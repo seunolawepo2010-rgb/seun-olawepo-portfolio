@@ -3,7 +3,7 @@
     "test": "Health Check",
     "success": true,
     "message": "API is responding correctly",
-    "timestamp": "2025-09-20T22:55:18.021575",
+    "timestamp": "2025-09-20T22:56:11.169350",
     "data": {
       "message": "Seun M. Olawepo Portfolio API v1.0.0"
     }
@@ -12,7 +12,7 @@
     "test": "Database Seeding",
     "success": true,
     "message": "Database seeded successfully",
-    "timestamp": "2025-09-20T22:55:18.094934",
+    "timestamp": "2025-09-20T22:56:11.246516",
     "data": {
       "message": "Database seeded successfully",
       "success": true
@@ -22,7 +22,7 @@
     "test": "Hero Data",
     "success": true,
     "message": "Hero data retrieved and validated successfully",
-    "timestamp": "2025-09-20T22:55:18.156625",
+    "timestamp": "2025-09-20T22:56:11.315267",
     "data": {
       "name": "Seun M. Olawepo",
       "title": "Senior Agile & Cloud Applications Leader"
@@ -32,7 +32,7 @@
     "test": "About Data",
     "success": true,
     "message": "About data structure and content validated",
-    "timestamp": "2025-09-20T22:55:18.211899",
+    "timestamp": "2025-09-20T22:56:11.407313",
     "data": {
       "stats_count": 4,
       "stats_labels": [
@@ -47,7 +47,7 @@
     "test": "Projects Data",
     "success": true,
     "message": "Retrieved 6 projects with valid structure",
-    "timestamp": "2025-09-20T22:55:18.272284",
+    "timestamp": "2025-09-20T22:56:11.464696",
     "data": {
       "total_projects": 6,
       "first_project_title": "PI Planning Excellence Playbook"
@@ -57,7 +57,7 @@
     "test": "Project Filtering - Agile Leadership",
     "success": true,
     "message": "Found 1 projects in category",
-    "timestamp": "2025-09-20T22:55:18.331827",
+    "timestamp": "2025-09-20T22:56:11.525278",
     "data": {
       "category": "Agile Leadership",
       "count": 1
@@ -67,7 +67,7 @@
     "test": "Project Filtering - Product Management",
     "success": true,
     "message": "Found 1 projects in category",
-    "timestamp": "2025-09-20T22:55:18.392009",
+    "timestamp": "2025-09-20T22:56:11.587685",
     "data": {
       "category": "Product Management",
       "count": 1
@@ -77,7 +77,7 @@
     "test": "Project Filtering - Release Train Engineering",
     "success": true,
     "message": "Found 1 projects in category",
-    "timestamp": "2025-09-20T22:55:18.458195",
+    "timestamp": "2025-09-20T22:56:11.644495",
     "data": {
       "category": "Release Train Engineering",
       "count": 1
@@ -87,21 +87,29 @@
     "test": "Project Filtering - Tags",
     "success": true,
     "message": "Found 2 projects with SAFe tag",
-    "timestamp": "2025-09-20T22:55:18.515961",
+    "timestamp": "2025-09-20T22:56:11.704108",
     "data": null
   },
   {
     "test": "Experience Data",
-    "success": false,
-    "message": "HTTP 500: Internal Server Error",
-    "timestamp": "2025-09-20T22:55:18.581477",
-    "data": null
+    "success": true,
+    "message": "Retrieved 6 experience entries with expected companies",
+    "timestamp": "2025-09-20T22:56:11.763853",
+    "data": {
+      "total_entries": 6,
+      "companies_found": [
+        "TSPi",
+        "Fidelity Investments",
+        "UnitedHealth Group",
+        "Mastercard"
+      ]
+    }
   },
   {
     "test": "Skills Data",
     "success": true,
     "message": "Skills data validated with 6 categories",
-    "timestamp": "2025-09-20T22:55:18.639500",
+    "timestamp": "2025-09-20T22:56:11.958542",
     "data": {
       "categories_found": [
         "Agile Frameworks",
@@ -118,7 +126,7 @@
     "test": "Certifications Data",
     "success": true,
     "message": "Validated 9 certifications and 2 education entries",
-    "timestamp": "2025-09-20T22:55:18.695580",
+    "timestamp": "2025-09-20T22:56:12.014716",
     "data": {
       "certifications_count": 9,
       "education_count": 2,
@@ -134,31 +142,33 @@
     "test": "Contact Info",
     "success": false,
     "message": "Contact details don't match expected values. Email: seunolawepo2010@gmail.com, Availability: Available 8am to 5pm CST",
-    "timestamp": "2025-09-20T22:55:18.751629",
+    "timestamp": "2025-09-20T22:56:12.071371",
     "data": null
   },
   {
     "test": "Contact Message Submission",
     "success": true,
     "message": "Contact message submitted successfully",
-    "timestamp": "2025-09-20T22:55:18.824457",
+    "timestamp": "2025-09-20T22:56:12.131147",
     "data": {
-      "message_id": "8389a6e7-651b-4cc1-99fb-b81002f2a83f",
+      "message_id": "96512f12-2323-466e-912c-49effe9edfb5",
       "response_message": "Your message has been sent successfully! I'll get back to you within 24 hours."
     }
   },
   {
     "test": "Contact Messages Retrieval",
-    "success": false,
-    "message": "HTTP 500: Internal Server Error",
-    "timestamp": "2025-09-20T22:55:18.879050",
-    "data": null
+    "success": true,
+    "message": "Retrieved 2 contact messages including test message",
+    "timestamp": "2025-09-20T22:56:12.188374",
+    "data": {
+      "total_messages": 2
+    }
   },
   {
     "test": "Contact Info Endpoint",
     "success": true,
     "message": "Contact info endpoint working",
-    "timestamp": "2025-09-20T22:55:18.933782",
+    "timestamp": "2025-09-20T22:56:12.250100",
     "data": {
       "email": "seunolawepo2010@gmail.com",
       "linkedin": "https://www.linkedin.com/in/seun-m-o/",
