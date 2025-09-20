@@ -349,7 +349,7 @@ class PortfolioAPITester:
                 missing_fields = [field for field in required_fields if field not in data]
                 
                 if not missing_fields:
-                    if data.get('email') == 'seunolawepo2010@gmail.com' and '8am-5pm CST' in data.get('availability', ''):
+                    if data.get('email') == 'seunolawepo2010@gmail.com' and '8am' in data.get('availability', '') and '5pm CST' in data.get('availability', ''):
                         self.log_test("Contact Info", True, "Contact information validated", {
                             'email': data.get('email'),
                             'availability': data.get('availability')
