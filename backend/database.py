@@ -99,7 +99,7 @@ class DatabaseManager:
         """Get contact messages"""
         try:
             filter_query = {"status": status} if status else {}
-            messages = await self.db.contact_messages.find(filter_query).sort("submitted_at", -1).to_list(length=None)
+            messages = await self.db.contact_messages.find(filter_query, {"_id": 0}).sort("submitted_at", -1).to_list(length=None)
             return messages
         except Exception as e:
             logger.error(f"Error getting contact messages: {e}")
