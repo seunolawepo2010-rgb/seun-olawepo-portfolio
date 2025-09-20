@@ -385,9 +385,9 @@ export const portfolioData = {
   ],
 
   contact: {
-    email: "seun.olawepo@email.com", // Placeholder - needs confirmation
+    email: "seunolawepo2010@gmail.com",
     linkedin: "https://www.linkedin.com/in/seun-m-o/",
-    calendar: "https://calendly.com/seun-olawepo", // Placeholder - needs confirmation
+    availability: "Available 8am to 5pm CST",
     location: "Available for Cloud Applications Manager roles",
     cta: "Schedule 15/30 min consultation"
   },
