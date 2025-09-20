@@ -54,7 +54,7 @@ class DatabaseManager:
             if tag:
                 filter_query["tags"] = {"$in": [tag]}
             
-            cursor = self.db.projects.find(filter_query).sort("display_order", 1)
+            cursor = self.db.projects.find(filter_query, {"_id": 0}).sort("display_order", 1)
             if limit:
                 cursor = cursor.limit(limit)
                 
