@@ -78,7 +78,7 @@ class DatabaseManager:
     async def get_experience(self) -> List[Dict[str, Any]]:
         """Get all work experience"""
         try:
-            experience = await self.db.experience.find().sort("id", 1).to_list(length=None)
+            experience = await self.db.experience.find({}, {"_id": 0}).sort("id", 1).to_list(length=None)
             return experience
         except Exception as e:
             logger.error(f"Error getting experience: {e}")
