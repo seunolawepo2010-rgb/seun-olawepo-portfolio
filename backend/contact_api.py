@@ -9,15 +9,17 @@ from datetime import datetime
 router = APIRouter(prefix="/api/contact", tags=["contact"])
 logger = logging.getLogger(__name__)
 
-# Database connection
-mongo_url = os.environ['MONGO_URL']
-db_name = os.environ['DB_NAME']
-db_manager = DatabaseManager(mongo_url, db_name)
+def get_db_manager():
+    """Get database manager instance"""
+    mongo_url = os.environ['MONGO_URL']
+    db_name = os.environ['DB_NAME']
+    return DatabaseManager(mongo_url, db_name)
 
 @router.post("/message", response_model=ApiResponse)
 async def submit_contact_message(message_data: ContactMessageCreate, request: Request):
     """Submit a contact form message"""
     try:
+        db_manager = get_db_manager()
         # Get client IP
         client_ip = request.client.host
         
@@ -52,6 +54,7 @@ async def submit_contact_message(message_data: ContactMessageCreate, request: Re
 async def get_contact_messages(status: Optional[str] = None):
     """Get contact messages (admin endpoint)"""
     try:
+        db_manager = get_db_manager()
         messages = await db_manager.get_contact_messages(status=status)
         return {
             "messages": messages,
@@ -65,6 +68,7 @@ async def get_contact_messages(status: Optional[str] = None):
 async def get_contact_info():
     """Get contact information"""
     try:
+        db_manager = get_db_manager()
         contact_data = await db_manager.get_portfolio_section("contact")
         if not contact_data:
             raise HTTPException(status_code=404, detail="Contact data not found")
