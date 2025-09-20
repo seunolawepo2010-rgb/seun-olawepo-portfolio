@@ -13,14 +13,17 @@ router = APIRouter(prefix="/api/portfolio", tags=["portfolio"])
 logger = logging.getLogger(__name__)
 
 # Database connection
-mongo_url = os.environ['MONGO_URL']
-db_name = os.environ['DB_NAME']
-db_manager = DatabaseManager(mongo_url, db_name)
+def get_db_manager():
+    """Get database manager instance"""
+    mongo_url = os.environ['MONGO_URL']
+    db_name = os.environ['DB_NAME']
+    return DatabaseManager(mongo_url, db_name)
 
 @router.get("/hero")
 async def get_hero_data():
     """Get hero section data"""
     try:
+        db_manager = get_db_manager()
         hero_data = await db_manager.get_portfolio_section("hero")
         if not hero_data:
             raise HTTPException(status_code=404, detail="Hero data not found")
@@ -33,6 +36,7 @@ async def get_hero_data():
 async def get_about_data():
     """Get about section data"""
     try:
+        db_manager = get_db_manager()
         about_data = await db_manager.get_portfolio_section("about")
         if not about_data:
             raise HTTPException(status_code=404, detail="About data not found")
@@ -49,6 +53,7 @@ async def get_projects(
 ):
     """Get projects with optional filtering"""
     try:
+        db_manager = get_db_manager()
         projects = await db_manager.get_projects(category=category, tag=tag, limit=limit)
         total_projects = await db_manager.get_projects()
         
@@ -65,6 +70,7 @@ async def get_projects(
 async def get_experience():
     """Get work experience data"""
     try:
+        db_manager = get_db_manager()
         experience = await db_manager.get_experience()
         return experience
     except Exception as e:
@@ -75,6 +81,7 @@ async def get_experience():
 async def get_skills():
     """Get skills data"""
     try:
+        db_manager = get_db_manager()
         skills_data = await db_manager.get_portfolio_section("skills")
         if not skills_data:
             raise HTTPException(status_code=404, detail="Skills data not found")
@@ -87,6 +94,7 @@ async def get_skills():
 async def get_certifications():
     """Get certifications and education data"""
     try:
+        db_manager = get_db_manager()
         cert_data = await db_manager.get_portfolio_section("certifications")
         if not cert_data:
             raise HTTPException(status_code=404, detail="Certifications data not found")
@@ -102,6 +110,7 @@ async def get_certifications():
 async def get_contact_info():
     """Get contact information"""
     try:
+        db_manager = get_db_manager()
         contact_data = await db_manager.get_portfolio_section("contact")
         if not contact_data:
             raise HTTPException(status_code=404, detail="Contact data not found")
