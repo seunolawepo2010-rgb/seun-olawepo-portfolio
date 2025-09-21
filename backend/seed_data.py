@@ -99,7 +99,7 @@ portfolio_data = {
             ],
             "artifacts": ["Dependency Dashboard", "Confluence Risk Log", "Scrum of Scrums Notes"],
             "tags": ["Dependencies", "Risk Management", "SAFe", "2022"],
-            "image": "/api/placeholder/600/400",
+            "image": "https://images.pexels.com/photos/7213435/pexels-photo-7213435.jpeg",
             "metrics": {"visibility": "100%", "blocker_reduction": "30%", "teams": "Multiple ARTs"},
             "featured": True,
             "display_order": 3
