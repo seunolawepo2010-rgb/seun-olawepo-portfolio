@@ -745,11 +745,7 @@ const Portfolio = () => {
               <div className="flex gap-3 pt-4 border-t">
                 <Button 
                   className="bg-blue-600 text-white hover:bg-blue-700"
-                  onClick={() => {
-                    // Open contact form and pre-fill subject with project title
-                    setShowProjectModal(false);
-                    setTimeout(() => setShowContactForm(true), 300);
-                  }}
+                  onClick={() => handleProjectDiscussion(selectedProject)}
                 >
                   <Mail className="w-4 h-4 mr-2" />
                   Discuss This Project
