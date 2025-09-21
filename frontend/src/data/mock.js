@@ -30,12 +30,12 @@ export const portfolioData = {
       location: "Supporting USDA/NRCS projects",
       achievements: [
         "Led Agile ceremonies and PI Planning sessions, improving team alignment, transparency, and delivery speed across multiple cross-functional teams",
-        "Reduced manual data entry by 40% through cross-functional rule-based automation implementation",
-        "Redesigned workflows using BPMN across four departments, reducing rework and operational delays",
-        "Facilitated stakeholder interviews, workshops, and JAD sessions for business requirements gathering",
-        "Aligned Agile practices with business objectives through strategic stakeholder collaboration"
+        "Reduced manual data entry by 40% through cross-functional rule-based automation and AI-powered process optimization implementation",
+        "Redesigned workflows using BPMN across four departments, integrating ML-driven decision points to reduce rework and operational delays",
+        "Facilitated stakeholder interviews, workshops, and JAD sessions for business requirements gathering, incorporating AI/ML solution feasibility assessments",
+        "Aligned Agile practices with business objectives through strategic stakeholder collaboration and data-driven insights from predictive analytics"
       ],
-      tags: ["SAFe", "Scrum Master", "BPMN", "Process Improvement", "Government"]
+      tags: ["SAFe", "Scrum Master", "BPMN", "Process Improvement", "Government", "AI/ML Integration"]
     },
     {
       id: 2,
