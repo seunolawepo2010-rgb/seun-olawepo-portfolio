@@ -39,7 +39,7 @@ code {
         --destructive: 239 68 68; /* Red for destructive actions */
         --destructive-foreground: 255 255 255;
         --border: 226 232 240; /* Light border */
-        --input: 241 245 249; /* Light input background */
+        --input: 255 255 255; /* White input background */
         --ring: 0 102 204; /* #0066CC - Tech Blue for focus rings */
         --chart-1: 0 102 204; /* Tech Blue */
         --chart-2: 16 185 129; /* Green */
