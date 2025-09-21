@@ -60,6 +60,7 @@ const Portfolio = () => {
   const [showContactForm, setShowContactForm] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
   const [showProjectModal, setShowProjectModal] = useState(false);
+  const [contactFormData, setContactFormData] = useState({});
 
   // Helper function to update loading state
   const setLoading = (section, isLoading) => {
