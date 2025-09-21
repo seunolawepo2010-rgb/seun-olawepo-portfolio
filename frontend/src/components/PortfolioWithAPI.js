@@ -188,6 +188,18 @@ const Portfolio = () => {
     setShowProjectModal(true);
   };
 
+  // Handle project discussion - opens contact form with pre-filled subject
+  const handleProjectDiscussion = (project) => {
+    setShowProjectModal(false);
+    // Pre-fill contact form with project information
+    const preFilledData = {
+      subject: `Discussion: ${project.title}`,
+      message: `Hi Seun,\n\nI'm interested in discussing your "${project.title}" case study. I'd like to learn more about:\n\n- The implementation approach\n- Key challenges and solutions\n- Potential application to my organization\n\nLooking forward to our conversation.\n\nBest regards,`
+    };
+    setContactFormData(preFilledData);
+    setTimeout(() => setShowContactForm(true), 300);
+  };
+
   const projectCategories = ['All', 'AI/ML Solutions', 'Agile Leadership', 'Product Management', 'Release Train Engineering', 'DevOps & Quality', 'Stakeholder Management', 'Agile Coaching'];
 
   return (
