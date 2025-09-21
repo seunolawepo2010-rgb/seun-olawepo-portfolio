@@ -272,7 +272,7 @@ export const portfolioData = {
       ],
       artifacts: ["Ceremony Excellence Playbook", "AI Facilitation Tools", "Retrospective Analytics Platform", "Team Maturity Assessment Framework"],
       tags: ["Scrum", "Facilitation", "Team Development", "AI/ML", "2020"],
-      image: "https://images.unsplash.com/photo-1709803857154-d20ee16ff763",
+      image: "https://images.unsplash.com/photo-1521737852567-6949f3f9f2b5?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzZ8MHwxfHNlYXJjaHwzfHx0ZWFtJTIwY29sbGFib3JhdGlvbnxlbnwwfHx8fDE3NTg0NDE0Mjh8MA&ixlib=rb-4.1.0&q=85",
       metrics: { participation: "80%", improvements: "3 per PI", engagement: "45%", maturity: "60%" },
       featured: false,
       display_order: 6
