@@ -227,7 +227,10 @@ const Portfolio = () => {
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[500px]">
-                <ContactForm onClose={() => setShowContactForm(false)} />
+                <ContactForm onClose={() => {
+                  setShowContactForm(false);
+                  setContactFormData({});
+                }} preFilledData={contactFormData} />
               </DialogContent>
             </Dialog>
           </nav>
