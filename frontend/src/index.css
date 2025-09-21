@@ -92,6 +92,16 @@ code {
   background-color: white !important;
 }
 
+[role="dialog"] * {
+  background-color: transparent !important;
+}
+
+[role="dialog"] .bg-card,
+[role="dialog"] .bg-popover,
+[role="dialog"] .bg-background {
+  background-color: white !important;
+}
+
 .dialog-content {
   background-color: white !important;
 }
@@ -101,7 +111,18 @@ input, textarea, select {
   background-color: white !important;
 }
 
-/* Override any yellow backgrounds */
-.bg-yellow-100, .bg-yellow-50, .bg-amber-50, .bg-amber-100 {
+/* Force all cards to have white backgrounds */
+[class*="card"] {
+  background-color: white !important;
+}
+
+/* Override any yellow/amber backgrounds */
+.bg-yellow-100, .bg-yellow-50, .bg-amber-50, .bg-amber-100,
+.bg-yellow-200, .bg-amber-200, .bg-warning {
+  background-color: white !important;
+}
+
+/* Ensure contact form has white background */
+.contact-form, .contact-form * {
   background-color: white !important;
 }
