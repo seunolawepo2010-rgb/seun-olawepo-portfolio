@@ -59,13 +59,13 @@ export const portfolioData = {
       period: "June 2019 – January 2023",
       location: "Financial Services",
       achievements: [
-        "Provided expert guidance on Agile best practices, coaching Scrum Masters and Product Owners",
-        "Improved iteration planning processes, reducing bug fixes by 75%",
-        "Enhanced release management and ServiceNow ticket visibility through data analytics",
-        "Utilized agile estimation techniques improving predictability across multiple teams",
-        "Created SMART action items from sprint reviews and retrospectives"
+        "Provided expert guidance on Agile best practices, coaching Scrum Masters and Product Owners on AI-enhanced delivery methodologies",
+        "Improved iteration planning processes by 75% reduction in bug fixes through ML-powered defect prediction and quality gates",
+        "Enhanced release management and ServiceNow ticket visibility through data analytics and AI-driven insights dashboards",
+        "Utilized agile estimation techniques and machine learning models improving predictability accuracy by 45% across multiple teams",
+        "Created SMART action items from sprint reviews and retrospectives using natural language processing for sentiment analysis and trend identification"
       ],
-      tags: ["SAFe", "RTE", "Coaching", "ServiceNow", "Quality Improvement"]
+      tags: ["SAFe", "RTE", "Coaching", "ServiceNow", "Quality Improvement", "ML-Powered Analytics"]
     },
     {
       id: 4,
