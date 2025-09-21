@@ -174,7 +174,7 @@ portfolio_data = {
             ],
             "artifacts": ["Retrospective Board", "Facilitation Guide", "Ceremony Templates"],
             "tags": ["Scrum", "Facilitation", "Team Building", "2020"],
-            "image": "/api/placeholder/600/400",
+            "image": "https://images.pexels.com/photos/7213435/pexels-photo-7213435.jpeg",
             "metrics": {"participation": "80%", "improvements": "3 per PI", "engagement": "High"},
             "featured": False,
             "display_order": 6
