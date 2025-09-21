@@ -621,6 +621,128 @@ const Portfolio = () => {
           ) : null}
         </div>
       </section>
+      
+      {/* Project Detail Modal */}
+      <Dialog open={showProjectModal} onOpenChange={setShowProjectModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          {selectedProject && (
+            <div className="space-y-6">
+              {/* Header */}
+              <div className="space-y-4">
+                <div className="flex items-start justify-between">
+                  <Badge variant="outline">{selectedProject.category}</Badge>
+                  <div className="text-sm text-gray-500">{selectedProject.tags.find(tag => tag.match(/\d{4}/))}</div>
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900">{selectedProject.title}</h2>
+                <p className="text-gray-600">{selectedProject.role}</p>
+              </div>
+
+              {/* Project Image */}
+              <div className="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg overflow-hidden">
+                <img 
+                  src={selectedProject.image} 
+                  alt={selectedProject.title}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='400' viewBox='0 0 600 400'%3E%3Crect width='600' height='400' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%236b7280' font-size='24'%3E📊 {selectedProject.title}%3C/text%3E%3C/svg%3E";
+                  }}
+                />
+              </div>
+
+              {/* Metrics Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {Object.entries(selectedProject.metrics).map(([key, value]) => (
+                  <div key={key} className="text-center p-3 bg-gray-50 rounded-lg">
+                    <div className="text-xl font-bold text-gray-900">{value}</div>
+                    <div className="text-sm text-gray-600 capitalize">{key.replace('_', ' ')}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Problem Statement */}
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <AlertCircle className="w-5 h-5 mr-2 text-red-500" />
+                  Challenge & Context
+                </h3>
+                <p className="text-gray-700 leading-relaxed">{selectedProject.problem}</p>
+              </div>
+
+              {/* Approach */}
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <CheckCircle className="w-5 h-5 mr-2 text-blue-500" />
+                  Strategic Approach
+                </h3>
+                <ul className="space-y-2">
+                  {selectedProject.approach.map((item, index) => (
+                    <li key={index} className="flex items-start">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                      <span className="text-gray-700">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Outcomes */}
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <TrendingUp className="w-5 h-5 mr-2 text-green-500" />
+                  Results & Impact
+                </h3>
+                <ul className="space-y-2">
+                  {selectedProject.outcomes.map((outcome, index) => (
+                    <li key={index} className="flex items-start">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                      <span className="text-gray-700">{outcome}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Artifacts */}
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <Download className="w-5 h-5 mr-2 text-purple-500" />
+                  Deliverables & Artifacts
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {selectedProject.artifacts.map((artifact, index) => (
+                    <div key={index} className="flex items-center p-2 bg-gray-50 rounded">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full mr-3"></div>
+                      <span className="text-sm text-gray-700">{artifact}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tags */}
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-gray-900">Technologies & Methods</h3>
+                <div className="flex flex-wrap gap-2">
+                  {selectedProject.tags.map((tag) => (
+                    <Badge key={tag} variant="secondary" className="text-sm">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4 border-t">
+                <Button className="bg-gray-900 text-white hover:bg-gray-800">
+                  <Mail className="w-4 h-4 mr-2" />
+                  Discuss This Project
+                </Button>
+                <Button variant="outline">
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  View Similar Work
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Footer */}
       <footer className="py-8 border-t border-gray-100">
