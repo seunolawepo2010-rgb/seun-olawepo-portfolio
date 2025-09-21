@@ -191,7 +191,7 @@ export const portfolioData = {
       ],
       artifacts: ["Dependency Visualization Dashboard", "Risk Assessment Algorithm", "Scrum of Scrums Playbook", "Escalation Workflow Automation"],
       tags: ["Dependencies", "Risk Management", "SAFe", "Predictive Analytics", "2022"],
-      image: "https://images.unsplash.com/photo-1533000247305-2061d09448e9",
+      image: "https://images.unsplash.com/photo-1600880292089-90a7e086ee0c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzZ8MHwxfHNlYXJjaHwxfHx0ZWFtJTIwY29sbGFib3JhdGlvbnxlbnwwfHx8fDE3NTg0NDE0Mjh8MA&ixlib=rb-4.1.0&q=85",
       metrics: { visibility: "100%", blocker_reduction: "30%", autonomy_improvement: "25%", delivery_rate: "85%" },
       featured: true,
       display_order: 3
