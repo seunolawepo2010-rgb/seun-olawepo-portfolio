@@ -3,6 +3,7 @@ from typing import List, Optional
 import logging
 from models import ContactMessage, ContactMessageCreate, ApiResponse
 from database import DatabaseManager
+from email_service import EmailService
 import os
 from datetime import datetime
 
@@ -14,6 +15,9 @@ def get_db_manager():
     mongo_url = os.environ['MONGO_URL']
     db_name = os.environ['DB_NAME']
     return DatabaseManager(mongo_url, db_name)
+
+# Initialize email service
+email_service = EmailService()
 
 @router.post("/message", response_model=ApiResponse)
 async def submit_contact_message(message_data: ContactMessageCreate, request: Request):
@@ -38,10 +42,21 @@ async def submit_contact_message(message_data: ContactMessageCreate, request: Re
         
         if success:
             logger.info(f"Contact message submitted by {message_data.email}")
+            
+            # Send email notification
+            email_sent = await email_service.send_contact_notification(contact_message.dict())
+            if email_sent:
+                logger.info("📧 Email notification sent successfully")
+            else:
+                logger.warning("⚠️ Failed to send email notification, but message was saved")
+            
             return ApiResponse(
                 success=True,
                 message="Your message has been sent successfully! I'll get back to you within 24 hours.",
-                data={"message_id": contact_message.id}
+                data={
+                    "message_id": contact_message.id,
+                    "email_notification": email_sent
+                }
             )
         else:
             raise HTTPException(status_code=500, detail="Failed to send message")
