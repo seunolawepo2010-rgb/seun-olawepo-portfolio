@@ -2,10 +2,10 @@
 export const portfolioData = {
   hero: {
     name: "Seun M. Olawepo",
-    shortTitle: "Senior Agile & Cloud Applications Leader",
-    longTitle: "Senior Agile & Cloud Applications Leader driving digital transformation through SAFe, Scrum, and enterprise delivery excellence",
-    bio: "15+ years leading multi-team Agile initiatives, mentoring high-performing teams, and delivering measurable business outcomes across cloud and enterprise systems.",
-    image: "/api/placeholder/400/400", // Professional headshot placeholder
+    shortTitle: "Senior Agile & Cloud Application Leader/AI Generalist",
+    longTitle: "Senior Agile & Cloud Application Leader/AI Generalist driving digital transformation through SAFe, Scrum, AI/ML integration, and enterprise delivery excellence",
+    bio: "15+ years leading multi-team Agile initiatives, mentoring high-performing teams, and delivering measurable business outcomes across cloud, AI/ML, and enterprise systems.",
+    image: "https://customer-assets.emergentagent.com/job_agile-portfolio/artifacts/dn6w3qoh_55555.jpeg",
     primaryCTA: "View Case Studies",
     secondaryCTA: "Download Resume"
   },
