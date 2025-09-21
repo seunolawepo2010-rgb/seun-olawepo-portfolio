@@ -257,10 +257,16 @@ const Portfolio = () => {
               </div>
               
               <div className="flex justify-center">
-                <div className="w-80 h-80 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                  <div className="w-72 h-72 rounded-full bg-white shadow-lg flex items-center justify-center">
-                    <div className="text-6xl text-gray-400">👤</div>
-                  </div>
+                <div className="w-80 h-80 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center overflow-hidden">
+                  <img 
+                    src={heroData.image} 
+                    alt={`${heroData.name} - Professional Portrait`}
+                    className="w-full h-full object-cover rounded-full"
+                    onError={(e) => {
+                      // Fallback to placeholder if image fails to load
+                      e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320' viewBox='0 0 320 320'%3E%3Crect width='320' height='320' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%236b7280' font-size='48'%3E👤%3C/text%3E%3C/svg%3E";
+                    }}
+                  />
                 </div>
               </div>
             </div>
