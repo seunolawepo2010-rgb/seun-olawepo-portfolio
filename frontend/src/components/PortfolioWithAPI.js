@@ -188,7 +188,7 @@ const Portfolio = () => {
     setShowProjectModal(true);
   };
 
-  const projectCategories = ['All', 'Agile Leadership', 'Product Management', 'Release Train Engineering', 'DevOps & Quality', 'Stakeholder Management', 'Agile Coaching'];
+  const projectCategories = ['All', 'AI/ML Solutions', 'Agile Leadership', 'Product Management', 'Release Train Engineering', 'DevOps & Quality', 'Stakeholder Management', 'Agile Coaching'];
 
   return (
     <div className="min-h-screen bg-white">
