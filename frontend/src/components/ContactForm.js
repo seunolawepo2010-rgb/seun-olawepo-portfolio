@@ -77,7 +77,7 @@ const ContactForm = ({ onClose, preFilledData = {} }) => {
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto contact-form bg-white">
+    <Card className="w-full max-w-md mx-auto">
       <CardHeader>
         <CardTitle className="text-lg font-medium">Get in Touch</CardTitle>
         <CardDescription>
@@ -85,7 +85,7 @@ const ContactForm = ({ onClose, preFilledData = {} }) => {
         </CardDescription>
       </CardHeader>
       
-      <CardContent className="bg-white">
+      <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {submitStatus === 'error' && (
             <Alert variant="destructive">
