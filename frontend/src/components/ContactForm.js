@@ -61,8 +61,8 @@ const ContactForm = ({ onClose, preFilledData = {} }) => {
 
   if (submitStatus === 'success') {
     return (
-      <Card className="w-full max-w-md mx-auto contact-form bg-white">
-        <CardContent className="p-6 text-center bg-white">
+      <Card className="w-full max-w-md mx-auto">
+        <CardContent className="p-6 text-center">
           <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">Message Sent!</h3>
           <p className="text-gray-600 mb-4">
