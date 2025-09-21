@@ -68,12 +68,20 @@ async def seed_portfolio_data():
         logging.error(f"Seeding failed: {e}")
         return {"message": f"Seeding failed: {str(e)}", "success": False}
 
+# Email setup info endpoint
+@api_router.get("/email/setup")
+async def get_email_setup_info():
+    """Get email setup information"""
+    email_service = EmailService()
+    return email_service.get_email_setup_instructions()
+
 # Include the main API router
 app.include_router(api_router)
 
-# Include portfolio and contact routers (they already have /api prefix)
+# Include portfolio, contact, and admin routers (they already have /api prefix)
 app.include_router(portfolio_router)
 app.include_router(contact_router)
+app.include_router(admin_router)
 
 app.add_middleware(
     CORSMiddleware,
