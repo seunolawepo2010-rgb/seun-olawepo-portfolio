@@ -253,11 +253,11 @@ const Portfolio = () => {
                 )}
 
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <Button size="lg" className="bg-gray-900 text-white hover:bg-gray-800">
+                  <Button size="lg" className="bg-blue-600 text-white hover:bg-blue-700">
                     {heroData.primary_cta}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
-                  <Button size="lg" variant="outline">
+                  <Button size="lg" variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50">
                     <Download className="w-4 h-4 mr-2" />
                     {heroData.secondary_cta}
                   </Button>
