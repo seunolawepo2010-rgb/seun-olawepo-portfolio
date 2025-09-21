@@ -9,13 +9,13 @@ import { Alert, AlertDescription } from './ui/alert';
 import { Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { contactAPI, handleApiError } from '../services/api';
 
-const ContactForm = ({ onClose }) => {
+const ContactForm = ({ onClose, preFilledData = {} }) => {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: '',
-    availability_preference: ''
+    name: preFilledData.name || '',
+    email: preFilledData.email || '',
+    subject: preFilledData.subject || '',
+    message: preFilledData.message || '',
+    availability_preference: preFilledData.availability_preference || ''
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
