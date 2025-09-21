@@ -44,13 +44,13 @@ export const portfolioData = {
       period: "January 2023 – August 2023",
       location: "Financial Services",
       achievements: [
-        "Delivered gap analysis saving $500K annually by consolidating overlapping systems",
-        "Reduced technical debt by 20% across two major sprints through requirement review checkpoints",
-        "Led business rule documentation and mapping for AI/ML and rules engine integrations",
-        "Supported PI Planning coordination and progress tracking in Jira",
-        "Mentored teams in Agile ceremonies and delivery best practices"
+        "Delivered gap analysis saving $500K annually by consolidating overlapping systems using AI-driven data analysis and pattern recognition",
+        "Reduced technical debt by 20% across two major sprints through requirement review checkpoints and ML-powered code quality assessment",
+        "Led business rule documentation and mapping for AI/ML and rules engine integrations, implementing intelligent decision-making workflows",
+        "Supported PI Planning coordination and progress tracking in Jira with predictive analytics for sprint velocity optimization",
+        "Mentored teams in Agile ceremonies and delivery best practices, introducing AI-assisted retrospective analysis for continuous improvement"
       ],
-      tags: ["Financial Services", "AI/ML", "Cost Optimization", "Technical Debt", "Jira"]
+      tags: ["Financial Services", "AI/ML", "Cost Optimization", "Technical Debt", "Jira", "Predictive Analytics"]
     },
     {
       id: 3,
