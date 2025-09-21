@@ -355,11 +355,16 @@ const Portfolio = () => {
             ) : (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {projectsData.projects.map((project) => (
-                  <Card key={project.id} className="group cursor-pointer hover:shadow-lg transition-all duration-300">
+                  <Card key={project.id} className="group cursor-pointer hover:shadow-lg transition-all duration-300" onClick={() => handleProjectClick(project)}>
                     <div className="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 rounded-t-lg overflow-hidden">
-                      <div className="w-full h-full flex items-center justify-center text-gray-400 text-4xl">
-                        📊
-                      </div>
+                      <img 
+                        src={project.image} 
+                        alt={project.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%236b7280' font-size='24'%3E📊 Case Study%3C/text%3E%3C/svg%3E";
+                        }}
+                      />
                     </div>
                     <CardHeader>
                       <div className="flex items-start justify-between">
@@ -389,6 +394,9 @@ const Portfolio = () => {
                               {tag}
                             </Badge>
                           ))}
+                        </div>
+                        <div className="text-xs text-gray-500 text-center pt-2 border-t">
+                          Click to view detailed case study
                         </div>
                       </div>
                     </CardContent>
