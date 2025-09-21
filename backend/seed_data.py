@@ -74,7 +74,7 @@ portfolio_data = {
             ],
             "artifacts": ["WSJF Scoring Sheet", "Workshop Notes", "Jira Integration"],
             "tags": ["WSJF", "Prioritization", "Stakeholder Management", "2022"],
-            "image": "/api/placeholder/600/400",
+            "image": "https://images.pexels.com/photos/7213435/pexels-photo-7213435.jpeg",
             "metrics": {"backlog_reduction": "40%", "satisfaction": "High", "items": "200+"},
             "featured": True,
             "display_order": 2
