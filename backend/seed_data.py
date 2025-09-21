@@ -124,7 +124,7 @@ portfolio_data = {
             ],
             "artifacts": ["Jenkins Pipeline", "Definition of Done Checklist", "CI Metrics Dashboard"],
             "tags": ["CI/CD", "Jenkins", "Quality", "2021"],
-            "image": "/api/placeholder/600/400",
+            "image": "https://images.pexels.com/photos/7213435/pexels-photo-7213435.jpeg",
             "metrics": {"build_success": "95%", "deployment_freq": "2x", "improvement": "25%"},
             "featured": False,
             "display_order": 4
