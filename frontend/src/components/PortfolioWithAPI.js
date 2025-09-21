@@ -298,7 +298,7 @@ const Portfolio = () => {
                 </div>
                 <div className="text-center space-y-2">
                   <Users className="w-8 h-8 text-gray-600 mx-auto" />
-                  <div className="text-xl font-light text-gray-900">20+ Teams</div>
+                  <div className="text-xl font-light text-gray-900">200+ Teams</div>
                   <div className="text-sm text-gray-600">Mentored & Led</div>
                 </div>
                 <div className="text-center space-y-2">
