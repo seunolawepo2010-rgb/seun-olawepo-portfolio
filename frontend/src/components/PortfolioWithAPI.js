@@ -730,11 +730,28 @@ const Portfolio = () => {
 
               {/* Action Buttons */}
               <div className="flex gap-3 pt-4 border-t">
-                <Button className="bg-gray-900 text-white hover:bg-gray-800">
+                <Button 
+                  className="bg-blue-600 text-white hover:bg-blue-700"
+                  onClick={() => {
+                    // Open contact form and pre-fill subject with project title
+                    setShowProjectModal(false);
+                    setTimeout(() => setShowContactForm(true), 300);
+                  }}
+                >
                   <Mail className="w-4 h-4 mr-2" />
                   Discuss This Project
                 </Button>
-                <Button variant="outline">
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    // Filter to show similar projects in the same category
+                    setShowProjectModal(false);
+                    setTimeout(() => {
+                      handleFilterChange(selectedProject.category);
+                      document.getElementById('portfolio')?.scrollIntoView({ behavior: 'smooth' });
+                    }, 300);
+                  }}
+                >
                   <ExternalLink className="w-4 h-4 mr-2" />
                   View Similar Work
                 </Button>
