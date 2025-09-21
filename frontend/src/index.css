@@ -26,7 +26,7 @@ code {
         --foreground: 26 32 44; /* #1A202C */
         --card: 255 255 255; /* White cards */
         --card-foreground: 26 32 44; /* #1A202C */
-        --popover: 255 255 255;
+        --popover: 255 255 255; /* White popover */
         --popover-foreground: 26 32 44;
         --primary: 0 102 204; /* #0066CC - Tech Blue */
         --primary-foreground: 255 255 255;
