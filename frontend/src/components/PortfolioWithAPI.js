@@ -182,6 +182,12 @@ const Portfolio = () => {
     loadProjectsData(filters);
   };
 
+  // Handle project card click
+  const handleProjectClick = (project) => {
+    setSelectedProject(project);
+    setShowProjectModal(true);
+  };
+
   const projectCategories = ['All', 'Agile Leadership', 'Product Management', 'Release Train Engineering', 'DevOps & Quality', 'Stakeholder Management', 'Agile Coaching'];
 
   return (
