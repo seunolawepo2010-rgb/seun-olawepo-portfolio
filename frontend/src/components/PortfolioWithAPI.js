@@ -609,7 +609,7 @@ const Portfolio = () => {
               <div className="flex flex-col sm:flex-row justify-center gap-4">
                 <Dialog open={showContactForm} onOpenChange={setShowContactForm}>
                   <DialogTrigger asChild>
-                    <Button size="lg" className="bg-blue-600 text-white hover:bg-blue-700">
+                    <Button size="lg" className="bg-gray-900 text-white hover:bg-gray-800">
                       <Calendar className="w-4 h-4 mr-2" />
                       Schedule Meeting
                     </Button>
