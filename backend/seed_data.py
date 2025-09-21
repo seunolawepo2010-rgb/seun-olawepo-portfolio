@@ -23,7 +23,7 @@ portfolio_data = {
         "key_stats": [
             {"label": "Years Experience", "value": "15+"},
             {"label": "Budget Managed", "value": "$5M+"},
-            {"label": "Teams Mentored", "value": "20+"},
+            {"label": "Teams Mentored", "value": "200+"},
             {"label": "Delivery Improvement", "value": "+35%"}
         ]
     },
