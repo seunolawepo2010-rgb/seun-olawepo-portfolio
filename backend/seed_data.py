@@ -149,7 +149,7 @@ portfolio_data = {
             ],
             "artifacts": ["Executive Dashboard", "Stakeholder Newsletter", "Demo Recordings"],
             "tags": ["Communication", "Power BI", "Executive Reporting", "2021"],
-            "image": "/api/placeholder/600/400",
+            "image": "https://images.pexels.com/photos/7213435/pexels-photo-7213435.jpeg",
             "metrics": {"escalation_reduction": "50%", "decision_speed": "<1 day", "trust": "High"},
             "featured": False,
             "display_order": 5
