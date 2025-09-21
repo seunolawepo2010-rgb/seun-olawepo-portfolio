@@ -280,6 +280,14 @@ export const portfolioData = {
   ],
 
   skills: {
+    "AI/ML & Data Analytics": [
+      "Machine Learning Pipeline Development",
+      "Predictive Analytics & Forecasting",
+      "Natural Language Processing (NLP)",
+      "AI-Powered Process Optimization",
+      "Business Intelligence & Data Visualization",
+      "Intelligent Automation & Decision Support"
+    ],
     "Agile Frameworks": [
       "SAFe (Scaled Agile Framework)",
       "Scrum",
@@ -289,6 +297,7 @@ export const portfolioData = {
       "Release Train Engineering"
     ],
     "Leadership & Delivery": [
+      "Enterprise Transformation Leadership",
       "Stakeholder Management",
       "Team Coaching & Mentoring",
       "Change Management",
@@ -302,10 +311,11 @@ export const portfolioData = {
       "CI/CD Pipelines",
       "Jenkins",
       "Multi-cloud Architecture",
-      "Cloud Migration"
+      "Cloud Migration",
+      "Infrastructure as Code"
     ],
     "Tools & Platforms": [
-      "Jira",
+      "Jira (Advanced)",
       "Confluence",
       "ServiceNow",
       "Salesforce",
@@ -315,20 +325,13 @@ export const portfolioData = {
       "Microsoft Visio"
     ],
     "Business Analysis": [
-      "Requirements Gathering",
+      "Advanced Requirements Gathering",
       "User Story Writing",
       "BPMN Process Modeling",
       "MoSCOW Prioritization",
       "WSJF Scoring",
-      "Gap Analysis"
-    ],
-    "Technical": [
-      "AI/ML Integration",
-      "Business Rules Analysis",
-      "API Testing (Postman)",
-      "TestRail",
-      "Cybersecurity GRC",
-      "Pega Business Architecture"
+      "Gap Analysis",
+      "ROI Analysis & Business Case Development"
     ]
   },
 
