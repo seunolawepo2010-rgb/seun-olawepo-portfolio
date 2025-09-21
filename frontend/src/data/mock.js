@@ -137,7 +137,7 @@ export const portfolioData = {
       ],
       artifacts: ["PI Planning Playbook (47 pages)", "Program Board Template", "Dependency Risk Assessment Matrix", "Stakeholder Communication Plan"],
       tags: ["SAFe", "PI Planning", "Enterprise Transformation", "ML Analytics", "2023"],
-      image: "https://images.unsplash.com/photo-1732437334226-e96e72272bc4",
+      image: "https://images.pexels.com/photos/7213435/pexels-photo-7213435.jpeg",
       metrics: { success_rate: "95%", improvement: "20%", participants: "200+", cost_savings: "$2.3M" },
       featured: true,
       display_order: 1
