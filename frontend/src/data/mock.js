@@ -164,7 +164,7 @@ export const portfolioData = {
       ],
       artifacts: ["WSJF Calculator with ML Integration", "Stakeholder Workshop Templates", "ROI Tracking Dashboard", "Prioritization Playbook"],
       tags: ["WSJF", "AI/ML", "Prioritization", "Product Strategy", "2022"],
-      image: "https://images.unsplash.com/photo-1620325867502-221cfb5faa5f",
+      image: "https://images.unsplash.com/photo-1666875753105-c63a6f3bdc86?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njd8MHwxfHNlYXJjaHwxfHxkYXRhJTIwYW5hbHl0aWNzfGVufDB8fHx8MTc1ODQ4Mjc4N3ww&ixlib=rb-4.1.0&q=85",
       metrics: { backlog_reduction: "40%", satisfaction: "28%", sprint_success: "92%", roi_improvement: "35%" },
       featured: true,
       display_order: 2
