@@ -32,7 +32,7 @@ code {
         --primary-foreground: 255 255 255;
         --secondary: 248 250 252; /* Very light gray for secondary elements */
         --secondary-foreground: 26 32 44;
-        --muted: 248 250 252; /* Very light gray */
+        --muted: 249 250 251; /* Very light gray */
         --muted-foreground: 100 116 139; /* Medium gray text */
         --accent: 0 102 204; /* #0066CC - Tech Blue */
         --accent-foreground: 255 255 255;
