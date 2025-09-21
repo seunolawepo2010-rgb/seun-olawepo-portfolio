@@ -58,6 +58,8 @@ const Portfolio = () => {
   // UI states
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [showContactForm, setShowContactForm] = useState(false);
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [showProjectModal, setShowProjectModal] = useState(false);
 
   // Helper function to update loading state
   const setLoading = (section, isLoading) => {
