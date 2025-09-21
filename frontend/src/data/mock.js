@@ -245,7 +245,7 @@ export const portfolioData = {
       ],
       artifacts: ["Executive Dashboard Suite", "Stakeholder Communication Playbook", "ROI Analytics Platform", "Demo Automation Framework"],
       tags: ["Executive Communication", "Power BI", "Stakeholder Management", "AI Analytics", "2021"],
-      image: "https://images.unsplash.com/photo-1670383050616-682df7d57b22",
+      image: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzB8MHwxfHNlYXJjaHwyfHxleGVjdXRpdmUlMjBtZWV0aW5nfGVufDB8fHx8MTc1ODQ4MjgwNHww&ixlib=rb-4.1.0&q=85",
       metrics: { escalation_reduction: "50%", decision_speed: "<1 day", satisfaction: "90%", contract_value: "$6M+" },
       featured: false,
       display_order: 5
