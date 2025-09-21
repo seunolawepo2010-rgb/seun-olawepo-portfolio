@@ -193,22 +193,22 @@ const Portfolio = () => {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="fixed top-0 w-full bg-white/90 backdrop-blur-md border-b border-gray-100 z-50">
+      <header className="fixed top-0 w-full bg-white/95 backdrop-blur-md border-b border-blue-100 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <nav className="flex items-center justify-between">
-            <div className="text-xl font-light text-gray-900">
+            <div className="text-xl font-light text-blue-900">
               {heroData?.name || "Seun M. Olawepo"}
             </div>
-            <div className="hidden md:flex items-center space-x-8 text-sm text-gray-600">
-              <a href="#about" className="hover:text-gray-900 transition-colors">About</a>
-              <a href="#portfolio" className="hover:text-gray-900 transition-colors">Portfolio</a>
-              <a href="#experience" className="hover:text-gray-900 transition-colors">Experience</a>
-              <a href="#skills" className="hover:text-gray-900 transition-colors">Skills</a>
-              <a href="#contact" className="hover:text-gray-900 transition-colors">Contact</a>
+            <div className="hidden md:flex items-center space-x-8 text-sm text-gray-700">
+              <a href="#about" className="hover:text-blue-700 transition-colors">About</a>
+              <a href="#portfolio" className="hover:text-blue-700 transition-colors">Portfolio</a>
+              <a href="#experience" className="hover:text-blue-700 transition-colors">Experience</a>
+              <a href="#skills" className="hover:text-blue-700 transition-colors">Skills</a>
+              <a href="#contact" className="hover:text-blue-700 transition-colors">Contact</a>
             </div>
             <Dialog open={showContactForm} onOpenChange={setShowContactForm}>
               <DialogTrigger asChild>
-                <Button size="sm" className="bg-gray-900 text-white hover:bg-gray-800">
+                <Button size="sm" className="bg-blue-600 text-white hover:bg-blue-700">
                   <Calendar className="w-4 h-4 mr-2" />
                   Schedule Call
                 </Button>
