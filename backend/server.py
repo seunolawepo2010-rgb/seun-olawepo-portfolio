@@ -13,7 +13,9 @@ from datetime import datetime
 # Import new API routers
 from portfolio_api import router as portfolio_router
 from contact_api import router as contact_router
+from admin_api import router as admin_router
 from seed_data import seed_database
+from email_service import EmailService
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
