@@ -218,7 +218,7 @@ export const portfolioData = {
       ],
       artifacts: ["Jenkins AI Pipeline Templates", "Quality Gates Framework", "CI Metrics Analytics Platform", "Developer Coaching Materials"],
       tags: ["CI/CD", "Jenkins", "Quality Engineering", "AI/ML", "2021"],
-      image: "https://images.pexels.com/photos/5716001/pexels-photo-5716001.jpeg",
+      image: "https://images.unsplash.com/photo-1631624210938-539575f92e3c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzV8MHwxfHNlYXJjaHw0fHxkZXZvcHN8ZW58MHx8fHwxNzU4NDgyNzk4fDA&ixlib=rb-4.1.0&q=85",
       metrics: { build_success: "95%", deployment_freq: "2x", conflict_reduction: "65%", quality_improvement: "40%" },
       featured: false,
       display_order: 4
