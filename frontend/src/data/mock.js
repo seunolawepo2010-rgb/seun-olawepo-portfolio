@@ -117,6 +117,87 @@ export const portfolioData = {
   projects: [
     {
       id: 1,
+      title: "Enterprise AI-Powered Sprint Velocity Prediction System",
+      category: "AI/ML Solutions",
+      problem: "Global technology company with 150+ Scrum teams struggled with sprint planning accuracy, achieving only 62% sprint goal completion rates. Estimation variance of 40% caused resource allocation issues and stakeholder confidence erosion, impacting $12M quarterly delivery commitments.",
+      role: "AI Solutions Architect & Senior Agile Coach",
+      approach: [
+        "Designed and implemented machine learning models using historical sprint data, team velocity patterns, and story complexity metrics",
+        "Integrated predictive analytics into Jira using Python-based ML pipelines with real-time velocity forecasting",
+        "Created ensemble models combining time series forecasting (ARIMA), regression analysis, and neural networks for sprint outcome prediction",
+        "Implemented automated story point recommendation engine using natural language processing on user story descriptions",
+        "Developed interactive dashboards with confidence intervals and risk assessment for Product Owners and Scrum Masters"
+      ],
+      outcomes: [
+        "Sprint goal completion rate improved from 62% to 89% within 4 PI cycles",
+        "Estimation accuracy increased by 35% through AI-assisted story point recommendations",
+        "Reduced planning overhead by 25% with automated velocity predictions and capacity planning",
+        "Enhanced stakeholder confidence with 90% prediction accuracy for delivery commitments",
+        "Created reusable ML framework adopted across 8 business units and 200+ development teams"
+      ],
+      artifacts: ["ML Model Documentation", "Jira Integration API", "Velocity Prediction Dashboard", "Story Point Recommendation Engine"],
+      tags: ["AI/ML", "Predictive Analytics", "Scrum", "Python", "Jira Integration", "2024"],
+      image: "https://images.unsplash.com/photo-1666875753105-c63a6f3bdc86?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njd8MHwxfHNlYXJjaHwxfHxkYXRhJTIwYW5hbHl0aWNzfGVufDB8fHx8MTc1ODQ4Mjc4N3ww&ixlib=rb-4.1.0&q=85",
+      metrics: { accuracy: "89%", improvement: "35%", teams: "200+", cost_savings: "$2.1M" },
+      featured: true,
+      display_order: 1
+    },
+    {
+      id: 2,
+      title: "Intelligent DevOps Pipeline Optimization Platform",
+      category: "AI/ML Solutions", 
+      problem: "Enterprise with 80+ microservices experienced 45% build failure rates and unpredictable deployment times averaging 3.2 hours. Manual intervention required in 60% of deployments, causing delivery delays and consuming 120+ engineering hours weekly.",
+      role: "AI/DevOps Solutions Lead & Release Train Engineer",
+      approach: [
+        "Developed machine learning models to predict build failures using code complexity metrics, dependency analysis, and historical patterns",
+        "Implemented intelligent test case prioritization using ML algorithms to optimize CI/CD pipeline execution time",
+        "Created automated root cause analysis system using natural language processing on build logs and error patterns",
+        "Built predictive deployment scheduling system considering system load, dependency readiness, and risk assessment",
+        "Integrated anomaly detection algorithms for real-time monitoring and automated rollback decision-making"
+      ],
+      outcomes: [
+        "Build success rate increased from 55% to 94% through predictive failure detection and proactive remediation",
+        "Deployment time reduced from 3.2 hours to 45 minutes using AI-optimized pipeline orchestration",
+        "Manual intervention decreased by 75% through intelligent automation and self-healing pipeline capabilities",
+        "Engineering productivity improved with 95% reduction in pipeline-related debugging time",
+        "Created AI-DevOps platform generating $1.8M annual savings through efficiency gains and reduced downtime"
+      ],
+      artifacts: ["ML Pipeline Framework", "Failure Prediction Models", "Automated RCA System", "Deployment Optimizer"],
+      tags: ["AI/ML", "DevOps", "CI/CD", "Automation", "Microservices", "2024"],
+      image: "https://images.unsplash.com/photo-1631624210938-539575f92e3c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzV8MHwxfHNlYXJjaHw0fHxkZXZvcHN8ZW58MHx8fHwxNzU4NDgyNzk4fDA&ixlib=rb-4.1.0&q=85",
+      metrics: { build_success: "94%", time_reduction: "85%", automation: "75%", savings: "$1.8M" },
+      featured: true,
+      display_order: 2
+    },
+    {
+      id: 3,
+      title: "AI-Enhanced Stakeholder Sentiment Analysis System",
+      category: "AI/ML Solutions",
+      problem: "Fortune 500 company with 25+ concurrent programs lacked real-time insights into stakeholder satisfaction and project health. Executive teams received delayed feedback, missing early warning signs that led to 8 major project escalations and $4.5M in rework costs annually.",
+      role: "AI Solutions Architect & Executive Program Manager",
+      approach: [
+        "Developed NLP-powered sentiment analysis system processing emails, meeting transcripts, and communication channels",
+        "Implemented real-time stakeholder mood tracking using transformer-based language models (BERT/GPT)",
+        "Created predictive escalation models analyzing communication patterns, meeting attendance, and feedback sentiment trends",
+        "Built automated executive briefing system generating insights from multi-source data including surveys, emails, and project metrics",
+        "Integrated machine learning recommendation engine for proactive stakeholder engagement strategies"
+      ],
+      outcomes: [
+        "Achieved 92% accuracy in predicting stakeholder escalations 2-3 weeks before occurrence",
+        "Reduced project escalations by 70% through proactive intervention and targeted communication strategies",
+        "Improved executive decision-making speed by 60% with real-time sentiment insights and trend analysis",
+        "Enhanced stakeholder satisfaction scores from 72% to 91% through data-driven engagement optimization",
+        "Created enterprise-wide stakeholder intelligence platform adopted across 15 business units"
+      ],
+      artifacts: ["NLP Sentiment Engine", "Escalation Prediction Models", "Executive Dashboard", "Communication Analytics Platform"],
+      tags: ["AI/ML", "NLP", "Sentiment Analysis", "Executive Communication", "Predictive Analytics", "2023"],
+      image: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzB8MHwxfHNlYXJjaHwyfHxleGVjdXRpdmUlMjBtZWV0aW5nfGVufDB8fHx8MTc1ODQ4MjgwNHww&ixlib=rb-4.1.0&q=85",
+      metrics: { accuracy: "92%", escalation_reduction: "70%", satisfaction: "91%", decision_speed: "60%" },
+      featured: true,
+      display_order: 3
+    },
+    {
+      id: 4,
       title: "Enterprise PI Planning Excellence Framework",
       category: "Agile Leadership",
       problem: "A Fortune 500 financial services organization with 200+ participants across 12 Agile Release Trains was experiencing misaligned dependencies and commitments, causing 35% delivery shortfall in past increments. Hybrid teams across 5 time zones struggled with coordination, resulting in $2.3M in delayed feature releases.",
@@ -140,10 +221,10 @@ export const portfolioData = {
       image: "https://images.pexels.com/photos/7213435/pexels-photo-7213435.jpeg",
       metrics: { success_rate: "95%", improvement: "20%", participants: "200+", cost_savings: "$2.3M" },
       featured: true,
-      display_order: 1
+      display_order: 4
     },
     {
-      id: 2,
+      id: 5,
       title: "AI-Enhanced WSJF Prioritization System",
       category: "Product Management",
       problem: "Healthcare technology company's product backlog contained 350+ competing user stories across 4 product lines with unclear ROI visibility and stakeholder priorities. Product owners spent 40% of their time in prioritization debates, delaying sprint planning and reducing development velocity by 30%.",
@@ -167,10 +248,10 @@ export const portfolioData = {
       image: "https://images.unsplash.com/photo-1666875753105-c63a6f3bdc86?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njd8MHwxfHNlYXJjaHwxfHxkYXRhJTIwYW5hbHl0aWNzfGVufDB8fHx8MTc1ODQ4Mjc4N3ww&ixlib=rb-4.1.0&q=85",
       metrics: { backlog_reduction: "40%", satisfaction: "28%", sprint_success: "92%", roi_improvement: "35%" },
       featured: true,
-      display_order: 2
+      display_order: 5
     },
     {
-      id: 3,
+      id: 6,
       title: "Intelligent Cross-Team Dependency Management Platform",
       category: "Release Train Engineering",
       problem: "Multi-national technology corporation with 15 Agile Release Trains and 120+ development teams experienced unmanaged cross-team dependencies causing 45% of Program Increments to miss delivery targets. Critical blockers emerged in weeks 8-10 of 12-week PIs, resulting in $4.2M quarterly revenue impact.",
@@ -193,11 +274,11 @@ export const portfolioData = {
       tags: ["Dependencies", "Risk Management", "SAFe", "Predictive Analytics", "2022"],
       image: "https://images.unsplash.com/photo-1600880292089-90a7e086ee0c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzZ8MHwxfHNlYXJjaHwxfHx0ZWFtJTIwY29sbGFib3JhdGlvbnxlbnwwfHx8fDE3NTg0NDE0Mjh8MA&ixlib=rb-4.1.0&q=85",
       metrics: { visibility: "100%", blocker_reduction: "30%", autonomy_improvement: "25%", delivery_rate: "85%" },
-      featured: true,
-      display_order: 3
+      featured: false,
+      display_order: 6
     },
     {
-      id: 4,
+      id: 7,
       title: "AI-Driven Continuous Integration Excellence Platform",
       category: "DevOps & Quality",
       problem: "Enterprise software company with 50+ development teams struggled with inconsistent code delivery practices, experiencing 70% build success rate and integration failures costing 25 developer hours per week. Manual testing bottlenecks delayed releases by average 3.5 days per sprint.",
@@ -221,10 +302,10 @@ export const portfolioData = {
       image: "https://images.unsplash.com/photo-1631624210938-539575f92e3c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzV8MHwxfHNlYXJjaHw0fHxkZXZvcHN8ZW58MHx8fHwxNzU4NDgyNzk4fDA&ixlib=rb-4.1.0&q=85",
       metrics: { build_success: "95%", deployment_freq: "2x", conflict_reduction: "65%", quality_improvement: "40%" },
       featured: false,
-      display_order: 4
+      display_order: 7
     },
     {
-      id: 5,
+      id: 8,
       title: "Executive Stakeholder Intelligence Communication System",
       category: "Stakeholder Management",
       problem: "Global consulting firm's executives across 8 countries lacked real-time visibility into 25+ concurrent project portfolios valued at $15M, experiencing delayed decision-making cycles averaging 14 days and eroding stakeholder trust leading to 3 major client escalations per quarter.",
@@ -248,10 +329,10 @@ export const portfolioData = {
       image: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzB8MHwxfHNlYXJjaHwyfHxleGVjdXRpdmUlMjBtZWV0aW5nfGVufDB8fHx8MTc1ODQ4MjgwNHww&ixlib=rb-4.1.0&q=85",
       metrics: { escalation_reduction: "50%", decision_speed: "<1 day", satisfaction: "90%", contract_value: "$6M+" },
       featured: false,
-      display_order: 5
+      display_order: 8
     },
     {
-      id: 6,
+      id: 9,
       title: "AI-Enhanced Scrum Ceremonies Transformation Framework",
       category: "Agile Coaching",
       problem: "Technology startup with 20+ Scrum teams across 4 countries experienced inconsistent ceremony execution with 45% team member participation rates, ceremonies perceived as 'time waste' by 60% of developers, and retrospectives generating minimal actionable improvements (averaging 0.8 improvements per PI).",
@@ -275,7 +356,7 @@ export const portfolioData = {
       image: "https://images.unsplash.com/photo-1521737852567-6949f3f9f2b5?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzZ8MHwxfHNlYXJjaHwzfHx0ZWFtJTIwY29sbGFib3JhdGlvbnxlbnwwfHx8fDE3NTg0NDE0Mjh8MA&ixlib=rb-4.1.0&q=85",
       metrics: { participation: "80%", improvements: "3 per PI", engagement: "45%", maturity: "60%" },
       featured: false,
-      display_order: 6
+      display_order: 9
     }
   ],
 
