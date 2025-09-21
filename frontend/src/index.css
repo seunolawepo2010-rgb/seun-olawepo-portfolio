@@ -22,7 +22,7 @@ code {
 
 @layer base {
   :root {
-        --background: 244 247 251; /* #F4F7FB */
+        --background: 255 255 255; /* Pure White */
         --foreground: 26 32 44; /* #1A202C */
         --card: 255 255 255; /* White cards on tech background */
         --card-foreground: 26 32 44; /* #1A202C */
