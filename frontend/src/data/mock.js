@@ -11,12 +11,12 @@ export const portfolioData = {
   },
   
   about: {
-    short: "Senior IT leader specializing in Agile delivery, cloud transformation, and enterprise systems with 15+ years of experience.",
-    long: "Senior IT leader with 15+ years in Agile delivery, cloud, and enterprise systems. I specialize in guiding multi-team initiatives, mentoring high-performing teams, and bridging business and technology to deliver measurable results. My experience spans Business Analysis, Release Train Engineering, Agile Coaching, Product Ownership, and Project Management. I hold advanced certifications including PMP, PSM, CSM, SAFe RTE, and AWS Cloud Practitioner, with an M.Sc. in IT Project Management. My civil engineering background provides a unique foundation for systematic problem-solving and structured delivery approaches.",
+    short: "Senior IT leader specializing in Agile delivery, cloud transformation, AI/ML integration, and enterprise systems with 15+ years of experience.",
+    long: "Senior IT leader with 15+ years in Agile delivery, cloud, AI/ML, and enterprise systems. I specialize in guiding multi-team initiatives, mentoring high-performing teams, and bridging business and technology to deliver measurable results. My experience spans Business Analysis, Release Train Engineering, Agile Coaching, Product Ownership, Project Management, and AI/ML solution implementation. I hold advanced certifications including PMP, PSM, CSM, SAFe RTE, and AWS Cloud Practitioner, with an M.Sc. in IT Project Management. My civil engineering background provides a unique foundation for systematic problem-solving and structured delivery approaches, while my AI/ML expertise enables data-driven decision making and intelligent automation solutions.",
     keyStats: [
       { label: "Years Experience", value: "15+" },
       { label: "Budget Managed", value: "$5M+" },
-      { label: "Teams Mentored", value: "20+" },
+      { label: "Teams Mentored", value: "200+" },
       { label: "Delivery Improvement", value: "+35%" }
     ]
   },
