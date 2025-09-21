@@ -49,7 +49,7 @@ portfolio_data = {
             ],
             "artifacts": ["Miro Program Board", "PI Objectives Sheet", "Playbook PDF"],
             "tags": ["SAFe", "PI Planning", "Dependencies", "2023"],
-            "image": "/api/placeholder/600/400",
+            "image": "https://images.pexels.com/photos/7213435/pexels-photo-7213435.jpeg",
             "metrics": {"success_rate": "95%", "improvement": "20%", "participants": "200+"},
             "featured": True,
             "display_order": 1
