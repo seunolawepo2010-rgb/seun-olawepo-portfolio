@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Download, Calendar, Mail, Linkedin, ExternalLink, Filter, ChevronDown, MapPin, Clock, DollarSign, Users, TrendingUp, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowRight, Download, Calendar, Mail, Linkedin, ExternalLink, Filter, ChevronDown, MapPin, Clock, DollarSign, Users, TrendingUp, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
