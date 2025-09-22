@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 load_dotenv('/app/frontend/.env')
 
 # Get backend URL from environment
-BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://agile-portfolio.preview.emergentagent.com')
+BACKEND_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://portfolio-fullstack.preview.emergentagent.com')
 API_BASE = f"{BACKEND_URL}/api"
 
 class PortfolioAPITester:

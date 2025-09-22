@@ -3,8 +3,8 @@
 > Senior Agile & Cloud Application Leader/AI Generalist | 15+ Years Experience | 200+ Teams Mentored
 
 ## 🌐 Live Portfolio
-**Website**: [https://agile-portfolio.preview.emergentagent.com](https://agile-portfolio.preview.emergentagent.com)  
-**Admin Dashboard**: [https://agile-portfolio.preview.emergentagent.com/admin](https://agile-portfolio.preview.emergentagent.com/admin)
+**Website**: [https://portfolio-fullstack.preview.emergentagent.com](https://portfolio-fullstack.preview.emergentagent.com)  
+**Admin Dashboard**: [https://portfolio-fullstack.preview.emergentagent.com/admin](https://portfolio-fullstack.preview.emergentagent.com/admin)
 
 ## 📋 About
 Professional portfolio showcasing extensive experience in Agile transformation, cloud application development, and AI/ML integration across Fortune 500 companies. This full-stack application demonstrates technical leadership capabilities while serving as a comprehensive showcase of career achievements.
