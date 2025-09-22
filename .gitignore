@@ -234,4 +234,7 @@ cython_debug/
 /logs/
 /certificates/
 *.sqlite
-*.db
+*.db-e 
+# Environment files
+*.env
+*.env.*
