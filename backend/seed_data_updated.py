@@ -190,6 +190,33 @@ portfolio_data = {
             "metrics": {"participation": "80%", "improvements": "3 per PI", "engagement": "45%", "maturity": "60%"},
             "featured": False,
             "display_order": 6
+        },
+        {
+            "id": 7,
+            "title": "Enterprise Cybersecurity GRC Framework Implementation",
+            "category": "Information Security",
+            "problem": "Fortune 500 financial services organization faced complex regulatory landscape with NIST, FFIEC, GLBA, NYDFS, SOX, and PCI-DSS requirements across 50+ business units. Fragmented compliance processes resulted in 40% audit findings, $2.1M in regulatory fines, and 6-month delayed product launches due to security compliance gaps.",
+            "role": "Senior InfoSec GRC Analyst & Compliance Framework Architect",
+            "approach": [
+                "Implemented comprehensive NIST Cybersecurity Framework with integrated FAIR risk assessment methodology across enterprise architecture",
+                "Developed automated GRC platform using ServiceNow and Archer with AI-powered control testing, gap analysis, and regulatory mapping capabilities",
+                "Established cross-functional governance committees with standardized risk scoring algorithms, third-party risk assessment protocols, and data classification frameworks",
+                "Created intelligent compliance monitoring dashboard with predictive analytics for regulatory change impact assessment and proactive remediation planning",
+                "Designed SOC 2 Type II readiness program with automated evidence collection, continuous control monitoring, and ML-driven anomaly detection systems"
+            ],
+            "outcomes": [
+                "Achieved 95% reduction in audit findings through systematic control implementation and continuous monitoring automation",
+                "Successfully passed SOC 2 Type II audit with zero exceptions, enabling $15M+ in new enterprise client contracts",
+                "Reduced regulatory compliance costs by 60% through process automation, standardization, and intelligent risk prioritization",
+                "Implemented HITRUST and ISO27001 frameworks resulting in industry-leading security posture and competitive differentiation",
+                "Established enterprise-wide security culture with 90% employee compliance training completion and zero security incidents over 18 months"
+            ],
+            "artifacts": ["NIST Implementation Roadmap", "GRC Automation Platform", "Risk Assessment Matrix", "SOC 2 Compliance Package", "Security Policy Framework"],
+            "tags": ["NIST Framework", "SOC 2", "GRC", "Risk Management", "Compliance", "2023"],
+            "image": "https://images.unsplash.com/photo-1563013544-824ae1b704d3?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzZ8MHwxfHNlYXJjaHwxfHxjeWJlcnNlY3VyaXR5fGVufDB8fHx8MTc1ODQ4Mjg3MHww&ixlib=rb-4.1.0&q=85",
+            "metrics": {"audit_improvement": "95%", "cost_reduction": "60%", "contract_value": "$15M+", "zero_incidents": "18 months"},
+            "featured": True,
+            "display_order": 7
         }
     ],
 
