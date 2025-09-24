@@ -5,21 +5,21 @@ import sys
 from database import DatabaseManager
 from datetime import datetime
 
-# Mock data (copied from frontend for seeding)
+# Mock data - Updated with InfoSec GRC content
 portfolio_data = {
     "hero": {
         "name": "Seun M. Olawepo",
-        "short_title": "Senior Agile & Cloud Application Leader/AI Generalist",
-        "long_title": "Senior Agile & Cloud Application Leader/AI Generalist driving digital transformation through SAFe, Scrum, AI/ML integration, and enterprise delivery excellence",
-        "bio": "15+ years leading multi-team Agile initiatives, mentoring high-performing teams, and delivering measurable business outcomes across cloud, AI/ML, and enterprise systems.",
+        "short_title": "Senior Agile & Cloud Leader | InfoSec GRC Analyst | AI Generalist",
+        "long_title": "Senior Agile & Cloud Application Leader | InfoSec GRC Analyst driving digital transformation through SAFe, Scrum, AI/ML integration, cybersecurity governance, and enterprise delivery excellence",
+        "bio": "15+ years leading multi-team Agile initiatives, cybersecurity governance & compliance programs, mentoring high-performing teams, and delivering measurable business outcomes across cloud, AI/ML, and enterprise systems.",
         "image": "https://customer-assets.emergentagent.com/job_agile-portfolio/artifacts/dn6w3qoh_55555.jpeg",
         "primary_cta": "View Case Studies",
         "secondary_cta": "Download Resume"
     },
     
     "about": {
-        "short": "Senior IT leader specializing in Agile delivery, cloud transformation, AI/ML integration, and enterprise systems with 15+ years of experience.",
-        "long": "Senior IT leader with 15+ years in Agile delivery, cloud, AI/ML, and enterprise systems. I specialize in guiding multi-team initiatives, mentoring high-performing teams, and bridging business and technology to deliver measurable results. My experience spans Business Analysis, Release Train Engineering, Agile Coaching, Product Ownership, Project Management, and AI/ML solution implementation. I hold advanced certifications including PMP, PSM, CSM, SAFe RTE, and AWS Cloud Practitioner, with an M.Sc. in IT Project Management. My civil engineering background provides a unique foundation for systematic problem-solving and structured delivery approaches, while my AI/ML expertise enables data-driven decision making and intelligent automation solutions.",
+        "short": "Senior IT leader specializing in Agile delivery, cybersecurity governance & risk management, cloud transformation, AI/ML integration, and enterprise systems with 15+ years of experience.",
+        "long": "Senior IT leader with 15+ years in Agile delivery, cybersecurity governance & compliance, cloud, AI/ML, and enterprise systems. I specialize in guiding multi-team initiatives, implementing robust GRC frameworks, mentoring high-performing teams, and bridging business and technology to deliver measurable results. My experience spans Business Analysis, Release Train Engineering, Agile Coaching, Product Ownership, Project Management, InfoSec GRC Analysis, and AI/ML solution implementation. I hold advanced certifications including CISM, CISA, PMP, PSM, CSM, SAFe RTE, and AWS Cloud Practitioner, with an M.Sc. in IT Project Management. My civil engineering background provides a unique foundation for systematic problem-solving and structured delivery approaches, while my AI/ML and cybersecurity expertise enables data-driven decision making and intelligent automation solutions.",
         "key_stats": [
             {"label": "Years Experience", "value": "15+"},
             {"label": "Budget Managed", "value": "$5M+"},
@@ -106,6 +106,33 @@ portfolio_data = {
         },
         {
             "id": 4,
+            "title": "Enterprise Cybersecurity GRC Framework Implementation",
+            "category": "Information Security",
+            "problem": "Fortune 500 financial services organization faced complex regulatory landscape with NIST, FFIEC, GLBA, NYDFS, SOX, and PCI-DSS requirements across 50+ business units. Fragmented compliance processes resulted in 40% audit findings, $2.1M in regulatory fines, and 6-month delayed product launches due to security compliance gaps.",
+            "role": "Senior InfoSec GRC Analyst & Compliance Framework Architect",
+            "approach": [
+                "Implemented comprehensive NIST Cybersecurity Framework with integrated FAIR risk assessment methodology across enterprise architecture",
+                "Developed automated GRC platform using ServiceNow and Archer with AI-powered control testing, gap analysis, and regulatory mapping capabilities",
+                "Established cross-functional governance committees with standardized risk scoring algorithms, third-party risk assessment protocols, and data classification frameworks",
+                "Created intelligent compliance monitoring dashboard with predictive analytics for regulatory change impact assessment and proactive remediation planning",
+                "Designed SOC 2 Type II readiness program with automated evidence collection, continuous control monitoring, and ML-driven anomaly detection systems"
+            ],
+            "outcomes": [
+                "Achieved 95% reduction in audit findings through systematic control implementation and continuous monitoring automation",
+                "Successfully passed SOC 2 Type II audit with zero exceptions, enabling $15M+ in new enterprise client contracts",
+                "Reduced regulatory compliance costs by 60% through process automation, standardization, and intelligent risk prioritization",
+                "Implemented HITRUST and ISO27001 frameworks resulting in industry-leading security posture and competitive differentiation",
+                "Established enterprise-wide security culture with 90% employee compliance training completion and zero security incidents over 18 months"
+            ],
+            "artifacts": ["NIST Implementation Roadmap", "GRC Automation Platform", "Risk Assessment Matrix", "SOC 2 Compliance Package", "Security Policy Framework"],
+            "tags": ["NIST Framework", "SOC 2", "GRC", "Risk Management", "Compliance", "2023"],
+            "image": "https://images.unsplash.com/photo-1563013544-824ae1b704d3?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzZ8MHwxfHNlYXJjaHwxfHxjeWJlcnNlY3VyaXR5fGVufDB8fHx8MTc1ODQ4Mjg3MHww&ixlib=rb-4.1.0&q=85",
+            "metrics": {"audit_improvement": "95%", "cost_reduction": "60%", "contract_value": "$15M+", "zero_incidents": "18 months"},
+            "featured": True,
+            "display_order": 4
+        },
+        {
+            "id": 5,
             "title": "Continuous Integration Excellence",
             "category": "DevOps & Quality",
             "problem": "Teams delivered code inconsistently causing integration failures, with build success rate at only 70% affecting deployment frequency.",
@@ -127,10 +154,10 @@ portfolio_data = {
             "image": "https://images.pexels.com/photos/7213435/pexels-photo-7213435.jpeg",
             "metrics": {"build_success": "95%", "deployment_freq": "2x", "improvement": "25%"},
             "featured": False,
-            "display_order": 4
+            "display_order": 5
         },
         {
-            "id": 5,
+            "id": 6,
             "title": "Executive Stakeholder Communication",
             "category": "Stakeholder Management",
             "problem": "Executives lacked visibility into progress and risks, eroding trust and causing delayed decision-making cycles.",
@@ -152,10 +179,10 @@ portfolio_data = {
             "image": "https://images.pexels.com/photos/7213435/pexels-photo-7213435.jpeg",
             "metrics": {"escalation_reduction": "50%", "decision_speed": "<1 day", "trust": "High"},
             "featured": False,
-            "display_order": 5
+            "display_order": 6
         },
         {
-            "id": 6,
+            "id": 7,
             "title": "Scrum Ceremonies Transformation",
             "category": "Agile Coaching",
             "problem": "Agile ceremonies were inconsistent and perceived as 'waste of time' by team members, with low participation and engagement.",
@@ -177,7 +204,7 @@ portfolio_data = {
             "image": "https://images.pexels.com/photos/7213435/pexels-photo-7213435.jpeg",
             "metrics": {"participation": "80%", "improvements": "3 per PI", "engagement": "High"},
             "featured": False,
-            "display_order": 6
+            "display_order": 7
         }
     ],
 
@@ -199,9 +226,24 @@ portfolio_data = {
         },
         {
             "id": 2,
+            "company": "Financial Services Corporation",
+            "role": "Senior InfoSec GRC Analyst",
+            "period": "January 2022 – August 2023",
+            "location": "Enterprise Risk & Compliance Division",
+            "achievements": [
+                "Implemented enterprise-wide NIST Cybersecurity Framework across 50+ business units, achieving 95% reduction in audit findings and zero regulatory violations",
+                "Led SOC 2 Type II audit preparation and certification, enabling $15M+ in new enterprise contracts and industry-leading security posture",
+                "Developed automated GRC platform using ServiceNow and Archer with AI-powered risk assessment, reducing compliance costs by 60% annually",
+                "Managed regulatory compliance across FFIEC, GLBA, NYDFS, SOX, PCI-DSS, HIPAA, and privacy requirements with 100% audit success rate",
+                "Established third-party risk assessment program and data classification framework, supporting HITRUST and ISO27001 certification initiatives"
+            ],
+            "tags": ["NIST", "SOC 2", "GRC", "ServiceNow", "Archer", "Regulatory Compliance", "Risk Management"]
+        },
+        {
+            "id": 3,
             "company": "Fidelity Investments",
             "role": "Sr. Agile Delivery Manager & Business Rules Analyst Lead",
-            "period": "January 2023 – August 2023",
+            "period": "January 2021 – December 2021",
             "location": "Financial Services",
             "achievements": [
                 "Delivered gap analysis saving $500K annually by consolidating overlapping systems",
@@ -213,10 +255,10 @@ portfolio_data = {
             "tags": ["Financial Services", "AI/ML", "Cost Optimization", "Technical Debt", "Jira"]
         },
         {
-            "id": 3,
+            "id": 4,
             "company": "Fidelity Investments",
             "role": "Sr. SAFe Scrum Master/RTE",
-            "period": "June 2019 – January 2023",
+            "period": "June 2019 – January 2021",
             "location": "Financial Services",
             "achievements": [
                 "Provided expert guidance on Agile best practices, coaching Scrum Masters and Product Owners",
@@ -228,7 +270,7 @@ portfolio_data = {
             "tags": ["SAFe", "RTE", "Coaching", "ServiceNow", "Quality Improvement"]
         },
         {
-            "id": 4,
+            "id": 5,
             "company": "UnitedHealth Group",
             "role": "Sr. Agile Lead & Business Analyst Lead",
             "period": "September 2018 – May 2019",
@@ -243,7 +285,7 @@ portfolio_data = {
             "tags": ["Healthcare", "Salesforce", "BI Dashboards", "Training", "WSJF"]
         },
         {
-            "id": 5,
+            "id": 6,
             "company": "UnitedHealth Group",
             "role": "Senior Scrum Master (ART Leadership) / Product Owner",
             "period": "November 2016 – September 2018",
@@ -258,7 +300,7 @@ portfolio_data = {
             "tags": ["Healthcare AI", "Multi-cloud", "Azure DevOps", "Product Owner", "SAFe"]
         },
         {
-            "id": 6,
+            "id": 7,
             "company": "Mastercard",
             "role": "IT Agile Scrum Master & Business Rules Analyst Lead",
             "period": "March 2012 – October 2016",
@@ -275,6 +317,30 @@ portfolio_data = {
     ],
 
     "skills": {
+        "Cybersecurity GRC": [
+            "NIST Cybersecurity Framework",
+            "SOC 2 Type I/II Compliance",
+            "Risk Management & Assessment",
+            "Regulatory Compliance (FFIEC, GLBA, NYDFS, SOX, PCI-DSS)",
+            "Third-Party Risk Assessment",
+            "Data Classification & Privacy (HIPAA, GxP)"
+        ],
+        "GRC Tools & Analytics": [
+            "ServiceNow GRC Platform",
+            "Archer GRC Concepts",
+            "Advanced Excel & Power BI Analytics",
+            "Jira & Confluence Administration",
+            "GenAI Tools Integration",
+            "Automated Compliance Monitoring"
+        ],
+        "Security Frameworks": [
+            "FAIR Risk Assessment",
+            "HITRUST CSF",
+            "ISO 27001",
+            "NIST 800-53",
+            "SOC 2 Controls",
+            "Privacy & Data Protection"
+        ],
         "Agile Frameworks": [
             "SAFe (Scaled Agile Framework)",
             "Scrum",
@@ -328,6 +394,18 @@ portfolio_data = {
     },
 
     "certifications": [
+        {
+            "name": "Certified Information Systems Manager (CISM)",
+            "issuer": "ISACA",
+            "year": "2023",
+            "credential_id": "Verified"
+        },
+        {
+            "name": "Certified Information Systems Auditor (CISA)",
+            "issuer": "ISACA",
+            "year": "2022",
+            "credential_id": "Verified"
+        },
         {
             "name": "Project Management Professional (PMP)",
             "issuer": "PMI",
