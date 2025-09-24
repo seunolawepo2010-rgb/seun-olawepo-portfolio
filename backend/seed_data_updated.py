@@ -236,6 +236,21 @@ portfolio_data = {
                 "Aligned Agile practices with business objectives through strategic stakeholder collaboration and data-driven insights from predictive analytics"
             ],
             "tags": ["SAFe", "Scrum Master", "BPMN", "Process Improvement", "Government", "AI/ML Integration"]
+        },
+        {
+            "id": 2,
+            "company": "Financial Services Corporation",
+            "role": "Senior InfoSec GRC Analyst",
+            "period": "January 2022 – August 2023",
+            "location": "Enterprise Risk & Compliance Division",
+            "achievements": [
+                "Implemented enterprise-wide NIST Cybersecurity Framework across 50+ business units, achieving 95% reduction in audit findings and zero regulatory violations",
+                "Led SOC 2 Type II audit preparation and certification, enabling $15M+ in new enterprise contracts and industry-leading security posture",
+                "Developed automated GRC platform using ServiceNow and Archer with AI-powered risk assessment, reducing compliance costs by 60% annually",
+                "Managed regulatory compliance across FFIEC, GLBA, NYDFS, SOX, PCI-DSS, HIPAA, and privacy requirements with 100% audit success rate",
+                "Established third-party risk assessment program and data classification framework, supporting HITRUST and ISO27001 certification initiatives"
+            ],
+            "tags": ["NIST", "SOC 2", "GRC", "ServiceNow", "Archer", "Regulatory Compliance", "Risk Management"]
         }
         # ... rest of experience data would continue here
     ],
