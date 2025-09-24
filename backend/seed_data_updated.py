@@ -301,9 +301,45 @@ portfolio_data = {
 
     "certifications": [
         {
+            "name": "Certified Information Systems Manager (CISM)",
+            "issuer": "ISACA",
+            "year": "2023",
+            "credential_id": "Verified"
+        },
+        {
+            "name": "Certified Information Systems Auditor (CISA)",
+            "issuer": "ISACA",
+            "year": "2022",
+            "credential_id": "Verified"
+        },
+        {
             "name": "Project Management Professional (PMP)",
             "issuer": "PMI",
             "year": "2022",
+            "credential_id": "Verified"
+        },
+        {
+            "name": "Professional Scrum Master (PSM I)",
+            "issuer": "Scrum.org",
+            "year": "2021",
+            "credential_id": "Verified"
+        },
+        {
+            "name": "Certified ScrumMaster (CSM)",
+            "issuer": "Scrum Alliance", 
+            "year": "2021",
+            "credential_id": "Verified"
+        },
+        {
+            "name": "SAFe 5 Release Train Engineer (RTE)",
+            "issuer": "Scaled Agile",
+            "year": "2021",
+            "credential_id": "Verified"
+        },
+        {
+            "name": "AWS Cloud Practitioner",
+            "issuer": "Amazon Web Services",
+            "year": "2021",
             "credential_id": "Verified"
         }
         # ... rest of certifications
