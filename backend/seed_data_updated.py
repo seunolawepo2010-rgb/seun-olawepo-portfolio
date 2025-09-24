@@ -256,6 +256,30 @@ portfolio_data = {
     ],
 
     "skills": {
+        "Cybersecurity GRC": [
+            "NIST Cybersecurity Framework",
+            "SOC 2 Type I/II Compliance",
+            "Risk Management & Assessment",
+            "Regulatory Compliance (FFIEC, GLBA, NYDFS, SOX, PCI-DSS)",
+            "Third-Party Risk Assessment",
+            "Data Classification & Privacy (HIPAA, GxP)"
+        ],
+        "GRC Tools & Analytics": [
+            "ServiceNow GRC Platform",
+            "Archer GRC Concepts",
+            "Advanced Excel & Power BI Analytics",
+            "Jira & Confluence Administration",
+            "GenAI Tools Integration",
+            "Automated Compliance Monitoring"
+        ],
+        "Security Frameworks": [
+            "FAIR Risk Assessment",
+            "HITRUST CSF",
+            "ISO 27001",
+            "NIST 800-53",
+            "SOC 2 Controls",
+            "Privacy & Data Protection"
+        ],
         "AI/ML & Data Analytics": [
             "Machine Learning Pipeline Development",
             "Predictive Analytics & Forecasting",
