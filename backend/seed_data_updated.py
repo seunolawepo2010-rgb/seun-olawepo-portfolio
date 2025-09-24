@@ -9,9 +9,9 @@ from datetime import datetime
 portfolio_data = {
     "hero": {
         "name": "Seun M. Olawepo",
-        "short_title": "Senior Agile & Cloud Application Leader/AI Generalist",
-        "long_title": "Senior Agile & Cloud Application Leader/AI Generalist driving digital transformation through SAFe, Scrum, AI/ML integration, and enterprise delivery excellence",
-        "bio": "15+ years leading multi-team Agile initiatives, mentoring high-performing teams, and delivering measurable business outcomes across cloud, AI/ML, and enterprise systems.",
+        "short_title": "Senior Agile & Cloud Leader | InfoSec GRC Analyst | AI Generalist",
+        "long_title": "Senior Agile & Cloud Application Leader | InfoSec GRC Analyst driving digital transformation through SAFe, Scrum, AI/ML integration, cybersecurity governance, and enterprise delivery excellence",
+        "bio": "15+ years leading multi-team Agile initiatives, cybersecurity governance & compliance programs, mentoring high-performing teams, and delivering measurable business outcomes across cloud, AI/ML, and enterprise systems.",
         "image": "https://customer-assets.emergentagent.com/job_agile-portfolio/artifacts/dn6w3qoh_55555.jpeg",
         "primary_cta": "View Case Studies",
         "secondary_cta": "Download Resume"
