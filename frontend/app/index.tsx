@@ -912,9 +912,9 @@ export default function WhisprlyApp() {
                 </TouchableOpacity>
 
                 {/* Recording indicator */}
-                <Animated.View style={[styles.recordingIndicator, { transform: [{ scale: isRecording ? pulseAnim : 1 }] }]}>
+                <View style={styles.recordingIndicator}>
                   <View style={[styles.recordingDot, isRecording && styles.recordingDotActive]} />
-                </Animated.View>
+                </View>
 
                 {/* Stop Button */}
                 <TouchableOpacity style={[styles.controlButton, styles.stopButton]} onPress={handleStopRecording} activeOpacity={0.7}>
