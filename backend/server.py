@@ -311,19 +311,23 @@ async def transcribe_audio_base64(data: dict):
         audio_base64 = data.get("audio", "")
         language = data.get("language", "en")
         
+        logger.info(f"Received transcription request. Audio base64 length: {len(audio_base64) if audio_base64 else 0}")
+        
         if not audio_base64:
+            logger.warning("No audio data provided in request")
             return TranscriptionResponse(
                 text="",
                 success=False,
                 error="No audio data provided"
             )
         
-        # Check minimum length
+        # Check minimum length (1000 chars ~ 750 bytes, very short audio)
         if len(audio_base64) < 1000:
+            logger.warning(f"Audio too short: {len(audio_base64)} characters")
             return TranscriptionResponse(
                 text="",
                 success=False,
-                error="Audio too short"
+                error=f"Audio too short ({len(audio_base64)} chars, need at least 1000)"
             )
         
         # Import FileContent for multimodal messages
