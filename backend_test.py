@@ -273,12 +273,28 @@ class WhisprlyAPITester:
         """Test PATCH /api/sessions/{session_id} endpoint"""
         print("\n=== Testing Update Session ===")
         
+        # First create a session to update
         try:
+            create_payload = {"mode": "interview"}
+            create_response = requests.post(f"{BACKEND_URL}/sessions", json=create_payload)
+            
+            if create_response.status_code != 200:
+                self.log_test("PATCH /api/sessions/{session_id}", False, "Failed to create session for testing")
+                return
+                
+            session_data = create_response.json()
+            test_session_id = session_data.get("id")
+            
+            if not test_session_id:
+                self.log_test("PATCH /api/sessions/{session_id}", False, "No session ID returned from creation")
+                return
+                
+            # Now update the session
             payload = {
                 "transcript_enabled": True,
                 "duration": 120
             }
-            response = requests.patch(f"{BACKEND_URL}/sessions/{self.session_id}", json=payload)
+            response = requests.patch(f"{BACKEND_URL}/sessions/{test_session_id}", json=payload)
             
             if response.status_code == 200:
                 data = response.json()
