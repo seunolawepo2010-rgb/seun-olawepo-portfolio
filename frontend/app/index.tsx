@@ -323,11 +323,19 @@ export default function WhisprlyApp() {
 
   const transcribeAudio = async (audioUri: string): Promise<string> => {
     try {
+      console.log('Transcribing audio from:', audioUri);
+      
+      // Use string 'base64' instead of FileSystem.EncodingType.Base64 for mobile compatibility
       const base64Audio = await FileSystem.readAsStringAsync(audioUri, {
-        encoding: FileSystem.EncodingType.Base64,
+        encoding: 'base64',
       });
       
-      if (!base64Audio || base64Audio.length < 1000) return '';
+      console.log('Base64 audio length:', base64Audio?.length || 0);
+      
+      if (!base64Audio || base64Audio.length < 1000) {
+        console.log('Audio too short, skipping transcription');
+        return '';
+      }
       
       const response = await fetch(`${API_BASE_URL}/api/transcribe-base64`, {
         method: 'POST',
@@ -336,6 +344,7 @@ export default function WhisprlyApp() {
       });
       
       const data = await response.json();
+      console.log('Transcription response:', data);
       return data.success && data.text ? data.text.trim() : '';
     } catch (error) {
       console.error('Transcription error:', error);
