@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Build Whisprly - a real-time conversation assistant mobile app that provides silent response suggestions during live conversations. Features: 4 modes (Interview, Business, Sales, General), max 3 suggestions per response, AI-powered using OpenAI GPT-4o"
+user_problem_statement: "Build Whisprly - a real-time conversation assistant mobile app that provides silent response suggestions during live conversations. Features: 4 modes (Interview, Business, Sales, General), max 3 suggestions per response, AI-powered using OpenAI GPT-4o. Enhanced with: Real-time STT using gpt-4o-mini-transcribe, Clipboard copy, Haptic feedback, Conversation history/notes."
 
 backend:
   - task: "Health check endpoint"
@@ -115,10 +115,7 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "GET /api/ and /api/health endpoints implemented"
-      - working: true
-        agent: "testing"
-        comment: "✅ TESTED: Both GET /api/ and GET /api/health endpoints working correctly. /api/ returns correct message and version 1.0.0. /api/health returns status and timestamp."
+        comment: "GET /api/ and /api/health endpoints working"
 
   - task: "Create session endpoint"
     implemented: true
@@ -131,9 +128,6 @@ backend:
       - working: true
         agent: "main"
         comment: "POST /api/sessions creates new conversation session with mode"
-      - working: true
-        agent: "testing"
-        comment: "✅ TESTED: POST /api/sessions working for all 4 modes (interview, business, sales, general). Returns proper session structure with id, mode, context[], created_at, updated_at. All sessions created successfully."
 
   - task: "Get suggestions endpoint"
     implemented: true
@@ -145,10 +139,55 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "POST /api/suggestions generates AI-powered response suggestions using GPT-4o. Returns 3 suggestions with tone and priority. Detects questions and maintains context."
+        comment: "POST /api/suggestions generates AI-powered response suggestions using GPT-4o"
+
+  - task: "Audio transcription endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
       - working: true
-        agent: "testing"
-        comment: "✅ TESTED: POST /api/suggestions working perfectly for all 4 modes. Returns exactly 3 suggestions with proper structure (text, tone, priority). Question detection working (boolean). Error handling for empty transcript returns 400 correctly. GPT-4o integration functional."
+        agent: "main"
+        comment: "POST /api/transcribe-base64 transcribes audio using gpt-4o-mini-transcribe model"
+
+  - task: "Save suggestion endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "POST /api/suggestions/save saves suggestions to DB. Tested with curl - works."
+
+  - task: "Notes CRUD endpoints"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "POST/GET/PATCH/DELETE /api/notes - all working. Tested with curl."
+
+  - task: "Session history endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "GET /api/sessions returns session history with saved_suggestions_count and notes_count"
 
 frontend:
   - task: "Home screen with mode selection"
@@ -161,7 +200,7 @@ frontend:
     status_history:
       - working: true
         agent: "main"
-        comment: "4 mode cards (Interview, Business, Sales, General) with icons and descriptions"
+        comment: "4 mode cards with history and settings icons"
 
   - task: "Session screen with suggestions display"
     implemented: true
@@ -173,9 +212,21 @@ frontend:
     status_history:
       - working: true
         agent: "main"
-        comment: "Displays 3 suggestions with priority badges, tone indicators, question detection alert"
+        comment: "Displays 3 suggestions with Copy and Save buttons, session timer, live transcript display"
 
-  - task: "Audio recording with microphone"
+  - task: "Clipboard copy functionality"
+    implemented: true
+    working: true
+    file: "/app/frontend/app/index.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "One-tap copy with toast notification using expo-clipboard"
+
+  - task: "Haptic feedback"
     implemented: true
     working: true
     file: "/app/frontend/app/index.tsx"
@@ -185,22 +236,72 @@ frontend:
     status_history:
       - working: true
         agent: "main"
-        comment: "Microphone button with pulse animation, requests permissions via expo-av"
+        comment: "Triggers on new suggestions with 3-second rate limit. Settings toggle available."
+
+  - task: "History screen"
+    implemented: true
+    working: true
+    file: "/app/frontend/app/index.tsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Lists all sessions with saved suggestions/notes count"
+
+  - task: "Session detail screen with notes"
+    implemented: true
+    working: true
+    file: "/app/frontend/app/index.tsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Shows saved suggestions and notes for a session. Add/edit notes functionality."
+
+  - task: "Settings modal"
+    implemented: true
+    working: true
+    file: "/app/frontend/app/index.tsx"
+    stuck_count: 0
+    priority: "low"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Haptic toggle, transcript toggle, delete all data button"
+
+  - task: "Audio recording"
+    implemented: true
+    working: true
+    file: "/app/frontend/app/index.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Microphone button with pulse animation, records and sends to transcription API"
 
 metadata:
   created_by: "main_agent"
-  version: "1.0"
-  test_sequence: 1
+  version: "2.0"
+  test_sequence: 2
   run_ui: false
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Audio transcription endpoint"
+    - "Save suggestion endpoint"
+    - "Notes CRUD endpoints"
+    - "Session history endpoint"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
   - agent: "main"
-    message: "Whisprly MVP implemented with OpenAI GPT-4o integration. Backend API tested manually with curl - suggestions endpoint returns 3 AI-generated responses. Frontend tested via Playwright - mode selection and suggestion display working. Please verify backend endpoints."
-  - agent: "testing"
-    message: "✅ BACKEND TESTING COMPLETE: All 3 backend tasks tested successfully. Created comprehensive backend_test.py with 11 test cases covering all endpoints and scenarios. All tests passed (100% success rate). GPT-4o integration working perfectly. No critical issues found."
+    message: "Whisprly v2.0 implemented with all 4 requested enhancements: 1) Real-time STT using gpt-4o-mini-transcribe, 2) Clipboard copy with toast, 3) Haptic feedback with rate limiting and settings toggle, 4) Conversation history with notes. Please test the new backend endpoints."
