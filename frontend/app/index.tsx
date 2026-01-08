@@ -9,7 +9,6 @@ import {
   StatusBar,
   ActivityIndicator,
   Alert,
-  Animated,
   Dimensions,
   TextInput,
   Modal,
