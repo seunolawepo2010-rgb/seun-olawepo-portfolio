@@ -330,6 +330,8 @@ async def transcribe_audio_base64(data: dict):
                 error=f"Audio too short ({len(audio_base64)} chars, need at least 1000)"
             )
         
+        logger.info("Preparing audio for transcription via GPT-4o-audio-preview...")
+        
         # Import FileContent for multimodal messages
         from emergentintegrations.llm.chat import FileContent
         
@@ -345,6 +347,8 @@ async def transcribe_audio_base64(data: dict):
             system_message="You are an audio transcription assistant. Your task is to transcribe the audio content exactly as spoken. Only output the transcribed text, nothing else. Do not add any commentary, introductions, or explanations. If you cannot hear any speech or the audio is unclear, respond with just: [no speech detected]"
         ).with_model("openai", "gpt-4o-audio-preview")
         
+        logger.info("Sending audio to GPT-4o-audio-preview...")
+        
         # Send audio for transcription with FileContent
         response = await chat.send_message(
             UserMessage(
@@ -353,10 +357,13 @@ async def transcribe_audio_base64(data: dict):
             )
         )
         
+        logger.info(f"Received transcription response: {response[:100] if response else 'empty'}...")
+        
         transcription = response.strip() if response else ""
         
         # Filter out the "no speech detected" response
         if "[no speech detected]" in transcription.lower():
+            logger.info("No speech detected in audio")
             transcription = ""
         
         return TranscriptionResponse(
