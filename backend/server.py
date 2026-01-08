@@ -326,28 +326,34 @@ async def transcribe_audio_base64(data: dict):
                 error="Audio too short"
             )
         
-        # Use GPT-4o with audio input via emergentintegrations
-        # Create a data URI for the audio
-        audio_data_uri = f"data:audio/m4a;base64,{audio_base64}"
+        # Import FileContent for multimodal messages
+        from emergentintegrations.llm.chat import FileContent
+        
+        # Create FileContent object with the audio data
+        audio_file = FileContent(
+            content_type="audio/m4a",
+            file_content_base64=audio_base64
+        )
         
         chat = LlmChat(
             api_key=EMERGENT_LLM_KEY,
             session_id=f"transcription_{uuid.uuid4()}",
-            system_message="You are an audio transcription assistant. Your task is to transcribe the audio content exactly as spoken. Only output the transcribed text, nothing else. If you cannot hear any speech or the audio is unclear, respond with an empty string."
+            system_message="You are an audio transcription assistant. Your task is to transcribe the audio content exactly as spoken. Only output the transcribed text, nothing else. Do not add any commentary, introductions, or explanations. If you cannot hear any speech or the audio is unclear, respond with just: [no speech detected]"
         ).with_model("openai", "gpt-4o-audio-preview")
         
-        # Send audio for transcription
-        from emergentintegrations.llm.chat import UserMessage
-        
-        # Create message with audio attachment
+        # Send audio for transcription with FileContent
         response = await chat.send_message(
             UserMessage(
-                text="Please transcribe this audio exactly as spoken:",
-                attachments=[audio_data_uri]
+                text="Transcribe this audio:",
+                file_contents=[audio_file]
             )
         )
         
         transcription = response.strip() if response else ""
+        
+        # Filter out the "no speech detected" response
+        if "[no speech detected]" in transcription.lower():
+            transcription = ""
         
         return TranscriptionResponse(
             text=transcription,
