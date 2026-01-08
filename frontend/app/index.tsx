@@ -281,30 +281,28 @@ export default function WhisprlyApp() {
     try {
       console.log('Transcribing audio from:', audioUri);
       
-      // Use fetch to read the file as blob and convert to base64
-      const response = await fetch(audioUri);
-      const blob = await response.blob();
+      // Check if file exists first
+      const fileInfo = await FileSystem.getInfoAsync(audioUri);
+      console.log('File info:', JSON.stringify(fileInfo));
       
-      // Convert blob to base64 using FileReader
-      const base64Audio = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const result = reader.result as string;
-          // Remove data URI prefix if present
-          const base64 = result.includes(',') ? result.split(',')[1] : result;
-          resolve(base64);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
+      if (!fileInfo.exists) {
+        console.log('Audio file does not exist:', audioUri);
+        return '';
+      }
+      
+      // Read file as base64 using expo-file-system (proper React Native method)
+      const base64Audio = await FileSystem.readAsStringAsync(audioUri, {
+        encoding: FileSystem.EncodingType.Base64,
       });
       
       console.log('Base64 audio length:', base64Audio?.length || 0);
       
       if (!base64Audio || base64Audio.length < 1000) {
-        console.log('Audio too short, skipping transcription');
+        console.log('Audio too short, skipping transcription. Length:', base64Audio?.length || 0);
         return '';
       }
       
+      console.log('Sending audio to transcription API...');
       const transcribeResponse = await fetch(`${API_BASE_URL}/api/transcribe-base64`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -312,8 +310,14 @@ export default function WhisprlyApp() {
       });
       
       const data = await transcribeResponse.json();
-      console.log('Transcription response:', data);
-      return data.success && data.text ? data.text.trim() : '';
+      console.log('Transcription response:', JSON.stringify(data));
+      
+      if (data.success && data.text) {
+        return data.text.trim();
+      } else if (data.error) {
+        console.log('Transcription API error:', data.error);
+      }
+      return '';
     } catch (error) {
       console.error('Transcription error:', error);
       return '';
