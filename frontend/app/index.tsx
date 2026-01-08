@@ -158,11 +158,6 @@ export default function WhisprlyApp() {
   const previousSuggestionsLengthRef = useRef<number>(0);
   const isRecordingRef = useRef<boolean>(false);
   const isPausedRef = useRef<boolean>(false);
-  
-  // Animations
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const toastAnim = useRef(new Animated.Value(0)).current;
 
   // Load settings on mount
   useEffect(() => {
@@ -207,41 +202,6 @@ export default function WhisprlyApp() {
     }
   }, [suggestions, triggerHaptic]);
 
-  // Pulse animation for recording indicator
-  useEffect(() => {
-    if (recordingState === 'recording') {
-      const pulse = Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1.2,
-            duration: 600,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 600,
-            useNativeDriver: true,
-          }),
-        ])
-      );
-      pulse.start();
-      return () => pulse.stop();
-    } else {
-      pulseAnim.setValue(1);
-    }
-  }, [recordingState, pulseAnim]);
-
-  // Fade in suggestions
-  useEffect(() => {
-    if (suggestions.length > 0) {
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [suggestions, fadeAnim]);
-
   // Session duration timer
   useEffect(() => {
     if (currentScreen === 'session' && sessionId) {
@@ -254,15 +214,12 @@ export default function WhisprlyApp() {
     }
   }, [currentScreen, sessionId]);
 
-  // Toast animation
+  // Toast message helper
   const showToastMessage = (message: string) => {
     setToastMessage(message);
     setShowToast(true);
-    Animated.sequence([
-      Animated.timing(toastAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
-      Animated.delay(1500),
-      Animated.timing(toastAnim, { toValue: 0, duration: 200, useNativeDriver: true }),
-    ]).start(() => setShowToast(false));
+    // Auto-hide after 2 seconds
+    setTimeout(() => setShowToast(false), 2000);
   };
 
   // API Functions
