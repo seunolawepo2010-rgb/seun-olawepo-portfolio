@@ -323,35 +323,38 @@ export default function WhisprlyApp() {
 
   const transcribeAudio = async (audioUri: string): Promise<string> => {
     try {
-      // Read audio file and convert to base64
-      const response = await fetch(audioUri);
-      const blob = await response.blob();
+      console.log('Transcribing audio from:', audioUri);
       
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-          try {
-            const base64 = (reader.result as string).split(',')[1];
-            
-            const transcribeResponse = await fetch(`${API_BASE_URL}/api/transcribe-base64`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ audio: base64 }),
-            });
-            
-            const data = await transcribeResponse.json();
-            if (data.success) {
-              resolve(data.text);
-            } else {
-              reject(new Error(data.error || 'Transcription failed'));
-            }
-          } catch (error) {
-            reject(error);
-          }
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
+      // Use expo-file-system to read the file as base64
+      const base64Audio = await FileSystem.readAsStringAsync(audioUri, {
+        encoding: FileSystem.EncodingType.Base64,
       });
+      
+      console.log('Audio base64 length:', base64Audio.length);
+      
+      if (!base64Audio || base64Audio.length < 100) {
+        console.error('Audio file too small or empty');
+        return '';
+      }
+      
+      const transcribeResponse = await fetch(`${API_BASE_URL}/api/transcribe-base64`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          audio: base64Audio,
+          language: 'en'
+        }),
+      });
+      
+      const data = await transcribeResponse.json();
+      console.log('Transcription response:', data);
+      
+      if (data.success && data.text) {
+        return data.text;
+      } else {
+        console.error('Transcription error:', data.error);
+        return '';
+      }
     } catch (error) {
       console.error('Transcription error:', error);
       return '';
