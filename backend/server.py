@@ -306,7 +306,7 @@ async def transcribe_audio(
 
 @api_router.post("/transcribe-base64", response_model=TranscriptionResponse)
 async def transcribe_audio_base64(data: dict):
-    """Transcribe base64 encoded audio"""
+    """Transcribe base64 encoded audio using GPT-4o via Emergent integrations"""
     try:
         audio_base64 = data.get("audio", "")
         language = data.get("language", "en")
@@ -318,7 +318,7 @@ async def transcribe_audio_base64(data: dict):
                 error="No audio data provided"
             )
         
-        # Check minimum length (very short audio won't transcribe well)
+        # Check minimum length
         if len(audio_base64) < 1000:
             return TranscriptionResponse(
                 text="",
@@ -326,38 +326,34 @@ async def transcribe_audio_base64(data: dict):
                 error="Audio too short"
             )
         
-        # Decode base64 audio
-        try:
-            audio_content = base64.b64decode(audio_base64)
-        except Exception as decode_error:
-            logger.error(f"Base64 decode error: {decode_error}")
-            return TranscriptionResponse(
-                text="",
-                success=False,
-                error=f"Invalid audio encoding: {str(decode_error)}"
-            )
+        # Use GPT-4o with audio input via emergentintegrations
+        # Create a data URI for the audio
+        audio_data_uri = f"data:audio/m4a;base64,{audio_base64}"
         
-        # Create a temporary file with m4a extension (better compatibility)
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".m4a") as tmp_file:
-            tmp_file.write(audio_content)
-            tmp_file_path = tmp_file.name
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"transcription_{uuid.uuid4()}",
+            system_message="You are an audio transcription assistant. Your task is to transcribe the audio content exactly as spoken. Only output the transcribed text, nothing else. If you cannot hear any speech or the audio is unclear, respond with an empty string."
+        ).with_model("openai", "gpt-4o-audio-preview")
         
-        try:
-            # Use OpenAI transcription API
-            with open(tmp_file_path, "rb") as audio_file:
-                transcription = openai_client.audio.transcriptions.create(
-                    model="gpt-4o-mini-transcribe",
-                    file=audio_file,
-                    language=language,
-                    response_format="text"
-                )
-            
-            return TranscriptionResponse(
-                text=transcription if isinstance(transcription, str) else transcription.text,
-                success=True
+        # Send audio for transcription
+        from emergentintegrations.llm.chat import UserMessage
+        
+        # Create message with audio attachment
+        response = await chat.send_message(
+            UserMessage(
+                text="Please transcribe this audio exactly as spoken:",
+                attachments=[audio_data_uri]
             )
-        finally:
-            os.unlink(tmp_file_path)
+        )
+        
+        transcription = response.strip() if response else ""
+        
+        return TranscriptionResponse(
+            text=transcription,
+            success=True if transcription else False,
+            error=None if transcription else "No speech detected"
+        )
             
     except Exception as e:
         logger.error(f"Transcription error: {str(e)}")
