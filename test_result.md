@@ -295,11 +295,14 @@ frontend:
     file: "/app/frontend/app/index.tsx"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
         comment: "Microphone button with pulse animation, records and sends to transcription API"
+      - working: "unknown"
+        agent: "main"
+        comment: "Fixed transcribeAudio function to use expo-file-system instead of fetch/blob. Now properly reads audio files on mobile devices."
 
 metadata:
   created_by: "main_agent"
