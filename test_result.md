@@ -147,7 +147,7 @@ backend:
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
@@ -155,6 +155,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "Tested POST /api/transcribe-base64 - correctly handles empty audio and invalid base64 with proper error responses. Returns 200 with success:false and error message for invalid inputs."
+      - working: "unknown"
+        agent: "main"
+        comment: "Fixed frontend to use expo-file-system for reading audio files. Previous approach using fetch/blob/FileReader doesn't work in React Native. Added detailed logging to backend for debugging."
 
   - task: "Save suggestion endpoint"
     implemented: true
