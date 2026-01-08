@@ -281,10 +281,13 @@ export default function WhisprlyApp() {
     try {
       console.log('Transcribing audio from:', audioUri);
       
-      // Use legacy FileSystem API for mobile compatibility
-      const base64Audio = await FileSystemLegacy.readAsStringAsync(audioUri, {
-        encoding: 'base64',
-      });
+      // Use new File API for expo-file-system v54+
+      // Remove 'file://' prefix if present for File API
+      const filePath = audioUri.replace('file://', '');
+      const audioFile = new File(filePath);
+      
+      // Read as base64 string using new API
+      const base64Audio = await audioFile.text({ encoding: 'base64' });
       
       console.log('Base64 audio length:', base64Audio?.length || 0);
       
