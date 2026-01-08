@@ -12,10 +12,15 @@ import {
   Alert,
   Animated,
   Dimensions,
+  TextInput,
+  Modal,
+  Switch,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
-import * as Speech from 'expo-speech';
+import * as Clipboard from 'expo-clipboard';
+import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
@@ -25,11 +30,40 @@ const API_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
 
 // Types
 type Mode = 'interview' | 'business' | 'sales' | 'general';
+type Screen = 'home' | 'session' | 'history' | 'sessionDetail';
 
 interface Suggestion {
   text: string;
   tone: string;
   priority: number;
+}
+
+interface SavedSuggestion {
+  id: string;
+  session_id: string;
+  text: string;
+  tone: string;
+  timestamp: string;
+  tags: string[];
+}
+
+interface Note {
+  id: string;
+  session_id: string;
+  text: string;
+  suggestion_ids: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+interface SessionHistory {
+  id: string;
+  mode: string;
+  duration: number;
+  transcript_enabled: boolean;
+  saved_suggestions_count: number;
+  notes_count: number;
+  created_at: string;
 }
 
 interface ModeConfig {
@@ -38,6 +72,11 @@ interface ModeConfig {
   icon: keyof typeof Ionicons.glyphMap;
   color: string;
   description: string;
+}
+
+interface Settings {
+  hapticEnabled: boolean;
+  transcriptEnabled: boolean;
 }
 
 // Mode Configurations
@@ -72,62 +111,12 @@ const MODES: ModeConfig[] = [
   },
 ];
 
-// Speech Recognition Simulation (since expo-speech only does TTS)
-// In production, you'd use a native module or cloud service
-const useSpeechRecognition = () => {
-  const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState('');
-  const recordingRef = useRef<Audio.Recording | null>(null);
-
-  const startListening = async () => {
-    try {
-      const { status } = await Audio.requestPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission Required', 'Please grant microphone access to use this feature.');
-        return false;
-      }
-
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
-
-      const recording = new Audio.Recording();
-      await recording.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
-      await recording.startAsync();
-      recordingRef.current = recording;
-      setIsListening(true);
-      return true;
-    } catch (error) {
-      console.error('Failed to start recording:', error);
-      return false;
-    }
-  };
-
-  const stopListening = async () => {
-    try {
-      if (recordingRef.current) {
-        await recordingRef.current.stopAndUnloadAsync();
-        recordingRef.current = null;
-      }
-      setIsListening(false);
-    } catch (error) {
-      console.error('Failed to stop recording:', error);
-    }
-  };
-
-  return {
-    isListening,
-    transcript,
-    setTranscript,
-    startListening,
-    stopListening,
-  };
-};
+// Settings storage key
+const SETTINGS_KEY = '@whisprly_settings';
 
 export default function WhisprlyApp() {
   // State
-  const [currentScreen, setCurrentScreen] = useState<'home' | 'session'>('home');
+  const [currentScreen, setCurrentScreen] = useState<Screen>('home');
   const [selectedMode, setSelectedMode] = useState<Mode>('general');
   const [sessionId, setSessionId] = useState<string>('');
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
@@ -135,20 +124,82 @@ export default function WhisprlyApp() {
   const [detectedQuestion, setDetectedQuestion] = useState(false);
   const [questionContext, setQuestionContext] = useState<string | null>(null);
   const [conversationContext, setConversationContext] = useState<string[]>([]);
-  const [inputText, setInputText] = useState('');
+  const [isListening, setIsListening] = useState(false);
+  const [liveTranscript, setLiveTranscript] = useState('');
+  const [sessionDuration, setSessionDuration] = useState(0);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  
+  // History state
+  const [sessionHistoryList, setSessionHistoryList] = useState<SessionHistory[]>([]);
+  const [selectedHistorySession, setSelectedHistorySession] = useState<SessionHistory | null>(null);
+  const [savedSuggestions, setSavedSuggestions] = useState<SavedSuggestion[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [showNoteModal, setShowNoteModal] = useState(false);
+  const [noteText, setNoteText] = useState('');
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  
+  // Settings state
+  const [settings, setSettings] = useState<Settings>({
+    hapticEnabled: true,
+    transcriptEnabled: false,
+  });
 
-  // Speech recognition hook
-  const {
-    isListening,
-    transcript,
-    setTranscript,
-    startListening,
-    stopListening,
-  } = useSpeechRecognition();
-
+  // Refs
+  const recordingRef = useRef<Audio.Recording | null>(null);
+  const sessionTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastHapticRef = useRef<number>(0);
+  const previousSuggestionsLengthRef = useRef<number>(0);
+  
   // Animations
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const toastAnim = useRef(new Animated.Value(0)).current;
+
+  // Load settings on mount
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(SETTINGS_KEY);
+      if (stored) {
+        setSettings(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('Failed to load settings:', error);
+    }
+  };
+
+  const saveSettings = async (newSettings: Settings) => {
+    try {
+      await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(newSettings));
+      setSettings(newSettings);
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+    }
+  };
+
+  // Haptic feedback with rate limiting (max once every 3 seconds)
+  const triggerHaptic = useCallback(() => {
+    if (!settings.hapticEnabled) return;
+    
+    const now = Date.now();
+    if (now - lastHapticRef.current >= 3000) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      lastHapticRef.current = now;
+    }
+  }, [settings.hapticEnabled]);
+
+  // Trigger haptic when new suggestions arrive
+  useEffect(() => {
+    if (suggestions.length > 0 && suggestions.length !== previousSuggestionsLengthRef.current) {
+      triggerHaptic();
+      previousSuggestionsLengthRef.current = suggestions.length;
+    }
+  }, [suggestions, triggerHaptic]);
 
   // Pulse animation for listening indicator
   useEffect(() => {
@@ -170,7 +221,7 @@ export default function WhisprlyApp() {
       pulse.start();
       return () => pulse.stop();
     }
-  }, [isListening]);
+  }, [isListening, pulseAnim]);
 
   // Fade in suggestions
   useEffect(() => {
@@ -181,9 +232,44 @@ export default function WhisprlyApp() {
         useNativeDriver: true,
       }).start();
     }
-  }, [suggestions]);
+  }, [suggestions, fadeAnim]);
 
-  // Create session
+  // Session duration timer
+  useEffect(() => {
+    if (currentScreen === 'session' && sessionId) {
+      sessionTimerRef.current = setInterval(() => {
+        setSessionDuration((prev) => prev + 1);
+      }, 1000);
+      
+      return () => {
+        if (sessionTimerRef.current) {
+          clearInterval(sessionTimerRef.current);
+        }
+      };
+    }
+  }, [currentScreen, sessionId]);
+
+  // Toast animation
+  const showToastMessage = (message: string) => {
+    setToastMessage(message);
+    setShowToast(true);
+    
+    Animated.sequence([
+      Animated.timing(toastAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.delay(1500),
+      Animated.timing(toastAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setShowToast(false));
+  };
+
+  // API Functions
   const createSession = async (mode: Mode) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/sessions`, {
@@ -199,7 +285,6 @@ export default function WhisprlyApp() {
     }
   };
 
-  // Fetch suggestions from API
   const fetchSuggestions = async (text: string) => {
     if (!text.trim()) return;
 
@@ -225,7 +310,6 @@ export default function WhisprlyApp() {
       setConversationContext((prev) => [...prev, text].slice(-10));
     } catch (error) {
       console.error('Failed to fetch suggestions:', error);
-      // Fallback suggestions
       setSuggestions([
         { text: 'Could you tell me more about that?', tone: 'curious', priority: 1 },
         { text: "That's interesting. I'd like to add...", tone: 'engaged', priority: 2 },
@@ -236,7 +320,222 @@ export default function WhisprlyApp() {
     }
   };
 
-  // Handle mode selection and start session
+  const transcribeAudio = async (audioUri: string): Promise<string> => {
+    try {
+      // Read audio file and convert to base64
+      const response = await fetch(audioUri);
+      const blob = await response.blob();
+      
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          try {
+            const base64 = (reader.result as string).split(',')[1];
+            
+            const transcribeResponse = await fetch(`${API_BASE_URL}/api/transcribe-base64`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ audio: base64 }),
+            });
+            
+            const data = await transcribeResponse.json();
+            if (data.success) {
+              resolve(data.text);
+            } else {
+              reject(new Error(data.error || 'Transcription failed'));
+            }
+          } catch (error) {
+            reject(error);
+          }
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.error('Transcription error:', error);
+      return '';
+    }
+  };
+
+  const fetchSessionHistory = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/sessions`);
+      const data = await response.json();
+      setSessionHistoryList(data);
+    } catch (error) {
+      console.error('Failed to fetch history:', error);
+    }
+  };
+
+  const fetchSessionDetails = async (historySessionId: string) => {
+    try {
+      const [suggestionsRes, notesRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/suggestions/saved/${historySessionId}`),
+        fetch(`${API_BASE_URL}/api/notes/${historySessionId}`),
+      ]);
+      
+      const suggestionsData = await suggestionsRes.json();
+      const notesData = await notesRes.json();
+      
+      setSavedSuggestions(suggestionsData);
+      setNotes(notesData);
+    } catch (error) {
+      console.error('Failed to fetch session details:', error);
+    }
+  };
+
+  const saveSuggestion = async (suggestion: Suggestion) => {
+    try {
+      await fetch(`${API_BASE_URL}/api/suggestions/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: sessionId,
+          text: suggestion.text,
+          tone: suggestion.tone,
+        }),
+      });
+      showToastMessage('Suggestion saved!');
+      triggerHaptic();
+    } catch (error) {
+      console.error('Failed to save suggestion:', error);
+    }
+  };
+
+  const createNote = async () => {
+    if (!noteText.trim()) return;
+    
+    try {
+      const url = editingNoteId 
+        ? `${API_BASE_URL}/api/notes/${editingNoteId}`
+        : `${API_BASE_URL}/api/notes`;
+      
+      await fetch(url, {
+        method: editingNoteId ? 'PATCH' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: selectedHistorySession?.id || sessionId,
+          text: noteText,
+        }),
+      });
+      
+      setNoteText('');
+      setEditingNoteId(null);
+      setShowNoteModal(false);
+      
+      if (selectedHistorySession) {
+        fetchSessionDetails(selectedHistorySession.id);
+      }
+      
+      showToastMessage(editingNoteId ? 'Note updated!' : 'Note created!');
+    } catch (error) {
+      console.error('Failed to save note:', error);
+    }
+  };
+
+  const deleteSession = async (deleteSessionId: string) => {
+    try {
+      await fetch(`${API_BASE_URL}/api/sessions/${deleteSessionId}`, {
+        method: 'DELETE',
+      });
+      fetchSessionHistory();
+      setCurrentScreen('history');
+      showToastMessage('Session deleted');
+    } catch (error) {
+      console.error('Failed to delete session:', error);
+    }
+  };
+
+  const deleteAllData = async () => {
+    Alert.alert(
+      'Delete All Data',
+      'This will permanently delete all your sessions, suggestions, and notes. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete All',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await fetch(`${API_BASE_URL}/api/sessions`, { method: 'DELETE' });
+              fetchSessionHistory();
+              showToastMessage('All data deleted');
+            } catch (error) {
+              console.error('Failed to delete all data:', error);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Audio Recording Functions
+  const startListening = async () => {
+    try {
+      const { status } = await Audio.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Please grant microphone access to use this feature.');
+        return;
+      }
+
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+
+      const recording = new Audio.Recording();
+      await recording.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+      await recording.startAsync();
+      recordingRef.current = recording;
+      setIsListening(true);
+      setLiveTranscript('Listening...');
+    } catch (error) {
+      console.error('Failed to start recording:', error);
+      Alert.alert('Error', 'Failed to start recording. Please try again.');
+    }
+  };
+
+  const stopListening = async () => {
+    try {
+      if (recordingRef.current) {
+        setLiveTranscript('Processing...');
+        await recordingRef.current.stopAndUnloadAsync();
+        const uri = recordingRef.current.getURI();
+        recordingRef.current = null;
+        setIsListening(false);
+        
+        if (uri) {
+          // Transcribe the audio
+          const transcribedText = await transcribeAudio(uri);
+          if (transcribedText) {
+            setLiveTranscript(transcribedText);
+            // Automatically fetch suggestions
+            fetchSuggestions(transcribedText);
+          } else {
+            setLiveTranscript('');
+            showToastMessage('Could not transcribe audio');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to stop recording:', error);
+      setIsListening(false);
+      setLiveTranscript('');
+    }
+  };
+
+  // Clipboard Function
+  const copyToClipboard = async (text: string) => {
+    try {
+      await Clipboard.setStringAsync(text);
+      showToastMessage('Copied!');
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+    }
+  };
+
+  // Navigation Functions
   const handleStartSession = async (mode: Mode) => {
     setSelectedMode(mode);
     const newSessionId = await createSession(mode);
@@ -245,45 +544,171 @@ export default function WhisprlyApp() {
     setConversationContext([]);
     setDetectedQuestion(false);
     setQuestionContext(null);
+    setSessionDuration(0);
+    setLiveTranscript('');
     setCurrentScreen('session');
   };
 
-  // Handle listening toggle
-  const handleToggleListening = async () => {
-    if (isListening) {
-      await stopListening();
-      // In a real app, you'd get the transcription here
-      // For now, we'll use a simulated input
-    } else {
-      await startListening();
+  const handleEndSession = async () => {
+    if (recordingRef.current) {
+      await recordingRef.current.stopAndUnloadAsync();
+      recordingRef.current = null;
     }
-  };
-
-  // Handle manual input submit
-  const handleSubmitInput = () => {
-    if (inputText.trim()) {
-      fetchSuggestions(inputText);
-      setInputText('');
+    setIsListening(false);
+    
+    // Update session duration
+    try {
+      await fetch(`${API_BASE_URL}/api/sessions/${sessionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ duration: sessionDuration }),
+      });
+    } catch (error) {
+      console.error('Failed to update session:', error);
     }
-  };
-
-  // End session
-  const handleEndSession = () => {
-    stopListening();
+    
     setSuggestions([]);
     setConversationContext([]);
     setSessionId('');
     setCurrentScreen('home');
   };
 
-  // Copy suggestion to clipboard
-  const handleCopySuggestion = (text: string) => {
-    // In a real app, use Clipboard API
-    Alert.alert('Copied!', 'Suggestion copied to clipboard');
+  const handleViewHistory = () => {
+    fetchSessionHistory();
+    setCurrentScreen('history');
+  };
+
+  const handleViewSessionDetail = (session: SessionHistory) => {
+    setSelectedHistorySession(session);
+    fetchSessionDetails(session.id);
+    setCurrentScreen('sessionDetail');
+  };
+
+  // Format duration
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Format date
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   // Get mode config
-  const getModeConfig = (mode: Mode) => MODES.find((m) => m.id === mode)!;
+  const getModeConfig = (mode: string) => MODES.find((m) => m.id === mode) || MODES[3];
+
+  // Render Toast
+  const renderToast = () => {
+    if (!showToast) return null;
+    
+    return (
+      <Animated.View
+        style={[
+          styles.toast,
+          {
+            opacity: toastAnim,
+            transform: [{ translateY: toastAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }],
+          },
+        ]}
+      >
+        <Ionicons name="checkmark-circle" size={18} color="#10B981" />
+        <Text style={styles.toastText}>{toastMessage}</Text>
+      </Animated.View>
+    );
+  };
+
+  // Render Settings Modal
+  const renderSettingsModal = () => (
+    <Modal visible={showSettingsModal} transparent animationType="slide">
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Settings</Text>
+            <TouchableOpacity onPress={() => setShowSettingsModal(false)}>
+              <Ionicons name="close" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.settingRow}>
+            <View style={styles.settingInfo}>
+              <Ionicons name="phone-portrait-outline" size={22} color="#8B5CF6" />
+              <View style={styles.settingTextContainer}>
+                <Text style={styles.settingLabel}>Haptic Feedback</Text>
+                <Text style={styles.settingDescription}>Vibrate when new suggestions arrive</Text>
+              </View>
+            </View>
+            <Switch
+              value={settings.hapticEnabled}
+              onValueChange={(value) => saveSettings({ ...settings, hapticEnabled: value })}
+              trackColor={{ false: '#374151', true: '#8B5CF620' }}
+              thumbColor={settings.hapticEnabled ? '#8B5CF6' : '#6B7280'}
+            />
+          </View>
+          
+          <View style={styles.settingRow}>
+            <View style={styles.settingInfo}>
+              <Ionicons name="document-text-outline" size={22} color="#8B5CF6" />
+              <View style={styles.settingTextContainer}>
+                <Text style={styles.settingLabel}>Save Transcripts</Text>
+                <Text style={styles.settingDescription}>Store conversation transcripts (privacy)</Text>
+              </View>
+            </View>
+            <Switch
+              value={settings.transcriptEnabled}
+              onValueChange={(value) => saveSettings({ ...settings, transcriptEnabled: value })}
+              trackColor={{ false: '#374151', true: '#8B5CF620' }}
+              thumbColor={settings.transcriptEnabled ? '#8B5CF6' : '#6B7280'}
+            />
+          </View>
+          
+          <TouchableOpacity style={styles.dangerButton} onPress={deleteAllData}>
+            <Ionicons name="trash-outline" size={20} color="#EF4444" />
+            <Text style={styles.dangerButtonText}>Delete All Data</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  // Render Note Modal
+  const renderNoteModal = () => (
+    <Modal visible={showNoteModal} transparent animationType="slide">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.modalOverlay}
+      >
+        <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>{editingNoteId ? 'Edit Note' : 'New Note'}</Text>
+            <TouchableOpacity onPress={() => { setShowNoteModal(false); setNoteText(''); setEditingNoteId(null); }}>
+              <Ionicons name="close" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+          
+          <TextInput
+            style={styles.noteInput}
+            placeholder="Write your note..."
+            placeholderTextColor="#6B7280"
+            multiline
+            value={noteText}
+            onChangeText={setNoteText}
+          />
+          
+          <TouchableOpacity style={styles.saveButton} onPress={createNote}>
+            <Text style={styles.saveButtonText}>Save Note</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
 
   // Render Home Screen
   const renderHomeScreen = () => (
@@ -297,6 +722,15 @@ export default function WhisprlyApp() {
           <Text style={styles.logoText}>Whisprly</Text>
         </View>
         <Text style={styles.tagline}>Silent conversation companion</Text>
+        
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.headerButton} onPress={handleViewHistory}>
+            <Ionicons name="time-outline" size={22} color="#FFFFFF" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerButton} onPress={() => setShowSettingsModal(true)}>
+            <Ionicons name="settings-outline" size={22} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Mode Selection */}
@@ -332,6 +766,9 @@ export default function WhisprlyApp() {
           Tap a mode to start your session
         </Text>
       </View>
+      
+      {renderSettingsModal()}
+      {renderToast()}
     </SafeAreaView>
   );
 
@@ -355,9 +792,18 @@ export default function WhisprlyApp() {
                 {modeConfig.label}
               </Text>
             </View>
+            <Text style={styles.durationText}>{formatDuration(sessionDuration)}</Text>
           </View>
           <View style={styles.headerSpacer} />
         </View>
+
+        {/* Live Transcript */}
+        {liveTranscript ? (
+          <View style={styles.transcriptBox}>
+            <Ionicons name="mic" size={16} color="#8B5CF6" />
+            <Text style={styles.transcriptText} numberOfLines={2}>{liveTranscript}</Text>
+          </View>
+        ) : null}
 
         {/* Question Alert */}
         {detectedQuestion && questionContext && (
@@ -383,12 +829,7 @@ export default function WhisprlyApp() {
           ) : suggestions.length > 0 ? (
             <Animated.View style={{ opacity: fadeAnim }}>
               {suggestions.map((suggestion, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.suggestionCard}
-                  onPress={() => handleCopySuggestion(suggestion.text)}
-                  activeOpacity={0.8}
-                >
+                <View key={index} style={styles.suggestionCard}>
                   <View style={styles.suggestionHeader}>
                     <View style={styles.priorityBadge}>
                       <Text style={styles.priorityText}>#{suggestion.priority}</Text>
@@ -398,11 +839,23 @@ export default function WhisprlyApp() {
                     </View>
                   </View>
                   <Text style={styles.suggestionText}>{suggestion.text}</Text>
-                  <View style={styles.suggestionFooter}>
-                    <Ionicons name="copy-outline" size={16} color="#6B7280" />
-                    <Text style={styles.tapToCopy}>Tap to copy</Text>
+                  <View style={styles.suggestionActions}>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => copyToClipboard(suggestion.text)}
+                    >
+                      <Ionicons name="copy-outline" size={18} color="#8B5CF6" />
+                      <Text style={styles.actionButtonText}>Copy</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.actionButton}
+                      onPress={() => saveSuggestion(suggestion)}
+                    >
+                      <Ionicons name="bookmark-outline" size={18} color="#10B981" />
+                      <Text style={[styles.actionButtonText, { color: '#10B981' }]}>Save</Text>
+                    </TouchableOpacity>
                   </View>
-                </TouchableOpacity>
+                </View>
               ))}
             </Animated.View>
           ) : (
@@ -410,8 +863,8 @@ export default function WhisprlyApp() {
               <Ionicons name="chatbubble-ellipses-outline" size={48} color="#4B5563" />
               <Text style={styles.emptyStateTitle}>Ready to assist</Text>
               <Text style={styles.emptyStateText}>
-                Tap the microphone to start listening{"\n"}
-                or type what you're hearing
+                Tap the microphone to start listening{'\n'}
+                or tap below to simulate input
               </Text>
             </View>
           )}
@@ -419,27 +872,24 @@ export default function WhisprlyApp() {
 
         {/* Input Area */}
         <View style={styles.inputContainer}>
-          <View style={styles.textInputContainer}>
-            <TouchableOpacity
-              style={styles.textInputWrapper}
-              onPress={() => {
-                const sampleInputs = [
-                  "Can you tell me about your experience with project management?",
-                  "What makes your product different from competitors?",
-                  "How would you handle a difficult team member?",
-                  "What are your thoughts on the budget proposal?",
-                  "Could you walk me through your sales process?",
-                ];
-                const randomInput = sampleInputs[Math.floor(Math.random() * sampleInputs.length)];
-                fetchSuggestions(randomInput);
-              }}
-            >
-              <Ionicons name="text-outline" size={20} color="#6B7280" />
-              <Text style={styles.textInputPlaceholder}>
-                Tap to simulate input...
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={styles.simulateButton}
+            onPress={() => {
+              const sampleInputs = [
+                "Can you tell me about your experience with project management?",
+                "What makes your product different from competitors?",
+                "How would you handle a difficult team member?",
+                "What are your thoughts on the budget proposal?",
+                "Could you walk me through your sales process?",
+              ];
+              const randomInput = sampleInputs[Math.floor(Math.random() * sampleInputs.length)];
+              setLiveTranscript(randomInput);
+              fetchSuggestions(randomInput);
+            }}
+          >
+            <Ionicons name="text-outline" size={20} color="#6B7280" />
+            <Text style={styles.simulateButtonText}>Tap to simulate</Text>
+          </TouchableOpacity>
 
           {/* Microphone Button */}
           <TouchableOpacity
@@ -448,12 +898,12 @@ export default function WhisprlyApp() {
               isListening && styles.micButtonActive,
               { backgroundColor: modeConfig.color },
             ]}
-            onPress={handleToggleListening}
+            onPress={isListening ? stopListening : startListening}
             activeOpacity={0.8}
           >
             <Animated.View style={{ transform: [{ scale: isListening ? pulseAnim : 1 }] }}>
               <Ionicons
-                name={isListening ? 'mic' : 'mic-outline'}
+                name={isListening ? 'stop' : 'mic-outline'}
                 size={28}
                 color="#FFFFFF"
               />
@@ -465,15 +915,175 @@ export default function WhisprlyApp() {
         {isListening && (
           <View style={styles.listeningIndicator}>
             <View style={styles.listeningDot} />
-            <Text style={styles.listeningText}>Listening...</Text>
+            <Text style={styles.listeningText}>Recording... tap to stop</Text>
           </View>
         )}
+        
+        {renderToast()}
+      </SafeAreaView>
+    );
+  };
+
+  // Render History Screen
+  const renderHistoryScreen = () => (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      
+      <View style={styles.historyHeader}>
+        <TouchableOpacity onPress={() => setCurrentScreen('home')} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <Text style={styles.historyTitle}>History</Text>
+        <View style={styles.headerSpacer} />
+      </View>
+      
+      <ScrollView style={styles.historyList} contentContainerStyle={styles.historyListContent}>
+        {sessionHistoryList.length === 0 ? (
+          <View style={styles.emptyHistory}>
+            <Ionicons name="folder-open-outline" size={48} color="#4B5563" />
+            <Text style={styles.emptyHistoryText}>No sessions yet</Text>
+            <Text style={styles.emptyHistorySubtext}>Your conversation history will appear here</Text>
+          </View>
+        ) : (
+          sessionHistoryList.map((session) => {
+            const modeConfig = getModeConfig(session.mode);
+            return (
+              <TouchableOpacity
+                key={session.id}
+                style={styles.historyCard}
+                onPress={() => handleViewSessionDetail(session)}
+              >
+                <View style={[styles.historyModeIcon, { backgroundColor: `${modeConfig.color}20` }]}>
+                  <Ionicons name={modeConfig.icon} size={24} color={modeConfig.color} />
+                </View>
+                <View style={styles.historyCardContent}>
+                  <Text style={styles.historyCardTitle}>{modeConfig.label}</Text>
+                  <Text style={styles.historyCardDate}>{formatDate(session.created_at)}</Text>
+                  <View style={styles.historyCardStats}>
+                    <View style={styles.statItem}>
+                      <Ionicons name="bookmark" size={14} color="#6B7280" />
+                      <Text style={styles.statText}>{session.saved_suggestions_count}</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                      <Ionicons name="document-text" size={14} color="#6B7280" />
+                      <Text style={styles.statText}>{session.notes_count}</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                      <Ionicons name="time" size={14} color="#6B7280" />
+                      <Text style={styles.statText}>{formatDuration(session.duration)}</Text>
+                    </View>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#6B7280" />
+              </TouchableOpacity>
+            );
+          })
+        )}
+      </ScrollView>
+      
+      {renderToast()}
+    </SafeAreaView>
+  );
+
+  // Render Session Detail Screen
+  const renderSessionDetailScreen = () => {
+    if (!selectedHistorySession) return null;
+    
+    const modeConfig = getModeConfig(selectedHistorySession.mode);
+    
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" />
+        
+        <View style={styles.historyHeader}>
+          <TouchableOpacity onPress={() => setCurrentScreen('history')} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+          <View style={styles.sessionDetailTitle}>
+            <Text style={styles.historyTitle}>{modeConfig.label}</Text>
+            <Text style={styles.sessionDetailDate}>{formatDate(selectedHistorySession.created_at)}</Text>
+          </View>
+          <TouchableOpacity onPress={() => deleteSession(selectedHistorySession.id)}>
+            <Ionicons name="trash-outline" size={22} color="#EF4444" />
+          </TouchableOpacity>
+        </View>
+        
+        <ScrollView style={styles.detailContent}>
+          {/* Saved Suggestions Section */}
+          <View style={styles.detailSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionHeaderText}>Saved Suggestions</Text>
+              <Text style={styles.sectionCount}>{savedSuggestions.length}</Text>
+            </View>
+            
+            {savedSuggestions.length === 0 ? (
+              <Text style={styles.noItemsText}>No saved suggestions</Text>
+            ) : (
+              savedSuggestions.map((suggestion) => (
+                <View key={suggestion.id} style={styles.savedSuggestionCard}>
+                  <View style={styles.savedSuggestionHeader}>
+                    <View style={styles.toneBadge}>
+                      <Text style={styles.toneText}>{suggestion.tone}</Text>
+                    </View>
+                    <TouchableOpacity onPress={() => copyToClipboard(suggestion.text)}>
+                      <Ionicons name="copy-outline" size={18} color="#8B5CF6" />
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={styles.savedSuggestionText}>{suggestion.text}</Text>
+                </View>
+              ))
+            )}
+          </View>
+          
+          {/* Notes Section */}
+          <View style={styles.detailSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionHeaderText}>Notes</Text>
+              <TouchableOpacity onPress={() => setShowNoteModal(true)}>
+                <Ionicons name="add-circle" size={24} color="#8B5CF6" />
+              </TouchableOpacity>
+            </View>
+            
+            {notes.length === 0 ? (
+              <Text style={styles.noItemsText}>No notes yet. Tap + to add one.</Text>
+            ) : (
+              notes.map((note) => (
+                <View key={note.id} style={styles.noteCard}>
+                  <Text style={styles.noteText}>{note.text}</Text>
+                  <View style={styles.noteActions}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setNoteText(note.text);
+                        setEditingNoteId(note.id);
+                        setShowNoteModal(true);
+                      }}
+                    >
+                      <Ionicons name="pencil-outline" size={18} color="#6B7280" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))
+            )}
+          </View>
+        </ScrollView>
+        
+        {renderNoteModal()}
+        {renderToast()}
       </SafeAreaView>
     );
   };
 
   // Main render
-  return currentScreen === 'home' ? renderHomeScreen() : renderSessionScreen();
+  switch (currentScreen) {
+    case 'session':
+      return renderSessionScreen();
+    case 'history':
+      return renderHistoryScreen();
+    case 'sessionDetail':
+      return renderSessionDetailScreen();
+    default:
+      return renderHomeScreen();
+  }
 }
 
 // Styles
@@ -504,6 +1114,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
     marginTop: 8,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 16,
+  },
+  headerButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#1A1A24',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   
   modesContainer: {
@@ -594,6 +1217,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  durationText: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 4,
+  },
+
+  transcriptBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1A1A24',
+    marginHorizontal: 16,
+    padding: 12,
+    borderRadius: 12,
+    gap: 8,
+    marginBottom: 8,
+  },
+  transcriptText: {
+    flex: 1,
+    color: '#D1D5DB',
+    fontSize: 13,
+  },
 
   questionAlert: {
     flexDirection: 'row',
@@ -671,14 +1315,22 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginBottom: 12,
   },
-  suggestionFooter: {
+  suggestionActions: {
+    flexDirection: 'row',
+    gap: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#2D2D3A',
+    paddingTop: 12,
+  },
+  actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  tapToCopy: {
-    color: '#6B7280',
-    fontSize: 12,
+  actionButtonText: {
+    color: '#8B5CF6',
+    fontSize: 13,
+    fontWeight: '500',
   },
 
   emptyState: {
@@ -709,10 +1361,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#2D2D3A',
   },
-  textInputContainer: {
+  simulateButton: {
     flex: 1,
-  },
-  textInputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#1A1A24',
@@ -721,7 +1371,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     gap: 10,
   },
-  textInputPlaceholder: {
+  simulateButtonText: {
     color: '#6B7280',
     fontSize: 14,
   },
@@ -732,15 +1382,9 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
   },
   micButtonActive: {
-    elevation: 8,
-    shadowOpacity: 0.5,
+    opacity: 0.9,
   },
 
   listeningIndicator: {
@@ -765,5 +1409,266 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '500',
+  },
+
+  // Toast
+  toast: {
+    position: 'absolute',
+    bottom: 120,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1A1A24',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#10B98140',
+  },
+  toastText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+
+  // History Screen
+  historyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'android' ? 40 : 12,
+    paddingBottom: 16,
+  },
+  historyTitle: {
+    flex: 1,
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  historyList: {
+    flex: 1,
+  },
+  historyListContent: {
+    padding: 16,
+  },
+  emptyHistory: {
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyHistoryText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 16,
+  },
+  emptyHistorySubtext: {
+    color: '#6B7280',
+    fontSize: 14,
+    marginTop: 4,
+  },
+  historyCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1A1A24',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 10,
+  },
+  historyModeIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  historyCardContent: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  historyCardTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  historyCardDate: {
+    color: '#6B7280',
+    fontSize: 12,
+    marginTop: 2,
+  },
+  historyCardStats: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 6,
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  statText: {
+    color: '#6B7280',
+    fontSize: 12,
+  },
+
+  // Session Detail
+  sessionDetailTitle: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  sessionDetailDate: {
+    color: '#6B7280',
+    fontSize: 12,
+    marginTop: 2,
+  },
+  detailContent: {
+    flex: 1,
+    padding: 16,
+  },
+  detailSection: {
+    marginBottom: 24,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  sectionHeaderText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  sectionCount: {
+    color: '#6B7280',
+    fontSize: 14,
+  },
+  noItemsText: {
+    color: '#6B7280',
+    fontSize: 14,
+    fontStyle: 'italic',
+  },
+  savedSuggestionCard: {
+    backgroundColor: '#1A1A24',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 8,
+  },
+  savedSuggestionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  savedSuggestionText: {
+    color: '#D1D5DB',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  noteCard: {
+    backgroundColor: '#1A1A24',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 8,
+  },
+  noteText: {
+    color: '#D1D5DB',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  noteActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 8,
+  },
+
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#1A1A24',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  noteInput: {
+    backgroundColor: '#0F0F14',
+    borderRadius: 12,
+    padding: 14,
+    color: '#FFFFFF',
+    fontSize: 15,
+    minHeight: 120,
+    textAlignVertical: 'top',
+  },
+  saveButton: {
+    backgroundColor: '#8B5CF6',
+    borderRadius: 12,
+    padding: 14,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  saveButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  settingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2D2D3A',
+  },
+  settingInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 12,
+  },
+  settingTextContainer: {
+    flex: 1,
+  },
+  settingLabel: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  settingDescription: {
+    color: '#6B7280',
+    fontSize: 12,
+    marginTop: 2,
+  },
+  dangerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 24,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#EF4444',
+  },
+  dangerButtonText: {
+    color: '#EF4444',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });
