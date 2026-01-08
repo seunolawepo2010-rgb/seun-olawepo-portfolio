@@ -18,16 +18,16 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAudioRecorder, AudioModule, RecordingPresets } from 'expo-audio';
 
 const { width } = Dimensions.get('window');
 
-// API Configuration
-const API_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
+// API Configuration - hardcode for mobile compatibility
+const API_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://context-aware-5.preview.emergentagent.com';
 
 // Types
 type Mode = 'interview' | 'business' | 'sales' | 'general';
@@ -147,8 +147,10 @@ export default function WhisprlyApp() {
     transcriptEnabled: false,
   });
 
+  // Audio recorder hook from expo-audio
+  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+
   // Refs
-  const recordingRef = useRef<Audio.Recording | null>(null);
   const sessionTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastHapticRef = useRef<number>(0);
   const previousSuggestionsLengthRef = useRef<number>(0);
@@ -273,12 +275,14 @@ export default function WhisprlyApp() {
   // API Functions
   const createSession = async (mode: Mode) => {
     try {
+      console.log('Creating session with API_BASE_URL:', API_BASE_URL);
       const response = await fetch(`${API_BASE_URL}/api/sessions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mode }),
       });
       const data = await response.json();
+      console.log('Session created:', data);
       return data.id;
     } catch (error) {
       console.error('Failed to create session:', error);
@@ -287,35 +291,55 @@ export default function WhisprlyApp() {
   };
 
   const fetchSuggestions = async (text: string) => {
-    if (!text.trim()) return;
+    if (!text.trim()) {
+      console.log('Empty text, skipping fetchSuggestions');
+      return;
+    }
 
+    console.log('Fetching suggestions for:', text);
     setIsLoading(true);
+    
     try {
+      const requestBody = {
+        transcript: text,
+        mode: selectedMode,
+        session_id: sessionId || `temp_${Date.now()}`,
+        context: conversationContext,
+      };
+      console.log('Request body:', requestBody);
+      
       const response = await fetch(`${API_BASE_URL}/api/suggestions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          transcript: text,
-          mode: selectedMode,
-          session_id: sessionId,
-          context: conversationContext,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
-      if (!response.ok) throw new Error('API request failed');
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API error:', errorText);
+        throw new Error(`API request failed: ${errorText}`);
+      }
 
       const data = await response.json();
+      console.log('Suggestions received:', data);
+      
       setSuggestions(data.suggestions || []);
       setDetectedQuestion(data.detected_question || false);
       setQuestionContext(data.question_context || null);
       setConversationContext((prev) => [...prev, text].slice(-10));
+      
+      showToastMessage('Suggestions ready!');
     } catch (error) {
       console.error('Failed to fetch suggestions:', error);
+      // Show fallback suggestions
       setSuggestions([
         { text: 'Could you tell me more about that?', tone: 'curious', priority: 1 },
         { text: "That's interesting. I'd like to add...", tone: 'engaged', priority: 2 },
         { text: 'I understand your point.', tone: 'empathetic', priority: 3 },
       ]);
+      showToastMessage('Using offline suggestions');
     } finally {
       setIsLoading(false);
     }
@@ -473,50 +497,21 @@ export default function WhisprlyApp() {
     );
   };
 
-  // Audio Recording Functions
+  // Audio Recording Functions using expo-audio
   const startListening = async () => {
     try {
-      const { status } = await Audio.requestPermissionsAsync();
-      if (status !== 'granted') {
+      // Request permission
+      const status = await AudioModule.requestRecordingPermissionsAsync();
+      if (!status.granted) {
         Alert.alert('Permission Required', 'Please grant microphone access to use this feature.');
         return;
       }
 
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
-
-      const recording = new Audio.Recording();
-      // Use a format that OpenAI supports (m4a/mp4)
-      await recording.prepareToRecordAsync({
-        android: {
-          extension: '.m4a',
-          outputFormat: Audio.AndroidOutputFormat.MPEG_4,
-          audioEncoder: Audio.AndroidAudioEncoder.AAC,
-          sampleRate: 44100,
-          numberOfChannels: 1,
-          bitRate: 128000,
-        },
-        ios: {
-          extension: '.m4a',
-          audioQuality: Audio.IOSAudioQuality.HIGH,
-          sampleRate: 44100,
-          numberOfChannels: 1,
-          bitRate: 128000,
-          linearPCMBitDepth: 16,
-          linearPCMIsBigEndian: false,
-          linearPCMIsFloat: false,
-        },
-        web: {
-          mimeType: 'audio/webm',
-          bitsPerSecond: 128000,
-        },
-      });
-      await recording.startAsync();
-      recordingRef.current = recording;
+      // Start recording
+      await audioRecorder.record();
       setIsListening(true);
       setLiveTranscript('Listening...');
+      console.log('Recording started');
     } catch (error) {
       console.error('Failed to start recording:', error);
       Alert.alert('Error', 'Failed to start recording. Please try again.');
@@ -525,30 +520,35 @@ export default function WhisprlyApp() {
 
   const stopListening = async () => {
     try {
-      if (recordingRef.current) {
-        setLiveTranscript('Processing...');
-        await recordingRef.current.stopAndUnloadAsync();
-        const uri = recordingRef.current.getURI();
-        recordingRef.current = null;
-        setIsListening(false);
-        
-        if (uri) {
-          // Transcribe the audio
-          const transcribedText = await transcribeAudio(uri);
-          if (transcribedText) {
-            setLiveTranscript(transcribedText);
-            // Automatically fetch suggestions
-            fetchSuggestions(transcribedText);
-          } else {
-            setLiveTranscript('');
-            showToastMessage('Could not transcribe audio');
-          }
+      setLiveTranscript('Processing...');
+      
+      // Stop recording
+      await audioRecorder.stop();
+      setIsListening(false);
+      
+      const uri = audioRecorder.uri;
+      console.log('Recording stopped, URI:', uri);
+      
+      if (uri) {
+        // Transcribe the audio
+        const transcribedText = await transcribeAudio(uri);
+        if (transcribedText) {
+          setLiveTranscript(transcribedText);
+          // Automatically fetch suggestions
+          await fetchSuggestions(transcribedText);
+        } else {
+          setLiveTranscript('');
+          showToastMessage('Could not transcribe audio');
         }
+      } else {
+        setLiveTranscript('');
+        showToastMessage('No audio recorded');
       }
     } catch (error) {
       console.error('Failed to stop recording:', error);
       setIsListening(false);
       setLiveTranscript('');
+      showToastMessage('Recording failed');
     }
   };
 
@@ -563,8 +563,25 @@ export default function WhisprlyApp() {
     }
   };
 
+  // Handle simulate input - THIS IS THE KEY FUNCTION
+  const handleSimulateInput = async () => {
+    console.log('Simulate input tapped');
+    const sampleInputs = [
+      "Can you tell me about your experience with project management?",
+      "What makes your product different from competitors?",
+      "How would you handle a difficult team member?",
+      "What are your thoughts on the budget proposal?",
+      "Could you walk me through your sales process?",
+    ];
+    const randomInput = sampleInputs[Math.floor(Math.random() * sampleInputs.length)];
+    console.log('Selected input:', randomInput);
+    setLiveTranscript(randomInput);
+    await fetchSuggestions(randomInput);
+  };
+
   // Navigation Functions
   const handleStartSession = async (mode: Mode) => {
+    console.log('Starting session with mode:', mode);
     setSelectedMode(mode);
     const newSessionId = await createSession(mode);
     setSessionId(newSessionId);
@@ -578,9 +595,12 @@ export default function WhisprlyApp() {
   };
 
   const handleEndSession = async () => {
-    if (recordingRef.current) {
-      await recordingRef.current.stopAndUnloadAsync();
-      recordingRef.current = null;
+    if (isListening) {
+      try {
+        await audioRecorder.stop();
+      } catch (e) {
+        console.log('Error stopping recorder:', e);
+      }
     }
     setIsListening(false);
     
@@ -773,7 +793,7 @@ export default function WhisprlyApp() {
               key={mode.id}
               style={[styles.modeCard, { borderColor: mode.color }]}
               onPress={() => handleStartSession(mode.id)}
-              activeOpacity={0.8}
+              activeOpacity={0.7}
             >
               <View style={[styles.modeIconContainer, { backgroundColor: `${mode.color}20` }]}>
                 <Ionicons name={mode.icon} size={28} color={mode.color} />
@@ -902,18 +922,8 @@ export default function WhisprlyApp() {
         <View style={styles.inputContainer}>
           <TouchableOpacity
             style={styles.simulateButton}
-            onPress={() => {
-              const sampleInputs = [
-                "Can you tell me about your experience with project management?",
-                "What makes your product different from competitors?",
-                "How would you handle a difficult team member?",
-                "What are your thoughts on the budget proposal?",
-                "Could you walk me through your sales process?",
-              ];
-              const randomInput = sampleInputs[Math.floor(Math.random() * sampleInputs.length)];
-              setLiveTranscript(randomInput);
-              fetchSuggestions(randomInput);
-            }}
+            onPress={handleSimulateInput}
+            activeOpacity={0.7}
           >
             <Ionicons name="text-outline" size={20} color="#6B7280" />
             <Text style={styles.simulateButtonText}>Tap to simulate</Text>
@@ -927,7 +937,7 @@ export default function WhisprlyApp() {
               { backgroundColor: modeConfig.color },
             ]}
             onPress={isListening ? stopListening : startListening}
-            activeOpacity={0.8}
+            activeOpacity={0.7}
           >
             <Animated.View style={{ transform: [{ scale: isListening ? pulseAnim : 1 }] }}>
               <Ionicons
@@ -1396,7 +1406,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1A1A24',
     borderRadius: 12,
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 14,
     gap: 10,
   },
   simulateButtonText: {
