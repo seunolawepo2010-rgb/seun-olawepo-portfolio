@@ -147,11 +147,14 @@ backend:
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "POST /api/transcribe-base64 transcribes audio using gpt-4o-mini-transcribe model"
+      - working: true
+        agent: "testing"
+        comment: "Tested POST /api/transcribe-base64 - correctly handles empty audio and invalid base64 with proper error responses. Returns 200 with success:false and error message for invalid inputs."
 
   - task: "Save suggestion endpoint"
     implemented: true
@@ -159,11 +162,14 @@ backend:
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "POST /api/suggestions/save saves suggestions to DB. Tested with curl - works."
+      - working: true
+        agent: "testing"
+        comment: "Tested POST /api/suggestions/save - successfully saves suggestions with ID and timestamp. GET /api/suggestions/saved/{session_id} correctly retrieves saved suggestions."
 
   - task: "Notes CRUD endpoints"
     implemented: true
@@ -171,11 +177,14 @@ backend:
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "POST/GET/PATCH/DELETE /api/notes - all working. Tested with curl."
+      - working: true
+        agent: "testing"
+        comment: "Tested all Notes CRUD operations: POST /api/notes (create), GET /api/notes/{session_id} (list), PATCH /api/notes/{note_id} (update), DELETE /api/notes/{note_id} (delete). All endpoints working correctly with proper data persistence."
 
   - task: "Session history endpoint"
     implemented: true
@@ -183,11 +192,14 @@ backend:
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "GET /api/sessions returns session history with saved_suggestions_count and notes_count"
+      - working: true
+        agent: "testing"
+        comment: "Tested GET /api/sessions - returns session history with correct structure including saved_suggestions_count and notes_count. PATCH /api/sessions/{session_id} also working for updating session settings."
 
 frontend:
   - task: "Home screen with mode selection"
