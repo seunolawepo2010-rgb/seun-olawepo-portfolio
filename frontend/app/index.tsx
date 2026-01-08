@@ -280,13 +280,22 @@ export default function WhisprlyApp() {
     try {
       console.log('Transcribing audio from:', audioUri);
       
-      // Use new File API for expo-file-system v54+
-      // Remove 'file://' prefix if present for File API
-      const filePath = audioUri.replace('file://', '');
-      const audioFile = new File(filePath);
+      // Use fetch to read the file as blob and convert to base64
+      const response = await fetch(audioUri);
+      const blob = await response.blob();
       
-      // Read as base64 string using new API
-      const base64Audio = await audioFile.text({ encoding: 'base64' });
+      // Convert blob to base64 using FileReader
+      const base64Audio = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          // Remove data URI prefix if present
+          const base64 = result.includes(',') ? result.split(',')[1] : result;
+          resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
       
       console.log('Base64 audio length:', base64Audio?.length || 0);
       
@@ -295,13 +304,13 @@ export default function WhisprlyApp() {
         return '';
       }
       
-      const response = await fetch(`${API_BASE_URL}/api/transcribe-base64`, {
+      const transcribeResponse = await fetch(`${API_BASE_URL}/api/transcribe-base64`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ audio: base64Audio, language: 'en' }),
       });
       
-      const data = await response.json();
+      const data = await transcribeResponse.json();
       console.log('Transcription response:', data);
       return data.success && data.text ? data.text.trim() : '';
     } catch (error) {
