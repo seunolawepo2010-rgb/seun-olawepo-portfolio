@@ -312,13 +312,33 @@ async def transcribe_audio_base64(data: dict):
         language = data.get("language", "en")
         
         if not audio_base64:
-            raise HTTPException(status_code=400, detail="No audio data provided")
+            return TranscriptionResponse(
+                text="",
+                success=False,
+                error="No audio data provided"
+            )
+        
+        # Check minimum length (very short audio won't transcribe well)
+        if len(audio_base64) < 1000:
+            return TranscriptionResponse(
+                text="",
+                success=False,
+                error="Audio too short"
+            )
         
         # Decode base64 audio
-        audio_content = base64.b64decode(audio_base64)
+        try:
+            audio_content = base64.b64decode(audio_base64)
+        except Exception as decode_error:
+            logger.error(f"Base64 decode error: {decode_error}")
+            return TranscriptionResponse(
+                text="",
+                success=False,
+                error=f"Invalid audio encoding: {str(decode_error)}"
+            )
         
-        # Create a temporary file
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as tmp_file:
+        # Create a temporary file with m4a extension (better compatibility)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".m4a") as tmp_file:
             tmp_file.write(audio_content)
             tmp_file_path = tmp_file.name
         
