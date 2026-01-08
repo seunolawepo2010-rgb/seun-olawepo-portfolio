@@ -404,6 +404,10 @@ async def get_session_history():
     
     history = []
     for session in sessions:
+        # Skip sessions without required fields (old/incomplete data)
+        if 'mode' not in session or 'id' not in session:
+            continue
+            
         suggestions_count = await db.saved_suggestions.count_documents({"session_id": session['id']})
         notes_count = await db.notes.count_documents({"session_id": session['id']})
         
@@ -414,7 +418,7 @@ async def get_session_history():
             transcript_enabled=session.get('transcript_enabled', False),
             saved_suggestions_count=suggestions_count,
             notes_count=notes_count,
-            created_at=session['created_at']
+            created_at=session.get('created_at', datetime.utcnow())
         ))
     
     return history
