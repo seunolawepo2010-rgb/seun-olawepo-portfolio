@@ -281,8 +281,8 @@ export default function WhisprlyApp() {
     try {
       console.log('Transcribing audio from:', audioUri);
       
-      // Use string 'base64' instead of FileSystem.EncodingType.Base64 for mobile compatibility
-      const base64Audio = await FileSystem.readAsStringAsync(audioUri, {
+      // Use legacy FileSystem API for mobile compatibility
+      const base64Audio = await FileSystemLegacy.readAsStringAsync(audioUri, {
         encoding: 'base64',
       });
       
