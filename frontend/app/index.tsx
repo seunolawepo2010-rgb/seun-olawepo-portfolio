@@ -682,10 +682,10 @@ export default function WhisprlyApp() {
   const renderToast = () => {
     if (!showToast) return null;
     return (
-      <Animated.View style={[styles.toast, { opacity: toastAnim }]}>
+      <View style={styles.toast}>
         <Ionicons name="checkmark-circle" size={18} color="#10B981" />
         <Text style={styles.toastText}>{toastMessage}</Text>
-      </Animated.View>
+      </View>
     );
   };
 
