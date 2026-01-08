@@ -22,12 +22,15 @@ import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAudioRecorder, AudioModule, RecordingPresets } from 'expo-audio';
+import { Audio } from 'expo-av';
 
 const { width } = Dimensions.get('window');
 
 // API Configuration - hardcode for mobile compatibility
 const API_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://context-aware-5.preview.emergentagent.com';
+
+// Recording interval in milliseconds (how often to process audio)
+const RECORDING_INTERVAL = 8000; // 8 seconds chunks for better transcription
 
 // Types
 type Mode = 'interview' | 'business' | 'sales' | 'general';
@@ -127,9 +130,11 @@ export default function WhisprlyApp() {
   const [conversationContext, setConversationContext] = useState<string[]>([]);
   const [isListening, setIsListening] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState('');
+  const [fullTranscript, setFullTranscript] = useState('');
   const [sessionDuration, setSessionDuration] = useState(0);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
   
   // History state
   const [sessionHistoryList, setSessionHistoryList] = useState<SessionHistory[]>([]);
@@ -147,18 +152,19 @@ export default function WhisprlyApp() {
     transcriptEnabled: false,
   });
 
-  // Audio recorder hook from expo-audio
-  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
-
   // Refs
+  const recordingRef = useRef<Audio.Recording | null>(null);
   const sessionTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const recordingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastHapticRef = useRef<number>(0);
   const previousSuggestionsLengthRef = useRef<number>(0);
+  const isListeningRef = useRef<boolean>(false);
   
   // Animations
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const toastAnim = useRef(new Animated.Value(0)).current;
+  const waveAnim = useRef(new Animated.Value(0)).current;
 
   // Load settings on mount
   useEffect(() => {
@@ -210,21 +216,42 @@ export default function WhisprlyApp() {
       const pulse = Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, {
-            toValue: 1.2,
-            duration: 800,
+            toValue: 1.3,
+            duration: 600,
             useNativeDriver: true,
           }),
           Animated.timing(pulseAnim, {
             toValue: 1,
-            duration: 800,
+            duration: 600,
             useNativeDriver: true,
           }),
         ])
       );
       pulse.start();
-      return () => pulse.stop();
+      
+      // Wave animation for visual feedback
+      const wave = Animated.loop(
+        Animated.sequence([
+          Animated.timing(waveAnim, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(waveAnim, {
+            toValue: 0,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      wave.start();
+      
+      return () => {
+        pulse.stop();
+        wave.stop();
+      };
     }
-  }, [isListening, pulseAnim]);
+  }, [isListening, pulseAnim, waveAnim]);
 
   // Fade in suggestions
   useEffect(() => {
@@ -291,8 +318,8 @@ export default function WhisprlyApp() {
   };
 
   const fetchSuggestions = async (text: string) => {
-    if (!text.trim()) {
-      console.log('Empty text, skipping fetchSuggestions');
+    if (!text.trim() || text.length < 10) {
+      console.log('Text too short, skipping fetchSuggestions');
       return;
     }
 
@@ -306,7 +333,6 @@ export default function WhisprlyApp() {
         session_id: sessionId || `temp_${Date.now()}`,
         context: conversationContext,
       };
-      console.log('Request body:', requestBody);
       
       const response = await fetch(`${API_BASE_URL}/api/suggestions`, {
         method: 'POST',
@@ -314,8 +340,6 @@ export default function WhisprlyApp() {
         body: JSON.stringify(requestBody),
       });
 
-      console.log('Response status:', response.status);
-      
       if (!response.ok) {
         const errorText = await response.text();
         console.error('API error:', errorText);
@@ -330,16 +354,16 @@ export default function WhisprlyApp() {
       setQuestionContext(data.question_context || null);
       setConversationContext((prev) => [...prev, text].slice(-10));
       
-      showToastMessage('Suggestions ready!');
+      if (data.detected_question) {
+        showToastMessage('Question detected!');
+      }
     } catch (error) {
       console.error('Failed to fetch suggestions:', error);
-      // Show fallback suggestions
       setSuggestions([
         { text: 'Could you tell me more about that?', tone: 'curious', priority: 1 },
         { text: "That's interesting. I'd like to add...", tone: 'engaged', priority: 2 },
         { text: 'I understand your point.', tone: 'empathetic', priority: 3 },
       ]);
-      showToastMessage('Using offline suggestions');
     } finally {
       setIsLoading(false);
     }
@@ -349,15 +373,14 @@ export default function WhisprlyApp() {
     try {
       console.log('Transcribing audio from:', audioUri);
       
-      // Use expo-file-system to read the file as base64
       const base64Audio = await FileSystem.readAsStringAsync(audioUri, {
         encoding: FileSystem.EncodingType.Base64,
       });
       
       console.log('Audio base64 length:', base64Audio.length);
       
-      if (!base64Audio || base64Audio.length < 100) {
-        console.error('Audio file too small or empty');
+      if (!base64Audio || base64Audio.length < 1000) {
+        console.log('Audio too short, skipping transcription');
         return '';
       }
       
@@ -373,15 +396,163 @@ export default function WhisprlyApp() {
       const data = await transcribeResponse.json();
       console.log('Transcription response:', data);
       
-      if (data.success && data.text) {
-        return data.text;
+      if (data.success && data.text && data.text.trim()) {
+        return data.text.trim();
       } else {
-        console.error('Transcription error:', data.error);
+        console.log('No transcription text or error:', data.error);
         return '';
       }
     } catch (error) {
       console.error('Transcription error:', error);
       return '';
+    }
+  };
+
+  // REAL-TIME CONTINUOUS LISTENING
+  const startContinuousListening = async () => {
+    try {
+      const { status } = await Audio.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Please grant microphone access to listen to meetings.');
+        return;
+      }
+
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+
+      setIsListening(true);
+      isListeningRef.current = true;
+      setLiveTranscript('Listening to meeting...');
+      showToastMessage('Real-time listening started!');
+      
+      // Start the first recording
+      await startNewRecordingChunk();
+      
+      // Set up interval to process chunks
+      recordingIntervalRef.current = setInterval(async () => {
+        if (isListeningRef.current) {
+          await processAndRestartRecording();
+        }
+      }, RECORDING_INTERVAL);
+      
+    } catch (error) {
+      console.error('Failed to start continuous listening:', error);
+      Alert.alert('Error', 'Failed to start listening. Please try again.');
+      setIsListening(false);
+      isListeningRef.current = false;
+    }
+  };
+
+  const startNewRecordingChunk = async () => {
+    try {
+      const recording = new Audio.Recording();
+      await recording.prepareToRecordAsync({
+        android: {
+          extension: '.m4a',
+          outputFormat: Audio.AndroidOutputFormat.MPEG_4,
+          audioEncoder: Audio.AndroidAudioEncoder.AAC,
+          sampleRate: 16000,
+          numberOfChannels: 1,
+          bitRate: 64000,
+        },
+        ios: {
+          extension: '.m4a',
+          audioQuality: Audio.IOSAudioQuality.MEDIUM,
+          sampleRate: 16000,
+          numberOfChannels: 1,
+          bitRate: 64000,
+          linearPCMBitDepth: 16,
+          linearPCMIsBigEndian: false,
+          linearPCMIsFloat: false,
+        },
+        web: {
+          mimeType: 'audio/webm',
+          bitsPerSecond: 64000,
+        },
+      });
+      await recording.startAsync();
+      recordingRef.current = recording;
+      console.log('New recording chunk started');
+    } catch (error) {
+      console.error('Failed to start new recording chunk:', error);
+    }
+  };
+
+  const processAndRestartRecording = async () => {
+    if (!isListeningRef.current) return;
+    
+    try {
+      setIsProcessing(true);
+      
+      // Stop current recording
+      if (recordingRef.current) {
+        await recordingRef.current.stopAndUnloadAsync();
+        const uri = recordingRef.current.getURI();
+        recordingRef.current = null;
+        
+        // Start new recording immediately (don't wait for processing)
+        if (isListeningRef.current) {
+          await startNewRecordingChunk();
+        }
+        
+        // Process the audio in background
+        if (uri) {
+          const transcribedText = await transcribeAudio(uri);
+          
+          if (transcribedText && transcribedText.length > 5) {
+            console.log('Transcribed:', transcribedText);
+            setLiveTranscript(transcribedText);
+            
+            // Add to full transcript
+            setFullTranscript(prev => {
+              const updated = prev ? `${prev} ${transcribedText}` : transcribedText;
+              return updated.slice(-500); // Keep last 500 chars
+            });
+            
+            // Fetch suggestions based on new text
+            await fetchSuggestions(transcribedText);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error processing recording chunk:', error);
+      // Try to restart recording
+      if (isListeningRef.current) {
+        await startNewRecordingChunk();
+      }
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const stopContinuousListening = async () => {
+    try {
+      isListeningRef.current = false;
+      setIsListening(false);
+      
+      // Clear interval
+      if (recordingIntervalRef.current) {
+        clearInterval(recordingIntervalRef.current);
+        recordingIntervalRef.current = null;
+      }
+      
+      // Stop current recording
+      if (recordingRef.current) {
+        try {
+          await recordingRef.current.stopAndUnloadAsync();
+        } catch (e) {
+          console.log('Error stopping recording:', e);
+        }
+        recordingRef.current = null;
+      }
+      
+      setLiveTranscript('');
+      showToastMessage('Listening stopped');
+      
+    } catch (error) {
+      console.error('Failed to stop listening:', error);
     }
   };
 
@@ -497,59 +668,23 @@ export default function WhisprlyApp() {
     );
   };
 
-  // Audio Recording Functions using expo-audio
-  const startListening = async () => {
-    try {
-      // Request permission
-      const status = await AudioModule.requestRecordingPermissionsAsync();
-      if (!status.granted) {
-        Alert.alert('Permission Required', 'Please grant microphone access to use this feature.');
-        return;
-      }
-
-      // Start recording
-      await audioRecorder.record();
-      setIsListening(true);
-      setLiveTranscript('Listening...');
-      console.log('Recording started');
-    } catch (error) {
-      console.error('Failed to start recording:', error);
-      Alert.alert('Error', 'Failed to start recording. Please try again.');
-    }
-  };
-
-  const stopListening = async () => {
-    try {
-      setLiveTranscript('Processing...');
-      
-      // Stop recording
-      await audioRecorder.stop();
-      setIsListening(false);
-      
-      const uri = audioRecorder.uri;
-      console.log('Recording stopped, URI:', uri);
-      
-      if (uri) {
-        // Transcribe the audio
-        const transcribedText = await transcribeAudio(uri);
-        if (transcribedText) {
-          setLiveTranscript(transcribedText);
-          // Automatically fetch suggestions
-          await fetchSuggestions(transcribedText);
-        } else {
-          setLiveTranscript('');
-          showToastMessage('Could not transcribe audio');
-        }
-      } else {
-        setLiveTranscript('');
-        showToastMessage('No audio recorded');
-      }
-    } catch (error) {
-      console.error('Failed to stop recording:', error);
-      setIsListening(false);
-      setLiveTranscript('');
-      showToastMessage('Recording failed');
-    }
+  // Handle simulate input
+  const handleSimulateInput = async () => {
+    console.log('Simulate input tapped');
+    const sampleInputs = [
+      "Can you tell me about your experience with project management?",
+      "What makes your product different from competitors?",
+      "How would you handle a difficult team member?",
+      "What are your thoughts on the budget proposal?",
+      "Could you walk me through your sales process?",
+      "What's your biggest professional achievement?",
+      "How do you prioritize tasks when everything seems urgent?",
+      "What salary range are you expecting for this position?",
+    ];
+    const randomInput = sampleInputs[Math.floor(Math.random() * sampleInputs.length)];
+    console.log('Selected input:', randomInput);
+    setLiveTranscript(randomInput);
+    await fetchSuggestions(randomInput);
   };
 
   // Clipboard Function
@@ -561,22 +696,6 @@ export default function WhisprlyApp() {
     } catch (error) {
       console.error('Failed to copy:', error);
     }
-  };
-
-  // Handle simulate input - THIS IS THE KEY FUNCTION
-  const handleSimulateInput = async () => {
-    console.log('Simulate input tapped');
-    const sampleInputs = [
-      "Can you tell me about your experience with project management?",
-      "What makes your product different from competitors?",
-      "How would you handle a difficult team member?",
-      "What are your thoughts on the budget proposal?",
-      "Could you walk me through your sales process?",
-    ];
-    const randomInput = sampleInputs[Math.floor(Math.random() * sampleInputs.length)];
-    console.log('Selected input:', randomInput);
-    setLiveTranscript(randomInput);
-    await fetchSuggestions(randomInput);
   };
 
   // Navigation Functions
@@ -591,18 +710,12 @@ export default function WhisprlyApp() {
     setQuestionContext(null);
     setSessionDuration(0);
     setLiveTranscript('');
+    setFullTranscript('');
     setCurrentScreen('session');
   };
 
   const handleEndSession = async () => {
-    if (isListening) {
-      try {
-        await audioRecorder.stop();
-      } catch (e) {
-        console.log('Error stopping recorder:', e);
-      }
-    }
-    setIsListening(false);
+    await stopContinuousListening();
     
     // Update session duration
     try {
@@ -769,7 +882,7 @@ export default function WhisprlyApp() {
           <Ionicons name="ear-outline" size={32} color="#8B5CF6" />
           <Text style={styles.logoText}>Whisprly</Text>
         </View>
-        <Text style={styles.tagline}>Silent conversation companion</Text>
+        <Text style={styles.tagline}>Real-time meeting assistant</Text>
         
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.headerButton} onPress={handleViewHistory}>
@@ -811,7 +924,7 @@ export default function WhisprlyApp() {
       {/* Footer */}
       <View style={styles.homeFooter}>
         <Text style={styles.footerText}>
-          Tap a mode to start your session
+          Tap a mode to start listening to your meeting
         </Text>
       </View>
       
@@ -845,20 +958,39 @@ export default function WhisprlyApp() {
           <View style={styles.headerSpacer} />
         </View>
 
+        {/* Listening Status Bar */}
+        {isListening && (
+          <View style={styles.listeningStatusBar}>
+            <Animated.View 
+              style={[
+                styles.listeningWave,
+                {
+                  opacity: waveAnim.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] }),
+                  transform: [{ scaleX: waveAnim.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1.2] }) }],
+                }
+              ]}
+            />
+            <View style={styles.listeningDotActive} />
+            <Text style={styles.listeningStatusText}>
+              {isProcessing ? 'Processing...' : 'Listening to meeting...'}
+            </Text>
+          </View>
+        )}
+
         {/* Live Transcript */}
         {liveTranscript ? (
           <View style={styles.transcriptBox}>
-            <Ionicons name="mic" size={16} color="#8B5CF6" />
-            <Text style={styles.transcriptText} numberOfLines={2}>{liveTranscript}</Text>
+            <Ionicons name="chatbubble-outline" size={16} color="#8B5CF6" />
+            <Text style={styles.transcriptText} numberOfLines={3}>{liveTranscript}</Text>
           </View>
         ) : null}
 
         {/* Question Alert */}
         {detectedQuestion && questionContext && (
           <View style={styles.questionAlert}>
-            <Ionicons name="help-circle" size={20} color="#F59E0B" />
+            <Ionicons name="alert-circle" size={20} color="#F59E0B" />
             <Text style={styles.questionAlertText}>
-              Question detected: {questionContext}
+              {questionContext}
             </Text>
           </View>
         )}
@@ -876,6 +1008,7 @@ export default function WhisprlyApp() {
             </View>
           ) : suggestions.length > 0 ? (
             <Animated.View style={{ opacity: fadeAnim }}>
+              <Text style={styles.suggestionsTitle}>Suggested Responses</Text>
               {suggestions.map((suggestion, index) => (
                 <View key={index} style={styles.suggestionCard}>
                   <View style={styles.suggestionHeader}>
@@ -908,12 +1041,18 @@ export default function WhisprlyApp() {
             </Animated.View>
           ) : (
             <View style={styles.emptyState}>
-              <Ionicons name="chatbubble-ellipses-outline" size={48} color="#4B5563" />
+              <Ionicons name="mic-outline" size={56} color="#4B5563" />
               <Text style={styles.emptyStateTitle}>Ready to assist</Text>
               <Text style={styles.emptyStateText}>
-                Tap the microphone to start listening{'\n'}
-                or tap below to simulate input
+                Tap the microphone button below to start{'\n'}
+                listening to your meeting in real-time
               </Text>
+              <View style={styles.instructionBox}>
+                <Text style={styles.instructionTitle}>How it works:</Text>
+                <Text style={styles.instructionText}>1. Tap the mic to start listening</Text>
+                <Text style={styles.instructionText}>2. The app will hear your meeting</Text>
+                <Text style={styles.instructionText}>3. Get instant response suggestions</Text>
+              </View>
             </View>
           )}
         </ScrollView>
@@ -925,37 +1064,36 @@ export default function WhisprlyApp() {
             onPress={handleSimulateInput}
             activeOpacity={0.7}
           >
-            <Ionicons name="text-outline" size={20} color="#6B7280" />
-            <Text style={styles.simulateButtonText}>Tap to simulate</Text>
+            <Ionicons name="flash-outline" size={20} color="#6B7280" />
+            <Text style={styles.simulateButtonText}>Test with sample</Text>
           </TouchableOpacity>
 
-          {/* Microphone Button */}
+          {/* Microphone Button - Main Control */}
           <TouchableOpacity
             style={[
               styles.micButton,
               isListening && styles.micButtonActive,
-              { backgroundColor: modeConfig.color },
+              { backgroundColor: isListening ? '#EF4444' : modeConfig.color },
             ]}
-            onPress={isListening ? stopListening : startListening}
+            onPress={isListening ? stopContinuousListening : startContinuousListening}
             activeOpacity={0.7}
           >
             <Animated.View style={{ transform: [{ scale: isListening ? pulseAnim : 1 }] }}>
               <Ionicons
-                name={isListening ? 'stop' : 'mic-outline'}
-                size={28}
+                name={isListening ? 'stop' : 'mic'}
+                size={32}
                 color="#FFFFFF"
               />
             </Animated.View>
           </TouchableOpacity>
         </View>
 
-        {/* Listening Indicator */}
-        {isListening && (
-          <View style={styles.listeningIndicator}>
-            <View style={styles.listeningDot} />
-            <Text style={styles.listeningText}>Recording... tap to stop</Text>
-          </View>
-        )}
+        {/* Bottom Hint */}
+        <View style={styles.bottomHint}>
+          <Text style={styles.bottomHintText}>
+            {isListening ? 'Tap the red button to stop listening' : 'Tap the mic to start real-time listening'}
+          </Text>
+        </View>
         
         {renderToast()}
       </SafeAreaView>
@@ -1261,9 +1399,41 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  transcriptBox: {
+  listeningStatusBar: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#10B98120',
+    marginHorizontal: 16,
+    padding: 10,
+    borderRadius: 12,
+    marginBottom: 8,
+    gap: 8,
+    overflow: 'hidden',
+  },
+  listeningWave: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: '#10B98110',
+  },
+  listeningDotActive: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#10B981',
+  },
+  listeningStatusText: {
+    color: '#10B981',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+
+  transcriptBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     backgroundColor: '#1A1A24',
     marginHorizontal: 16,
     padding: 12,
@@ -1274,7 +1444,8 @@ const styles = StyleSheet.create({
   transcriptText: {
     flex: 1,
     color: '#D1D5DB',
-    fontSize: 13,
+    fontSize: 14,
+    lineHeight: 20,
   },
 
   questionAlert: {
@@ -1285,6 +1456,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 12,
     gap: 8,
+    marginBottom: 8,
   },
   questionAlertText: {
     flex: 1,
@@ -1298,6 +1470,12 @@ const styles = StyleSheet.create({
   },
   suggestionsContent: {
     padding: 16,
+  },
+  suggestionsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 12,
   },
 
   loadingContainer: {
@@ -1374,11 +1552,11 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 80,
+    paddingVertical: 40,
   },
   emptyStateTitle: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
     marginTop: 16,
   },
@@ -1388,6 +1566,24 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 8,
     lineHeight: 22,
+  },
+  instructionBox: {
+    backgroundColor: '#1A1A24',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 24,
+    width: '100%',
+  },
+  instructionTitle: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  instructionText: {
+    color: '#9CA3AF',
+    fontSize: 13,
+    marginBottom: 6,
   },
 
   inputContainer: {
@@ -1415,44 +1611,35 @@ const styles = StyleSheet.create({
   },
 
   micButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   micButtonActive: {
-    opacity: 0.9,
+    elevation: 8,
+    shadowOpacity: 0.5,
   },
 
-  listeningIndicator: {
-    position: 'absolute',
-    bottom: 100,
-    alignSelf: 'center',
-    flexDirection: 'row',
+  bottomHint: {
     alignItems: 'center',
-    backgroundColor: '#1A1A24',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    gap: 8,
+    paddingBottom: 16,
   },
-  listeningDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#EF4444',
-  },
-  listeningText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '500',
+  bottomHintText: {
+    color: '#6B7280',
+    fontSize: 12,
   },
 
   // Toast
   toast: {
     position: 'absolute',
-    bottom: 120,
+    bottom: 140,
     alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
