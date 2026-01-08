@@ -70,10 +70,12 @@ class WhisprlyAPITester:
                 "language": "en"
             }
             response = requests.post(f"{BACKEND_URL}/transcribe-base64", json=payload)
-            if response.status_code == 400:
+            data = response.json()
+            # The endpoint returns 200 with success:false and error message for empty audio
+            if response.status_code == 200 and not data.get("success", True) and "No audio data provided" in data.get("error", ""):
                 self.log_test("POST /api/transcribe-base64 (empty audio)", True, "Correctly rejected empty audio")
             else:
-                self.log_test("POST /api/transcribe-base64 (empty audio)", False, f"Status: {response.status_code}")
+                self.log_test("POST /api/transcribe-base64 (empty audio)", False, f"Status: {response.status_code}, Response: {data}")
         except Exception as e:
             self.log_test("POST /api/transcribe-base64 (empty audio)", False, f"Error: {str(e)}")
             
