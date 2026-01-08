@@ -25,7 +25,7 @@ import { Audio } from 'expo-av';
 const { width } = Dimensions.get('window');
 
 // API Configuration
-const API_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://context-aware-5.preview.emergentagent.com';
+const API_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://realtalk-assist.preview.emergentagent.com';
 
 // Recording interval in milliseconds
 const RECORDING_INTERVAL = 8000; // 8 seconds chunks
