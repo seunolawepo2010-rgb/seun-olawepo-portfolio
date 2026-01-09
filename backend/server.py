@@ -405,8 +405,9 @@ async def transcribe_audio_base64(data: dict):
     try:
         audio_base64 = data.get("audio", "")
         language = data.get("language", "en")
+        audio_format = data.get("format", "m4a")  # Support both m4a (mobile) and webm (web)
         
-        logger.info(f"Received transcription request. Audio base64 length: {len(audio_base64) if audio_base64 else 0}")
+        logger.info(f"Received transcription request. Audio base64 length: {len(audio_base64) if audio_base64 else 0}, format: {audio_format}")
         
         if not audio_base64:
             logger.warning("No audio data provided in request")
@@ -439,13 +440,17 @@ async def transcribe_audio_base64(data: dict):
                 error=f"Invalid base64 audio data: {str(decode_error)}"
             )
         
+        # Determine file extension based on format
+        # Whisper supports: mp3, mp4, mpeg, mpga, m4a, wav, webm
+        file_ext = ".webm" if audio_format == "webm" else ".m4a"
+        
         # Save to temporary file for Whisper API
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".m4a") as tmp_file:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as tmp_file:
             tmp_file.write(audio_bytes)
             tmp_file_path = tmp_file.name
         
         try:
-            logger.info(f"Sending audio to OpenAI Whisper API...")
+            logger.info(f"Sending audio ({file_ext}) to OpenAI Whisper API...")
             
             # Use OpenAI Whisper API for transcription
             with open(tmp_file_path, "rb") as audio_file:
