@@ -623,7 +623,7 @@ export default function WhisprlyApp() {
       
       // Read file as base64 using expo-file-system (proper React Native method)
       const base64Audio = await FileSystem.readAsStringAsync(audioUri, {
-        encoding: FileSystem.EncodingType.Base64,
+        encoding: 'base64',
       });
       
       console.log('Base64 audio length:', base64Audio?.length || 0);
