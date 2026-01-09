@@ -258,7 +258,40 @@ Respond in this exact JSON format:
 
 # ==================== Helper Functions ====================
 
-async def get_ai_suggestions(transcript: str, mode: str, context: List[str], session_id: str) -> dict:
+def build_preference_prompt(preferences: Optional[ResponsePreferences], mode: str) -> str:
+    """Build additional prompt instructions based on user preferences"""
+    if not preferences:
+        return ""
+    
+    parts = []
+    
+    # Tone
+    if preferences.tone and preferences.tone in TONE_MODIFIERS:
+        parts.append(f"TONE: {TONE_MODIFIERS[preferences.tone]}")
+    
+    # Style
+    if preferences.style and preferences.style in STYLE_MODIFIERS:
+        parts.append(f"STYLE: {STYLE_MODIFIERS[preferences.style]}")
+    
+    # Risk level
+    if preferences.risk_level and preferences.risk_level in RISK_MODIFIERS:
+        parts.append(f"APPROACH: {RISK_MODIFIERS[preferences.risk_level]}")
+    
+    # Interview-specific settings
+    if mode == "interview":
+        if preferences.role_type:
+            parts.append(f"TARGET ROLE: {preferences.role_type.replace('_', ' ').title()}")
+        if preferences.seniority_level:
+            level_map = {"ic": "Individual Contributor", "manager": "Manager", "director": "Director/Executive"}
+            parts.append(f"SENIORITY: {level_map.get(preferences.seniority_level, preferences.seniority_level)}")
+        if preferences.preferred_frameworks:
+            parts.append(f"USE FRAMEWORKS: {', '.join(preferences.preferred_frameworks)}")
+    
+    if parts:
+        return "\n\nUSER PREFERENCES:\n" + "\n".join(parts)
+    return ""
+
+async def get_ai_suggestions(transcript: str, mode: str, context: List[str], session_id: str, preferences: Optional[ResponsePreferences] = None) -> dict:
     """Generate AI-powered response suggestions"""
     try:
         mode_prompt = MODE_PROMPTS.get(mode, MODE_PROMPTS["general"])
