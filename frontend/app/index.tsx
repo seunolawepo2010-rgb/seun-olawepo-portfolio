@@ -140,6 +140,52 @@ const MODES: ModeConfig[] = [
 ];
 
 const SETTINGS_KEY = '@whisprly_settings';
+const PREFERENCES_KEY = '@whisprly_preferences';
+
+// Preference options
+const TONE_OPTIONS = [
+  { value: 'confident', label: 'Confident', icon: 'shield-checkmark-outline' },
+  { value: 'neutral', label: 'Neutral', icon: 'remove-outline' },
+  { value: 'executive', label: 'Executive', icon: 'business-outline' },
+  { value: 'friendly', label: 'Friendly', icon: 'happy-outline' },
+  { value: 'concise', label: 'Concise', icon: 'flash-outline' },
+];
+
+const STYLE_OPTIONS = [
+  { value: 'direct', label: 'Direct Only' },
+  { value: 'explanation', label: 'With Explanation' },
+  { value: 'followup', label: 'With Follow-up' },
+  { value: 'star', label: 'STAR Format' },
+];
+
+const RISK_OPTIONS = [
+  { value: 'conservative', label: 'Conservative', description: 'Safe, policy-aware' },
+  { value: 'balanced', label: 'Balanced', description: 'Measured responses' },
+  { value: 'assertive', label: 'Assertive', description: 'Bold, clear positions' },
+];
+
+const ROLE_OPTIONS = [
+  'Product Manager', 'Software Engineer', 'Data Scientist', 'Designer', 
+  'Sales', 'Marketing', 'GRC/Compliance', 'Finance', 'HR', 'Operations', 'Other'
+];
+
+const SENIORITY_OPTIONS = [
+  { value: 'ic', label: 'Individual Contributor' },
+  { value: 'manager', label: 'Manager' },
+  { value: 'director', label: 'Director/Executive' },
+];
+
+const DEFAULT_PREFERENCES: ResponsePreferences = {
+  tone: 'neutral',
+  style: 'direct',
+  risk_level: 'balanced',
+  role_type: null,
+  seniority_level: null,
+  preferred_frameworks: [],
+};
+
+// Inactivity timeout for prompt (60 seconds)
+const INACTIVITY_TIMEOUT = 60000;
 
 export default function WhisprlyApp() {
   // State
