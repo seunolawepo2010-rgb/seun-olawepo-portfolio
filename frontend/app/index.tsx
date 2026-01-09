@@ -219,6 +219,15 @@ export default function WhisprlyApp() {
     hapticEnabled: true,
     transcriptEnabled: false,
   });
+  
+  // Response Preferences state
+  const [preferences, setPreferences] = useState<ResponsePreferences>(DEFAULT_PREFERENCES);
+  const [showPreferencesModal, setShowPreferencesModal] = useState(false);
+  
+  // Meeting Summary state
+  const [meetingSummary, setMeetingSummary] = useState<MeetingSummary | null>(null);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [showInactivityPrompt, setShowInactivityPrompt] = useState(false);
 
   // Refs
   const recordingRef = useRef<Audio.Recording | null>(null);
@@ -228,6 +237,8 @@ export default function WhisprlyApp() {
   const previousSuggestionsLengthRef = useRef<number>(0);
   const isRecordingRef = useRef<boolean>(false);
   const isPausedRef = useRef<boolean>(false);
+  const lastActivityRef = useRef<number>(Date.now());
+  const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load settings on mount
   useEffect(() => {
