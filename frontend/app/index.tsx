@@ -729,7 +729,7 @@ export default function WhisprlyApp() {
       const response = await fetch(`${API_BASE_URL}/api/transcribe-base64`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ audio: base64Audio, language: 'en' }),
+        body: JSON.stringify({ audio: base64Audio, language: 'en', format: 'webm' }),
       });
       
       const data = await response.json();
