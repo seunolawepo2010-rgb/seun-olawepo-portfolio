@@ -173,6 +173,28 @@ class GenerateSummaryInput(BaseModel):
 
 # ==================== System Prompts ====================
 
+# Tone modifiers for response preferences
+TONE_MODIFIERS = {
+    "confident": "Be assertive and self-assured. Use decisive language.",
+    "neutral": "Maintain a balanced, professional tone without strong emotions.",
+    "executive": "Use executive-level language. Be strategic and high-level.",
+    "friendly": "Be warm and approachable while staying professional.",
+    "concise": "Be extremely brief. Maximum 1-2 sentences per suggestion."
+}
+
+STYLE_MODIFIERS = {
+    "direct": "Give direct answers only. No elaboration unless necessary.",
+    "explanation": "Provide the answer followed by a brief explanation of reasoning.",
+    "followup": "Give the answer and suggest a follow-up question to deepen the conversation.",
+    "star": "Structure responses using STAR format (Situation, Task, Action, Result) when applicable."
+}
+
+RISK_MODIFIERS = {
+    "conservative": "Be cautious and policy-aware. Avoid controversial or risky statements.",
+    "balanced": "Balance between being helpful and being careful. Use measured language.",
+    "assertive": "Be bold and take clear positions. Don't hedge unnecessarily."
+}
+
 MODE_PROMPTS = {
     "interview": """You are an expert interview coach providing silent, real-time response suggestions.
 Focus on:
