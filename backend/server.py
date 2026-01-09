@@ -436,19 +436,25 @@ async def get_ai_suggestions(transcript: str, mode: str, context: List[str], ses
     try:
         mode_prompt = MODE_PROMPTS.get(mode, MODE_PROMPTS["general"])
         preference_prompt = build_preference_prompt(preferences, mode)
+        
+        # Get knowledge base context
+        knowledge_context = await get_knowledge_context(session_id)
+        
         system_prompt = SYSTEM_PROMPT_TEMPLATE.format(mode_prompt=mode_prompt) + preference_prompt
+        if knowledge_context:
+            system_prompt += "\n\nYou have access to the user's knowledge base. Use this information to provide more accurate and contextual responses."
         
         # Build context string
         context_str = ""
         if context:
             context_str = "Previous conversation context:\n" + "\n".join(context[-5:])  # Last 5 lines
         
-        user_message = f"""{context_str}
+        user_message = f"""{knowledge_context}{context_str}
 
 Current transcript:
 {transcript}
 
-Provide 3 response suggestions based on the conversation above."""
+Provide 3 response suggestions based on the conversation above. Use any relevant information from the knowledge base to make your suggestions more accurate and specific."""
         
         chat = LlmChat(
             api_key=EMERGENT_LLM_KEY,
