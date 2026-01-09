@@ -1298,6 +1298,7 @@ export default function WhisprlyApp() {
         <Text style={styles.footerText}>Tap a mode to start</Text>
       </View>
       {renderSettingsModal()}
+      {renderPreferencesModal()}
       {renderToast()}
     </SafeAreaView>
   );
