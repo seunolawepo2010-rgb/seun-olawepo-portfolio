@@ -656,36 +656,150 @@ export default function WhisprlyApp() {
     }
   };
 
+  // Web-specific recording functions
+  const startWebRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      webStreamRef.current = stream;
+      webAudioChunksRef.current = [];
+      
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus'
+      });
+      
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          webAudioChunksRef.current.push(event.data);
+        }
+      };
+      
+      webMediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start();
+      console.log('Web recording started');
+    } catch (error) {
+      console.error('Failed to start web recording:', error);
+      throw error;
+    }
+  };
+
+  const stopWebRecording = async (): Promise<string | null> => {
+    return new Promise((resolve) => {
+      if (!webMediaRecorderRef.current) {
+        resolve(null);
+        return;
+      }
+      
+      webMediaRecorderRef.current.onstop = async () => {
+        const audioBlob = new Blob(webAudioChunksRef.current, { type: 'audio/webm' });
+        webAudioChunksRef.current = [];
+        
+        // Convert blob to base64
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64 = (reader.result as string).split(',')[1];
+          resolve(base64);
+        };
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(audioBlob);
+      };
+      
+      webMediaRecorderRef.current.stop();
+    });
+  };
+
+  const cleanupWebRecording = () => {
+    if (webStreamRef.current) {
+      webStreamRef.current.getTracks().forEach(track => track.stop());
+      webStreamRef.current = null;
+    }
+    webMediaRecorderRef.current = null;
+    webAudioChunksRef.current = [];
+  };
+
+  // Transcribe audio from base64 (for web)
+  const transcribeAudioBase64 = async (base64Audio: string): Promise<string> => {
+    try {
+      console.log('Transcribing web audio, base64 length:', base64Audio?.length || 0);
+      
+      if (!base64Audio || base64Audio.length < 1000) {
+        console.log('Audio too short for transcription');
+        return '';
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/api/transcribe-base64`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ audio: base64Audio, language: 'en' }),
+      });
+      
+      const data = await response.json();
+      console.log('Web transcription response:', data);
+      
+      if (data.success && data.text) {
+        return data.text.trim();
+      }
+      return '';
+    } catch (error) {
+      console.error('Web transcription error:', error);
+      return '';
+    }
+  };
+
   const processRecordingChunk = async () => {
     if (!isRecordingRef.current || isPausedRef.current) return;
     
     try {
       setRecordingState('processing');
       
-      if (recordingRef.current) {
-        await recordingRef.current.stopAndUnloadAsync();
-        const uri = recordingRef.current.getURI();
-        recordingRef.current = null;
+      if (isWeb) {
+        // Web browser processing
+        const base64Audio = await stopWebRecording();
         
         // Start new recording immediately if still active
         if (isRecordingRef.current && !isPausedRef.current) {
-          await startNewRecordingChunk();
+          await startWebRecording();
           setRecordingState('recording');
         }
         
         // Process audio in background
-        if (uri) {
-          const transcribedText = await transcribeAudio(uri);
+        if (base64Audio) {
+          const transcribedText = await transcribeAudioBase64(base64Audio);
           if (transcribedText && transcribedText.length > 0) {
             setLiveTranscript(transcribedText);
-            // Accumulate transcript
             const newFullTranscript = fullTranscript ? `${fullTranscript} ${transcribedText}` : transcribedText;
             setFullTranscript(newFullTranscript.slice(-500));
             
-            // Use accumulated transcript for suggestions (better context)
             const textForSuggestions = newFullTranscript.length > 50 ? newFullTranscript.slice(-200) : newFullTranscript;
             if (textForSuggestions.length >= 5) {
               await fetchSuggestions(textForSuggestions);
+            }
+          }
+        }
+      } else {
+        // Mobile (Expo) processing
+        if (recordingRef.current) {
+          await recordingRef.current.stopAndUnloadAsync();
+          const uri = recordingRef.current.getURI();
+          recordingRef.current = null;
+          
+          // Start new recording immediately if still active
+          if (isRecordingRef.current && !isPausedRef.current) {
+            await startNewRecordingChunk();
+            setRecordingState('recording');
+          }
+          
+          // Process audio in background
+          if (uri) {
+            const transcribedText = await transcribeAudio(uri);
+            if (transcribedText && transcribedText.length > 0) {
+              setLiveTranscript(transcribedText);
+              const newFullTranscript = fullTranscript ? `${fullTranscript} ${transcribedText}` : transcribedText;
+              setFullTranscript(newFullTranscript.slice(-500));
+              
+              const textForSuggestions = newFullTranscript.length > 50 ? newFullTranscript.slice(-200) : newFullTranscript;
+              if (textForSuggestions.length >= 5) {
+                await fetchSuggestions(textForSuggestions);
+              }
             }
           }
         }
@@ -693,7 +807,11 @@ export default function WhisprlyApp() {
     } catch (error) {
       console.error('Error processing chunk:', error);
       if (isRecordingRef.current && !isPausedRef.current) {
-        await startNewRecordingChunk();
+        if (isWeb) {
+          await startWebRecording();
+        } else {
+          await startNewRecordingChunk();
+        }
         setRecordingState('recording');
       }
     }
