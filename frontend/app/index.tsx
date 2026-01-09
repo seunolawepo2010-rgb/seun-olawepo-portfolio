@@ -379,10 +379,17 @@ export default function WhisprlyApp() {
         // Process audio in background
         if (uri) {
           const transcribedText = await transcribeAudio(uri);
-          if (transcribedText && transcribedText.length > 5) {
+          if (transcribedText && transcribedText.length > 0) {
             setLiveTranscript(transcribedText);
-            setFullTranscript(prev => (prev ? `${prev} ${transcribedText}` : transcribedText).slice(-500));
-            await fetchSuggestions(transcribedText);
+            // Accumulate transcript
+            const newFullTranscript = fullTranscript ? `${fullTranscript} ${transcribedText}` : transcribedText;
+            setFullTranscript(newFullTranscript.slice(-500));
+            
+            // Use accumulated transcript for suggestions (better context)
+            const textForSuggestions = newFullTranscript.length > 50 ? newFullTranscript.slice(-200) : newFullTranscript;
+            if (textForSuggestions.length >= 5) {
+              await fetchSuggestions(textForSuggestions);
+            }
           }
         }
       }
