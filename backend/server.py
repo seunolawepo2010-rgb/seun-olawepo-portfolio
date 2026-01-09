@@ -932,6 +932,167 @@ async def get_meeting_summary(session_id: str):
         generated_at=summary.get("generated_at", datetime.utcnow())
     )
 
+# ==================== Knowledge Base Routes ====================
+
+@api_router.post("/knowledge/document")
+async def upload_document(
+    file: UploadFile = File(...),
+    storage_type: str = Form("persistent"),
+    session_id: Optional[str] = Form(None)
+):
+    """Upload a document to the knowledge base"""
+    # Check file size (10MB limit)
+    content = await file.read()
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File size exceeds 10MB limit")
+    
+    # Determine file type
+    filename = file.filename or "unknown"
+    file_ext = filename.split(".")[-1].lower() if "." in filename else ""
+    
+    supported_types = ["pdf", "docx", "xlsx", "pptx", "txt"]
+    if file_ext not in supported_types:
+        raise HTTPException(status_code=400, detail=f"Unsupported file type. Supported: {', '.join(supported_types)}")
+    
+    # Extract text from file
+    extracted_text = extract_text_from_file(content, file_ext)
+    if not extracted_text:
+        raise HTTPException(status_code=400, detail="Could not extract text from file")
+    
+    # Create document record
+    doc = KnowledgeDocument(
+        name=filename,
+        file_type=file_ext,
+        content=extracted_text,
+        storage_type=storage_type,
+        session_id=session_id if storage_type == "session" else None,
+        file_size=len(content)
+    )
+    
+    doc_dict = doc.model_dump()
+    doc_dict['_id'] = doc_dict['id']
+    await db.knowledge_documents.insert_one(doc_dict)
+    
+    logger.info(f"Uploaded document: {filename}, type: {file_ext}, size: {len(content)} bytes, extracted: {len(extracted_text)} chars")
+    
+    return {
+        "id": doc.id,
+        "name": doc.name,
+        "file_type": doc.file_type,
+        "storage_type": doc.storage_type,
+        "content_length": len(extracted_text),
+        "file_size": doc.file_size,
+        "created_at": doc.created_at.isoformat()
+    }
+
+@api_router.post("/knowledge/note")
+async def create_knowledge_note(
+    title: str = Form(...),
+    content: str = Form(...),
+    storage_type: str = Form("persistent"),
+    session_id: Optional[str] = Form(None)
+):
+    """Create a text note in the knowledge base"""
+    if not content.strip():
+        raise HTTPException(status_code=400, detail="Note content cannot be empty")
+    
+    note = KnowledgeNote(
+        title=title,
+        content=content,
+        storage_type=storage_type,
+        session_id=session_id if storage_type == "session" else None
+    )
+    
+    note_dict = note.model_dump()
+    note_dict['_id'] = note_dict['id']
+    await db.knowledge_notes.insert_one(note_dict)
+    
+    return {
+        "id": note.id,
+        "title": note.title,
+        "storage_type": note.storage_type,
+        "content_length": len(content),
+        "created_at": note.created_at.isoformat()
+    }
+
+@api_router.get("/knowledge")
+async def get_knowledge_base(session_id: Optional[str] = None):
+    """Get all knowledge base items"""
+    # Get persistent documents
+    persistent_docs = await db.knowledge_documents.find({"storage_type": "persistent"}).to_list(100)
+    
+    # Get session documents if session_id provided
+    session_docs = []
+    if session_id:
+        session_docs = await db.knowledge_documents.find({
+            "storage_type": "session",
+            "session_id": session_id
+        }).to_list(50)
+    
+    # Get persistent notes
+    persistent_notes = await db.knowledge_notes.find({"storage_type": "persistent"}).to_list(100)
+    
+    # Get session notes
+    session_notes = []
+    if session_id:
+        session_notes = await db.knowledge_notes.find({
+            "storage_type": "session",
+            "session_id": session_id
+        }).to_list(50)
+    
+    # Format response
+    documents = []
+    for doc in persistent_docs + session_docs:
+        documents.append({
+            "id": doc.get("id"),
+            "name": doc.get("name"),
+            "file_type": doc.get("file_type"),
+            "storage_type": doc.get("storage_type"),
+            "content_preview": doc.get("content", "")[:200] + "..." if len(doc.get("content", "")) > 200 else doc.get("content", ""),
+            "file_size": doc.get("file_size", 0),
+            "created_at": doc.get("created_at").isoformat() if doc.get("created_at") else None
+        })
+    
+    notes = []
+    for note in persistent_notes + session_notes:
+        notes.append({
+            "id": note.get("id"),
+            "title": note.get("title"),
+            "storage_type": note.get("storage_type"),
+            "content_preview": note.get("content", "")[:200] + "..." if len(note.get("content", "")) > 200 else note.get("content", ""),
+            "created_at": note.get("created_at").isoformat() if note.get("created_at") else None
+        })
+    
+    return {
+        "documents": documents,
+        "notes": notes,
+        "total_documents": len(documents),
+        "total_notes": len(notes)
+    }
+
+@api_router.delete("/knowledge/document/{doc_id}")
+async def delete_knowledge_document(doc_id: str):
+    """Delete a document from knowledge base"""
+    result = await db.knowledge_documents.delete_one({"id": doc_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return {"message": "Document deleted successfully"}
+
+@api_router.delete("/knowledge/note/{note_id}")
+async def delete_knowledge_note(note_id: str):
+    """Delete a note from knowledge base"""
+    result = await db.knowledge_notes.delete_one({"id": note_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Note not found")
+    return {"message": "Note deleted successfully"}
+
+@api_router.delete("/knowledge/session/{session_id}")
+async def clear_session_knowledge(session_id: str):
+    """Clear all session-specific knowledge base items"""
+    await db.knowledge_documents.delete_many({"storage_type": "session", "session_id": session_id})
+    await db.knowledge_notes.delete_many({"storage_type": "session", "session_id": session_id})
+    return {"message": "Session knowledge cleared"}
+
 @api_router.post("/suggestions/save", response_model=SavedSuggestion)
 async def save_suggestion(input_data: SaveSuggestionInput):
     """Save a suggestion for later reference"""
