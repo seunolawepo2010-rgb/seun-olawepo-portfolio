@@ -400,10 +400,30 @@ export default function WhisprlyApp() {
       if (!response.ok) throw new Error('API request failed');
 
       const data = await response.json();
-      setSuggestions(data.suggestions || []);
+      const newSuggestions = data.suggestions || [];
+      
+      // Update current suggestions (for latest display)
+      setSuggestions(newSuggestions);
       setDetectedQuestion(data.detected_question || false);
       setQuestionContext(data.question_context || null);
       setConversationContext((prev) => [...prev, text].slice(-10));
+      
+      // Add to conversation history (persistent during session)
+      if (newSuggestions.length > 0) {
+        const newEntry: ConversationEntry = {
+          id: `entry_${Date.now()}`,
+          timestamp: new Date(),
+          transcript: text,
+          question: data.question_context || null,
+          suggestions: newSuggestions,
+        };
+        setConversationHistory(prev => [...prev, newEntry]);
+        
+        // Auto-scroll to bottom after adding new entry
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      }
       
       if (data.detected_question) {
         showToastMessage('Question detected!');
