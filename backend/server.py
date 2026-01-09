@@ -35,13 +35,15 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Get the Emergent LLM Key
+# Get the Emergent LLM Key (for chat/suggestions)
 EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY', '')
 
-# Initialize OpenAI client for transcription
+# Get the OpenAI API Key (for Whisper transcription)
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
+
+# Initialize OpenAI client for Whisper transcription
 openai_client = openai.OpenAI(
-    api_key=EMERGENT_LLM_KEY,
-    base_url="https://api.openai.com/v1"
+    api_key=OPENAI_API_KEY
 )
 
 # ==================== Models ====================
