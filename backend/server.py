@@ -295,7 +295,8 @@ async def get_ai_suggestions(transcript: str, mode: str, context: List[str], ses
     """Generate AI-powered response suggestions"""
     try:
         mode_prompt = MODE_PROMPTS.get(mode, MODE_PROMPTS["general"])
-        system_prompt = SYSTEM_PROMPT_TEMPLATE.format(mode_prompt=mode_prompt)
+        preference_prompt = build_preference_prompt(preferences, mode)
+        system_prompt = SYSTEM_PROMPT_TEMPLATE.format(mode_prompt=mode_prompt) + preference_prompt
         
         # Build context string
         context_str = ""
