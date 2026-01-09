@@ -308,7 +308,7 @@ async def transcribe_audio(
 
 @api_router.post("/transcribe-base64", response_model=TranscriptionResponse)
 async def transcribe_audio_base64(data: dict):
-    """Transcribe base64 encoded audio using GPT-4o via Emergent integrations"""
+    """Transcribe base64 encoded audio using OpenAI Whisper API"""
     try:
         audio_base64 = data.get("audio", "")
         language = data.get("language", "en")
@@ -332,47 +332,54 @@ async def transcribe_audio_base64(data: dict):
                 error=f"Audio too short ({len(audio_base64)} chars, need at least 1000)"
             )
         
-        logger.info("Preparing audio for transcription via GPT-4o-audio-preview...")
+        logger.info("Decoding base64 audio and preparing for Whisper API...")
         
-        # Import FileContent for multimodal messages
-        from emergentintegrations.llm.chat import FileContent
-        
-        # Create FileContent object with the audio data
-        audio_file = FileContent(
-            content_type="audio/m4a",
-            file_content_base64=audio_base64
-        )
-        
-        chat = LlmChat(
-            api_key=EMERGENT_LLM_KEY,
-            session_id=f"transcription_{uuid.uuid4()}",
-            system_message="You are an audio transcription assistant. Your task is to transcribe the audio content exactly as spoken. Only output the transcribed text, nothing else. Do not add any commentary, introductions, or explanations. If you cannot hear any speech or the audio is unclear, respond with just: [no speech detected]"
-        ).with_model("openai", "gpt-4o-audio-preview")
-        
-        logger.info("Sending audio to GPT-4o-audio-preview...")
-        
-        # Send audio for transcription with FileContent
-        response = await chat.send_message(
-            UserMessage(
-                text="Transcribe this audio:",
-                file_contents=[audio_file]
+        # Decode base64 to bytes
+        try:
+            audio_bytes = base64.b64decode(audio_base64)
+            logger.info(f"Decoded audio size: {len(audio_bytes)} bytes")
+        except Exception as decode_error:
+            logger.error(f"Failed to decode base64: {decode_error}")
+            return TranscriptionResponse(
+                text="",
+                success=False,
+                error=f"Invalid base64 audio data: {str(decode_error)}"
             )
-        )
         
-        logger.info(f"Received transcription response: {response[:100] if response else 'empty'}...")
+        # Save to temporary file for Whisper API
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".m4a") as tmp_file:
+            tmp_file.write(audio_bytes)
+            tmp_file_path = tmp_file.name
         
-        transcription = response.strip() if response else ""
-        
-        # Filter out the "no speech detected" response
-        if "[no speech detected]" in transcription.lower():
-            logger.info("No speech detected in audio")
-            transcription = ""
-        
-        return TranscriptionResponse(
-            text=transcription,
-            success=True if transcription else False,
-            error=None if transcription else "No speech detected"
-        )
+        try:
+            logger.info(f"Sending audio to OpenAI Whisper API...")
+            
+            # Use OpenAI Whisper API for transcription
+            with open(tmp_file_path, "rb") as audio_file:
+                transcription = openai_client.audio.transcriptions.create(
+                    model="whisper-1",
+                    file=audio_file,
+                    language=language,
+                    response_format="text"
+                )
+            
+            result_text = transcription if isinstance(transcription, str) else transcription.text
+            result_text = result_text.strip() if result_text else ""
+            
+            logger.info(f"Whisper transcription result: '{result_text[:100]}...' (length: {len(result_text)})")
+            
+            return TranscriptionResponse(
+                text=result_text,
+                success=True if result_text else False,
+                error=None if result_text else "No speech detected"
+            )
+            
+        finally:
+            # Clean up temp file
+            try:
+                os.unlink(tmp_file_path)
+            except:
+                pass
             
     except Exception as e:
         logger.error(f"Transcription error: {str(e)}")
