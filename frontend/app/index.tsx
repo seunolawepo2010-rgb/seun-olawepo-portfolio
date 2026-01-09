@@ -604,6 +604,7 @@ export default function WhisprlyApp() {
     setSessionDuration(0);
     setRecordingState('idle');
     setMeetingSummary(null);
+    setConversationHistory([]); // Clear conversation history
     if (sessionTimerRef.current) clearInterval(sessionTimerRef.current);
   };
 
