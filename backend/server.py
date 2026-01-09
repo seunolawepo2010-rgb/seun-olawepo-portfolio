@@ -13,6 +13,13 @@ from emergentintegrations.llm.chat import LlmChat, UserMessage
 import openai
 import base64
 import tempfile
+import io
+
+# Document processing imports
+from PyPDF2 import PdfReader
+from docx import Document as DocxDocument
+from openpyxl import load_workbook
+from pptx import Presentation
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
