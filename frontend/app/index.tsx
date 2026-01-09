@@ -37,7 +37,7 @@ const isWeb = Platform.OS === 'web';
 
 // Types
 type Mode = 'interview' | 'business' | 'sales' | 'general';
-type Screen = 'home' | 'session' | 'history' | 'sessionDetail' | 'summary' | 'preferences';
+type Screen = 'home' | 'session' | 'history' | 'sessionDetail' | 'summary' | 'preferences' | 'knowledge';
 type RecordingState = 'idle' | 'recording' | 'paused' | 'processing';
 
 interface Suggestion {
