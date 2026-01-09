@@ -569,20 +569,21 @@ async def delete_all_sessions():
 # ==================== Suggestions Routes ====================
 
 @api_router.post("/suggestions", response_model=SuggestionsResponse)
-async def get_suggestions(input_data: TranscriptInput):
-    """Generate response suggestions based on transcript"""
+async def get_suggestions(input_data: TranscriptInputWithPreferences):
+    """Generate response suggestions based on transcript with user preferences"""
     if not input_data.transcript.strip():
         raise HTTPException(status_code=400, detail="Transcript cannot be empty")
     
     # Get or create session context
     context = input_data.context or []
     
-    # Get AI suggestions
+    # Get AI suggestions with preferences
     ai_result = await get_ai_suggestions(
         transcript=input_data.transcript,
         mode=input_data.mode,
         context=context,
-        session_id=input_data.session_id
+        session_id=input_data.session_id,
+        preferences=input_data.preferences
     )
     
     # Build response
@@ -613,6 +614,153 @@ async def get_suggestions(input_data: TranscriptInput):
         detected_question=ai_result.get("detected_question", False),
         question_context=ai_result.get("question_context"),
         session_id=input_data.session_id
+    )
+
+# ==================== Meeting Summary Routes ====================
+
+SUMMARY_SYSTEM_PROMPT = """You are a professional meeting summarizer. Your task is to analyze meeting transcripts and generate:
+1. A concise meeting summary (4-6 bullet points)
+2. Action items with task, owner (if mentioned), and due date (if mentioned)
+3. Key highlights including risks, blockers, or important follow-ups
+
+RULES:
+- Use ONLY information from the provided transcript
+- Do NOT fabricate actions, owners, or deadlines
+- Leave owner/due_date as null if not explicitly mentioned
+- Be concise and professional
+- Focus on decisions made, topics discussed, and outcomes
+
+Respond in this exact JSON format:
+{
+    "summary_points": ["Point 1", "Point 2", "Point 3", "Point 4"],
+    "action_items": [
+        {"task": "Description of action", "owner": "Person name or null", "due_date": "Date or null"}
+    ],
+    "key_highlights": ["Highlight 1", "Highlight 2"]
+}
+"""
+
+INTERVIEW_SUMMARY_PROMPT = """You are an interview feedback analyzer. Your task is to analyze interview transcripts and generate:
+1. A summary of the interview (4-6 bullet points covering questions asked and topics discussed)
+2. Action items (follow-up tasks, thank you notes to send, skills to brush up on)
+3. Key highlights (strong answers, areas for improvement, feedback signals)
+
+RULES:
+- Use ONLY information from the provided transcript
+- Be objective and constructive
+- Focus on actionable insights for the interviewee
+
+Respond in this exact JSON format:
+{
+    "summary_points": ["Point 1", "Point 2", "Point 3", "Point 4"],
+    "action_items": [
+        {"task": "Description of action", "owner": null, "due_date": null}
+    ],
+    "key_highlights": ["Highlight 1", "Highlight 2"]
+}
+"""
+
+@api_router.post("/generate-summary", response_model=MeetingSummary)
+async def generate_meeting_summary(input_data: GenerateSummaryInput):
+    """Generate post-meeting summary with action items"""
+    if not input_data.full_transcript.strip():
+        raise HTTPException(status_code=400, detail="Transcript cannot be empty")
+    
+    try:
+        # Choose appropriate prompt based on mode
+        system_prompt = INTERVIEW_SUMMARY_PROMPT if input_data.mode == "interview" else SUMMARY_SYSTEM_PROMPT
+        
+        user_message = f"""Please analyze the following {input_data.mode} transcript and generate a summary:
+
+TRANSCRIPT:
+{input_data.full_transcript}
+
+Generate the summary, action items, and key highlights."""
+        
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"summary_{input_data.session_id}",
+            system_message=system_prompt
+        ).with_model("openai", "gpt-4o")
+        
+        response = await chat.send_message(UserMessage(text=user_message))
+        
+        # Parse JSON response
+        import json
+        clean_response = response.strip()
+        if clean_response.startswith("```json"):
+            clean_response = clean_response[7:]
+        if clean_response.startswith("```"):
+            clean_response = clean_response[3:]
+        if clean_response.endswith("```"):
+            clean_response = clean_response[:-3]
+        clean_response = clean_response.strip()
+        
+        result = json.loads(clean_response)
+        
+        # Build action items
+        action_items = [
+            ActionItem(
+                task=item.get("task", ""),
+                owner=item.get("owner"),
+                due_date=item.get("due_date")
+            )
+            for item in result.get("action_items", [])
+        ]
+        
+        # Save summary to database
+        summary_doc = {
+            "session_id": input_data.session_id,
+            "summary_points": result.get("summary_points", []),
+            "action_items": [ai.model_dump() for ai in action_items],
+            "key_highlights": result.get("key_highlights", []),
+            "mode": input_data.mode,
+            "duration": input_data.duration,
+            "generated_at": datetime.utcnow()
+        }
+        await db.meeting_summaries.update_one(
+            {"session_id": input_data.session_id},
+            {"$set": summary_doc},
+            upsert=True
+        )
+        
+        return MeetingSummary(
+            summary_points=result.get("summary_points", []),
+            action_items=action_items,
+            key_highlights=result.get("key_highlights", []),
+            mode=input_data.mode,
+            duration=input_data.duration
+        )
+        
+    except Exception as e:
+        logger.error(f"Summary generation error: {str(e)}")
+        # Return a basic summary on error
+        return MeetingSummary(
+            summary_points=["Meeting summary could not be generated. Please try again."],
+            action_items=[],
+            key_highlights=[],
+            mode=input_data.mode,
+            duration=input_data.duration
+        )
+
+@api_router.get("/summary/{session_id}", response_model=MeetingSummary)
+async def get_meeting_summary(session_id: str):
+    """Retrieve a previously generated meeting summary"""
+    summary = await db.meeting_summaries.find_one({"session_id": session_id})
+    if not summary:
+        raise HTTPException(status_code=404, detail="Summary not found")
+    
+    action_items = [
+        ActionItem(**item) for item in summary.get("action_items", [])
+    ]
+    
+    return MeetingSummary(
+        summary_points=summary.get("summary_points", []),
+        action_items=action_items,
+        key_highlights=summary.get("key_highlights", []),
+        mode=summary.get("mode", "general"),
+        duration=summary.get("duration", 0),
+        generated_at=summary.get("generated_at", datetime.utcnow())
     )
 
 @api_router.post("/suggestions/save", response_model=SavedSuggestion)
