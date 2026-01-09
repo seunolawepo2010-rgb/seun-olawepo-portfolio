@@ -178,6 +178,30 @@ class GenerateSummaryInput(BaseModel):
     mode: str
     duration: int
 
+# ==================== Knowledge Base Models ====================
+
+class KnowledgeDocument(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    file_type: str  # pdf, docx, xlsx, pptx, txt
+    content: str  # Extracted text content
+    storage_type: str = "persistent"  # "persistent" or "session"
+    session_id: Optional[str] = None  # Only set if storage_type is "session"
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    file_size: int = 0
+
+class KnowledgeNote(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    title: str
+    content: str
+    storage_type: str = "persistent"
+    session_id: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class KnowledgeBaseResponse(BaseModel):
+    documents: List[KnowledgeDocument]
+    notes: List[KnowledgeNote]
+
 # ==================== System Prompts ====================
 
 # Tone modifiers for response preferences
