@@ -1444,7 +1444,9 @@ export default function WhisprlyApp() {
           </Text>
         </View>
 
+        {renderInactivityPrompt()}
         {renderToast()}
+        {renderPreferencesModal()}
       </SafeAreaView>
     );
   };
