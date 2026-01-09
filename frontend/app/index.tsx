@@ -1574,7 +1574,7 @@ export default function WhisprlyApp() {
             </View>
           ) : conversationHistory.length > 0 ? (
             <View>
-              <View style={styles.historyHeader}>
+              <View style={styles.conversationHistoryHeader}>
                 <Text style={styles.suggestionsTitle}>Conversation History</Text>
                 <Text style={styles.historyCount}>{conversationHistory.length} entries</Text>
               </View>
