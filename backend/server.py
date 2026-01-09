@@ -322,6 +322,115 @@ def build_preference_prompt(preferences: Optional[ResponsePreferences], mode: st
         return "\n\nUSER PREFERENCES:\n" + "\n".join(parts)
     return ""
 
+# ==================== Document Extraction Functions ====================
+
+def extract_text_from_pdf(file_content: bytes) -> str:
+    """Extract text from PDF file"""
+    try:
+        pdf_reader = PdfReader(io.BytesIO(file_content))
+        text = ""
+        for page in pdf_reader.pages:
+            text += page.extract_text() or ""
+        return text.strip()
+    except Exception as e:
+        logger.error(f"PDF extraction error: {e}")
+        return ""
+
+def extract_text_from_docx(file_content: bytes) -> str:
+    """Extract text from Word document"""
+    try:
+        doc = DocxDocument(io.BytesIO(file_content))
+        text = "\n".join([paragraph.text for paragraph in doc.paragraphs])
+        return text.strip()
+    except Exception as e:
+        logger.error(f"DOCX extraction error: {e}")
+        return ""
+
+def extract_text_from_xlsx(file_content: bytes) -> str:
+    """Extract text from Excel file"""
+    try:
+        wb = load_workbook(io.BytesIO(file_content), data_only=True)
+        text_parts = []
+        for sheet in wb.worksheets:
+            text_parts.append(f"Sheet: {sheet.title}")
+            for row in sheet.iter_rows(values_only=True):
+                row_text = " | ".join([str(cell) if cell is not None else "" for cell in row])
+                if row_text.strip():
+                    text_parts.append(row_text)
+        return "\n".join(text_parts).strip()
+    except Exception as e:
+        logger.error(f"XLSX extraction error: {e}")
+        return ""
+
+def extract_text_from_pptx(file_content: bytes) -> str:
+    """Extract text from PowerPoint file"""
+    try:
+        prs = Presentation(io.BytesIO(file_content))
+        text_parts = []
+        for slide_num, slide in enumerate(prs.slides, 1):
+            text_parts.append(f"Slide {slide_num}:")
+            for shape in slide.shapes:
+                if hasattr(shape, "text") and shape.text:
+                    text_parts.append(shape.text)
+        return "\n".join(text_parts).strip()
+    except Exception as e:
+        logger.error(f"PPTX extraction error: {e}")
+        return ""
+
+def extract_text_from_file(file_content: bytes, file_type: str) -> str:
+    """Extract text from various file types"""
+    extractors = {
+        "pdf": extract_text_from_pdf,
+        "docx": extract_text_from_docx,
+        "xlsx": extract_text_from_xlsx,
+        "pptx": extract_text_from_pptx,
+        "txt": lambda x: x.decode("utf-8", errors="ignore")
+    }
+    extractor = extractors.get(file_type.lower())
+    if extractor:
+        return extractor(file_content)
+    return ""
+
+async def get_knowledge_context(session_id: Optional[str] = None) -> str:
+    """Get all relevant knowledge base content for AI context"""
+    context_parts = []
+    
+    # Get persistent documents
+    persistent_docs = await db.knowledge_documents.find({"storage_type": "persistent"}).to_list(100)
+    for doc in persistent_docs:
+        if doc.get("content"):
+            context_parts.append(f"[Document: {doc['name']}]\n{doc['content'][:2000]}")
+    
+    # Get session-specific documents if session_id provided
+    if session_id:
+        session_docs = await db.knowledge_documents.find({
+            "storage_type": "session",
+            "session_id": session_id
+        }).to_list(50)
+        for doc in session_docs:
+            if doc.get("content"):
+                context_parts.append(f"[Session Document: {doc['name']}]\n{doc['content'][:2000]}")
+    
+    # Get persistent notes
+    persistent_notes = await db.knowledge_notes.find({"storage_type": "persistent"}).to_list(100)
+    for note in persistent_notes:
+        if note.get("content"):
+            context_parts.append(f"[Note: {note['title']}]\n{note['content']}")
+    
+    # Get session-specific notes
+    if session_id:
+        session_notes = await db.knowledge_notes.find({
+            "storage_type": "session",
+            "session_id": session_id
+        }).to_list(50)
+        for note in session_notes:
+            if note.get("content"):
+                context_parts.append(f"[Session Note: {note['title']}]\n{note['content']}")
+    
+    if context_parts:
+        return "\n\n--- KNOWLEDGE BASE REFERENCE ---\n" + "\n\n".join(context_parts) + "\n--- END KNOWLEDGE BASE ---\n\n"
+    return ""
+
 async def get_ai_suggestions(transcript: str, mode: str, context: List[str], session_id: str, preferences: Optional[ResponsePreferences] = None) -> dict:
     """Generate AI-powered response suggestions"""
     try:
