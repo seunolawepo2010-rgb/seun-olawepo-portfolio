@@ -543,13 +543,31 @@ async def get_session_history():
     sessions = await db.sessions.find().sort("created_at", -1).to_list(100)
     
     history = []
+    
+    # Get all session IDs first
+    session_ids = [session['id'] for session in sessions if 'id' in session]
+    
+    # Batch fetch counts using aggregation (fixes N+1 query issue)
+    suggestions_pipeline = [
+        {"$match": {"session_id": {"$in": session_ids}}},
+        {"$group": {"_id": "$session_id", "count": {"$sum": 1}}}
+    ]
+    notes_pipeline = [
+        {"$match": {"session_id": {"$in": session_ids}}},
+        {"$group": {"_id": "$session_id", "count": {"$sum": 1}}}
+    ]
+    
+    suggestions_counts = {doc['_id']: doc['count'] for doc in await db.saved_suggestions.aggregate(suggestions_pipeline).to_list(None)}
+    notes_counts = {doc['_id']: doc['count'] for doc in await db.notes.aggregate(notes_pipeline).to_list(None)}
+    
     for session in sessions:
         # Skip sessions without required fields (old/incomplete data)
         if 'mode' not in session or 'id' not in session:
             continue
-            
-        suggestions_count = await db.saved_suggestions.count_documents({"session_id": session['id']})
-        notes_count = await db.notes.count_documents({"session_id": session['id']})
+        
+        # Use pre-fetched counts (O(1) lookup instead of O(n) queries)
+        suggestions_count = suggestions_counts.get(session['id'], 0)
+        notes_count = notes_counts.get(session['id'], 0)
         
         history.append(SessionHistory(
             id=session['id'],
