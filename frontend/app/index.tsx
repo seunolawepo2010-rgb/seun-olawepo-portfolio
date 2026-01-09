@@ -33,7 +33,7 @@ const RECORDING_INTERVAL = 4000; // 4 seconds chunks for faster responses
 
 // Types
 type Mode = 'interview' | 'business' | 'sales' | 'general';
-type Screen = 'home' | 'session' | 'history' | 'sessionDetail';
+type Screen = 'home' | 'session' | 'history' | 'sessionDetail' | 'summary' | 'preferences';
 type RecordingState = 'idle' | 'recording' | 'paused' | 'processing';
 
 interface Suggestion {
@@ -76,6 +76,30 @@ interface ModeConfig {
   icon: keyof typeof Ionicons.glyphMap;
   color: string;
   description: string;
+}
+
+// Response Preferences Types
+interface ResponsePreferences {
+  tone: 'confident' | 'neutral' | 'executive' | 'friendly' | 'concise';
+  style: 'direct' | 'explanation' | 'followup' | 'star';
+  risk_level: 'conservative' | 'balanced' | 'assertive';
+  role_type: string | null;
+  seniority_level: 'ic' | 'manager' | 'director' | null;
+  preferred_frameworks: string[];
+}
+
+interface ActionItem {
+  task: string;
+  owner: string | null;
+  due_date: string | null;
+}
+
+interface MeetingSummary {
+  summary_points: string[];
+  action_items: ActionItem[];
+  key_highlights: string[];
+  mode: string;
+  duration: number;
 }
 
 interface Settings {
