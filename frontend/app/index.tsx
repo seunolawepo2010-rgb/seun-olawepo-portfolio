@@ -977,10 +977,256 @@ export default function WhisprlyApp() {
             <Ionicons name="trash-outline" size={20} color="#EF4444" />
             <Text style={styles.dangerButtonText}>Delete All Data</Text>
           </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.preferencesButton} 
+            onPress={() => { setShowSettingsModal(false); setShowPreferencesModal(true); }}
+          >
+            <Ionicons name="options-outline" size={20} color="#8B5CF6" />
+            <Text style={styles.preferencesButtonText}>Response Preferences</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </Modal>
   );
+
+  // Render Response Preferences Modal
+  const renderPreferencesModal = () => (
+    <Modal visible={showPreferencesModal} transparent animationType="slide">
+      <View style={styles.modalOverlay}>
+        <ScrollView style={styles.preferencesModalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Response Preferences</Text>
+            <TouchableOpacity onPress={() => setShowPreferencesModal(false)}>
+              <Ionicons name="close" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+          
+          {/* Tone Selection */}
+          <Text style={styles.prefSectionTitle}>Tone</Text>
+          <View style={styles.prefOptionsRow}>
+            {TONE_OPTIONS.map((option) => (
+              <TouchableOpacity
+                key={option.value}
+                style={[styles.prefOption, preferences.tone === option.value && styles.prefOptionSelected]}
+                onPress={() => savePreferences({ ...preferences, tone: option.value as any })}
+              >
+                <Ionicons name={option.icon as any} size={18} color={preferences.tone === option.value ? '#8B5CF6' : '#9CA3AF'} />
+                <Text style={[styles.prefOptionText, preferences.tone === option.value && styles.prefOptionTextSelected]}>{option.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          
+          {/* Style Selection */}
+          <Text style={styles.prefSectionTitle}>Response Style</Text>
+          <View style={styles.prefOptionsColumn}>
+            {STYLE_OPTIONS.map((option) => (
+              <TouchableOpacity
+                key={option.value}
+                style={[styles.prefOptionFull, preferences.style === option.value && styles.prefOptionSelected]}
+                onPress={() => savePreferences({ ...preferences, style: option.value as any })}
+              >
+                <View style={[styles.prefRadio, preferences.style === option.value && styles.prefRadioSelected]} />
+                <Text style={[styles.prefOptionText, preferences.style === option.value && styles.prefOptionTextSelected]}>{option.label}</Text>
+                {option.value === 'star' && <Text style={styles.prefBadge}>Interview</Text>}
+              </TouchableOpacity>
+            ))}
+          </View>
+          
+          {/* Risk Level */}
+          <Text style={styles.prefSectionTitle}>Risk Tolerance</Text>
+          <View style={styles.prefOptionsColumn}>
+            {RISK_OPTIONS.map((option) => (
+              <TouchableOpacity
+                key={option.value}
+                style={[styles.prefOptionFull, preferences.risk_level === option.value && styles.prefOptionSelected]}
+                onPress={() => savePreferences({ ...preferences, risk_level: option.value as any })}
+              >
+                <View style={[styles.prefRadio, preferences.risk_level === option.value && styles.prefRadioSelected]} />
+                <View style={styles.prefOptionContent}>
+                  <Text style={[styles.prefOptionText, preferences.risk_level === option.value && styles.prefOptionTextSelected]}>{option.label}</Text>
+                  <Text style={styles.prefOptionDesc}>{option.description}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+          
+          {/* Interview-Specific Settings */}
+          <Text style={styles.prefSectionTitle}>Interview Settings</Text>
+          <Text style={styles.prefSubtitle}>Role Type</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.prefScrollRow}>
+            {ROLE_OPTIONS.map((role) => (
+              <TouchableOpacity
+                key={role}
+                style={[styles.prefChip, preferences.role_type === role && styles.prefChipSelected]}
+                onPress={() => savePreferences({ ...preferences, role_type: preferences.role_type === role ? null : role })}
+              >
+                <Text style={[styles.prefChipText, preferences.role_type === role && styles.prefChipTextSelected]}>{role}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+          
+          <Text style={styles.prefSubtitle}>Seniority Level</Text>
+          <View style={styles.prefOptionsRow}>
+            {SENIORITY_OPTIONS.map((option) => (
+              <TouchableOpacity
+                key={option.value}
+                style={[styles.prefOption, preferences.seniority_level === option.value && styles.prefOptionSelected]}
+                onPress={() => savePreferences({ ...preferences, seniority_level: preferences.seniority_level === option.value ? null : option.value as any })}
+              >
+                <Text style={[styles.prefOptionText, preferences.seniority_level === option.value && styles.prefOptionTextSelected]}>{option.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          
+          {/* Reset to Defaults */}
+          <TouchableOpacity style={styles.resetButton} onPress={() => savePreferences(DEFAULT_PREFERENCES)}>
+            <Ionicons name="refresh-outline" size={18} color="#9CA3AF" />
+            <Text style={styles.resetButtonText}>Reset to Defaults</Text>
+          </TouchableOpacity>
+          
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+
+  // Render Inactivity Prompt
+  const renderInactivityPrompt = () => {
+    if (!showInactivityPrompt) return null;
+    return (
+      <View style={styles.inactivityPrompt}>
+        <Ionicons name="time-outline" size={20} color="#F59E0B" />
+        <Text style={styles.inactivityText}>No activity for 60 seconds</Text>
+        <TouchableOpacity style={styles.endMeetingPromptBtn} onPress={handleEndMeeting}>
+          <Text style={styles.endMeetingPromptText}>End Meeting</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={resetInactivityTimer}>
+          <Ionicons name="close" size={20} color="#9CA3AF" />
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  // Render Summary Screen
+  const renderSummaryScreen = () => {
+    const modeConfig = MODES.find(m => m.id === selectedMode);
+    
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" />
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => { resetSession(); setCurrentScreen('home'); }} style={styles.backButton}>
+            <Ionicons name="checkmark" size={24} color="#10B981" />
+          </TouchableOpacity>
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle}>Meeting Summary</Text>
+            <View style={[styles.modeBadge, { backgroundColor: modeConfig?.color + '20' }]}>
+              <Ionicons name={modeConfig?.icon || 'chatbubbles'} size={14} color={modeConfig?.color} />
+              <Text style={[styles.modeBadgeText, { color: modeConfig?.color }]}>{modeConfig?.label}</Text>
+            </View>
+          </View>
+          <View style={styles.headerRight}>
+            <Text style={styles.durationText}>{formatDuration(sessionDuration)}</Text>
+          </View>
+        </View>
+        
+        <ScrollView style={styles.summaryContent} showsVerticalScrollIndicator={false}>
+          {isGeneratingSummary ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#8B5CF6" />
+              <Text style={styles.loadingText}>Generating summary...</Text>
+            </View>
+          ) : meetingSummary ? (
+            <>
+              {/* Summary Points */}
+              <View style={styles.summarySection}>
+                <View style={styles.summarySectionHeader}>
+                  <Ionicons name="document-text-outline" size={20} color="#8B5CF6" />
+                  <Text style={styles.summarySectionTitle}>Summary</Text>
+                </View>
+                {meetingSummary.summary_points.map((point, index) => (
+                  <View key={index} style={styles.summaryPoint}>
+                    <Text style={styles.summaryPointNumber}>{index + 1}.</Text>
+                    <Text style={styles.summaryPointText}>{point}</Text>
+                  </View>
+                ))}
+              </View>
+              
+              {/* Action Items */}
+              {meetingSummary.action_items.length > 0 && (
+                <View style={styles.summarySection}>
+                  <View style={styles.summarySectionHeader}>
+                    <Ionicons name="checkbox-outline" size={20} color="#10B981" />
+                    <Text style={styles.summarySectionTitle}>Action Items</Text>
+                  </View>
+                  {meetingSummary.action_items.map((item, index) => (
+                    <View key={index} style={styles.actionItem}>
+                      <View style={styles.actionItemHeader}>
+                        <Ionicons name="square-outline" size={18} color="#6B7280" />
+                        <Text style={styles.actionItemTask}>{item.task}</Text>
+                      </View>
+                      <View style={styles.actionItemMeta}>
+                        {item.owner && (
+                          <View style={styles.actionItemTag}>
+                            <Ionicons name="person-outline" size={12} color="#8B5CF6" />
+                            <Text style={styles.actionItemTagText}>{item.owner}</Text>
+                          </View>
+                        )}
+                        {item.due_date && (
+                          <View style={styles.actionItemTag}>
+                            <Ionicons name="calendar-outline" size={12} color="#F59E0B" />
+                            <Text style={styles.actionItemTagText}>{item.due_date}</Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
+              
+              {/* Key Highlights */}
+              {meetingSummary.key_highlights.length > 0 && (
+                <View style={styles.summarySection}>
+                  <View style={styles.summarySectionHeader}>
+                    <Ionicons name="flash-outline" size={20} color="#F59E0B" />
+                    <Text style={styles.summarySectionTitle}>Key Highlights</Text>
+                  </View>
+                  {meetingSummary.key_highlights.map((highlight, index) => (
+                    <View key={index} style={styles.highlightItem}>
+                      <Text style={styles.highlightBullet}>•</Text>
+                      <Text style={styles.highlightText}>{highlight}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+              
+              {/* Share/Copy Buttons */}
+              <View style={styles.summaryActions}>
+                <TouchableOpacity style={styles.summaryActionBtn} onPress={copySummary}>
+                  <Ionicons name="copy-outline" size={20} color="#FFFFFF" />
+                  <Text style={styles.summaryActionText}>Copy</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.summaryActionBtn, styles.summaryShareBtn]} onPress={shareSummary}>
+                  <Ionicons name="share-outline" size={20} color="#FFFFFF" />
+                  <Text style={styles.summaryActionText}>Share</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : (
+            <View style={styles.emptySummary}>
+              <Ionicons name="document-text-outline" size={48} color="#4B5563" />
+              <Text style={styles.emptySummaryText}>No summary available</Text>
+            </View>
+          )}
+        </ScrollView>
+        
+        <TouchableOpacity style={styles.doneButton} onPress={() => { resetSession(); setCurrentScreen('home'); }}>
+          <Text style={styles.doneButtonText}>Done</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  };
 
   // Render Note Modal
   const renderNoteModal = () => (
