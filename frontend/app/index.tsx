@@ -431,8 +431,10 @@ export default function WhisprlyApp() {
 
   // End meeting and show summary
   const handleEndMeeting = async () => {
+    console.log('handleEndMeeting called');
+    
     // Stop recording first
-    await stopRecording();
+    await handleStopRecording();
     
     // Clear inactivity timer
     if (inactivityTimerRef.current) {
@@ -456,12 +458,20 @@ export default function WhisprlyApp() {
     
     // Generate summary if there's enough transcript
     if (fullTranscript && fullTranscript.length >= 20) {
+      console.log('Generating summary for transcript:', fullTranscript.substring(0, 50));
       await generateMeetingSummary();
       setCurrentScreen('summary');
     } else {
-      // Not enough content for summary, go back to home
-      resetSession();
-      setCurrentScreen('home');
+      // Not enough content for summary, show message and go to summary anyway
+      console.log('Not enough transcript, showing empty summary');
+      setMeetingSummary({
+        summary_points: ['Session ended - no significant conversation to summarize'],
+        action_items: [],
+        key_highlights: [],
+        mode: selectedMode,
+        duration: sessionDuration
+      });
+      setCurrentScreen('summary');
     }
   };
 
