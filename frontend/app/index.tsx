@@ -1945,6 +1945,19 @@ const styles = StyleSheet.create({
   noteCard: { backgroundColor: '#1A1A24', borderRadius: 12, padding: 14, marginBottom: 8, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
   noteText: { color: '#D1D5DB', fontSize: 14, lineHeight: 20, flex: 1 },
 
+  // Conversation History Styles
+  historyHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+  historyCount: { color: '#6B7280', fontSize: 12 },
+  conversationEntry: { backgroundColor: '#1A1A24', borderRadius: 14, padding: 14, marginBottom: 16, borderLeftWidth: 3, borderLeftColor: '#8B5CF6' },
+  entryHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  entryNumber: { color: '#8B5CF6', fontSize: 12, fontWeight: '700' },
+  entryTime: { color: '#6B7280', fontSize: 11 },
+  entryQuestion: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#F59E0B10', borderRadius: 8, padding: 8, marginBottom: 10 },
+  entryQuestionText: { color: '#F59E0B', fontSize: 13, flex: 1 },
+  entryTranscript: { color: '#9CA3AF', fontSize: 12, fontStyle: 'italic', marginBottom: 12, lineHeight: 18 },
+  loadingMore: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16 },
+  loadingMoreText: { color: '#6B7280', fontSize: 13 },
+
   // Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
   modalContent: { backgroundColor: '#1A1A24', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: Platform.OS === 'ios' ? 40 : 20 },
