@@ -1304,7 +1304,13 @@ export default function WhisprlyApp() {
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="light-content" />
         <View style={styles.sessionHeader}>
-          <TouchableOpacity onPress={handleEndSession} style={styles.backButton}>
+          <TouchableOpacity onPress={() => {
+            Alert.alert('End Session', 'Do you want to end this session?', [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Just Exit', onPress: handleEndSession },
+              { text: 'End & Summarize', onPress: handleEndMeeting, style: 'default' },
+            ]);
+          }} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <View style={styles.sessionHeaderCenter}>
@@ -1314,7 +1320,9 @@ export default function WhisprlyApp() {
             </View>
             <Text style={styles.durationText}>{formatDuration(sessionDuration)}</Text>
           </View>
-          <View style={styles.headerSpacer} />
+          <TouchableOpacity style={styles.endMeetingBtn} onPress={handleEndMeeting}>
+            <Text style={styles.endMeetingText}>End</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Recording Status */}
