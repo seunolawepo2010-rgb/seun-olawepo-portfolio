@@ -360,24 +360,207 @@ class WhisprlyAPITester:
         except Exception as e:
             self.log_test("DELETE /api/notes/{note_id}", False, f"Error: {str(e)}")
     
-    def test_sessions_delete_all(self):
-        """Test DELETE /api/sessions endpoint (careful!)"""
-        print("\n=== Testing Delete All Sessions (WARNING: Destructive) ===")
+    def test_suggestions_with_preferences(self):
+        """Test POST /api/suggestions with preferences (NEW FEATURE)"""
+        print("\n=== Testing Suggestions with Preferences ===")
         
-        # This is a destructive operation, so we'll test it last
         try:
-            response = requests.delete(f"{BACKEND_URL}/sessions")
+            payload = {
+                "transcript": "Tell me about your experience with Python",
+                "mode": "interview",
+                "session_id": "test-pref-1",
+                "preferences": {
+                    "tone": "confident",
+                    "style": "star",
+                    "risk_level": "assertive",
+                    "role_type": "Software Engineer",
+                    "seniority_level": "manager"
+                }
+            }
+            response = requests.post(f"{BACKEND_URL}/suggestions", json=payload, timeout=30)
             
             if response.status_code == 200:
                 data = response.json()
-                if "message" in data:
-                    self.log_test("DELETE /api/sessions", True, "All data deleted successfully")
+                required_fields = ["suggestions", "detected_question", "session_id"]
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if not missing_fields:
+                    suggestions = data.get("suggestions", [])
+                    if len(suggestions) == 3:
+                        # Check for STAR format indicators in interview mode
+                        star_indicators = ["situation", "task", "action", "result", "when i", "i was", "i did", "the result"]
+                        has_star_format = any(
+                            any(indicator in suggestion["text"].lower() for indicator in star_indicators)
+                            for suggestion in suggestions
+                        )
+                        
+                        details = f"Generated {len(suggestions)} suggestions with preferences"
+                        if has_star_format:
+                            details += " (STAR format detected)"
+                        
+                        self.log_test("POST /api/suggestions (with preferences)", True, details)
+                    else:
+                        self.log_test("POST /api/suggestions (with preferences)", False, f"Expected 3 suggestions, got {len(suggestions)}")
                 else:
-                    self.log_test("DELETE /api/sessions", False, "No confirmation message in response")
+                    self.log_test("POST /api/suggestions (with preferences)", False, f"Missing fields: {missing_fields}")
             else:
-                self.log_test("DELETE /api/sessions", False, f"Status: {response.status_code}")
+                self.log_test("POST /api/suggestions (with preferences)", False, f"Status: {response.status_code}")
         except Exception as e:
-            self.log_test("DELETE /api/sessions", False, f"Error: {str(e)}")
+            self.log_test("POST /api/suggestions (with preferences)", False, f"Error: {str(e)}")
+
+    def test_generate_summary(self):
+        """Test POST /api/generate-summary (NEW FEATURE)"""
+        print("\n=== Testing Generate Summary ===")
+        
+        try:
+            payload = {
+                "session_id": "test-summary-1",
+                "full_transcript": "Today we discussed the Q3 budget. John mentioned we need to cut costs by 15%. Sarah will prepare the new proposal by Friday. We also talked about the marketing campaign launch. Mark will follow up with the agency tomorrow. Key concern raised was the timeline being too tight.",
+                "mode": "business",
+                "duration": 1800
+            }
+            response = requests.post(f"{BACKEND_URL}/generate-summary", json=payload, timeout=30)
+            
+            if response.status_code == 200:
+                data = response.json()
+                required_fields = ["summary_points", "action_items", "key_highlights", "mode", "duration"]
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if not missing_fields:
+                    summary_points = data.get("summary_points", [])
+                    action_items = data.get("action_items", [])
+                    key_highlights = data.get("key_highlights", [])
+                    
+                    # Validate action items structure
+                    valid_action_items = True
+                    for action in action_items:
+                        if "task" not in action:
+                            valid_action_items = False
+                            break
+                    
+                    if summary_points and valid_action_items:
+                        details = f"Generated {len(summary_points)} summary points, {len(action_items)} action items, {len(key_highlights)} highlights"
+                        self.log_test("POST /api/generate-summary", True, details)
+                    else:
+                        self.log_test("POST /api/generate-summary", False, "Invalid summary structure")
+                else:
+                    self.log_test("POST /api/generate-summary", False, f"Missing fields: {missing_fields}")
+            else:
+                self.log_test("POST /api/generate-summary", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_test("POST /api/generate-summary", False, f"Error: {str(e)}")
+
+    def test_get_summary(self):
+        """Test GET /api/summary/{session_id} (NEW FEATURE)"""
+        print("\n=== Testing Get Summary ===")
+        
+        try:
+            response = requests.get(f"{BACKEND_URL}/summary/test-summary-1", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                required_fields = ["summary_points", "action_items", "key_highlights", "mode", "duration"]
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if not missing_fields:
+                    if data.get("mode") == "business" and data.get("duration") == 1800:
+                        summary_points = data.get("summary_points", [])
+                        action_items = data.get("action_items", [])
+                        details = f"Retrieved summary with {len(summary_points)} points and {len(action_items)} action items"
+                        self.log_test("GET /api/summary/{session_id}", True, details)
+                    else:
+                        self.log_test("GET /api/summary/{session_id}", False, "Summary data doesn't match expected values")
+                else:
+                    self.log_test("GET /api/summary/{session_id}", False, f"Missing fields: {missing_fields}")
+            elif response.status_code == 404:
+                self.log_test("GET /api/summary/{session_id}", False, "Summary not found - generate-summary may have failed")
+            else:
+                self.log_test("GET /api/summary/{session_id}", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_test("GET /api/summary/{session_id}", False, f"Error: {str(e)}")
+
+    def test_session_management_new(self):
+        """Test Session Management endpoints (ENHANCED FEATURE)"""
+        print("\n=== Testing Enhanced Session Management ===")
+        
+        # Test creating session with interview mode
+        try:
+            payload = {"mode": "interview"}
+            response = requests.post(f"{BACKEND_URL}/sessions", json=payload, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "id" in data and data.get("mode") == "interview":
+                    created_session_id = data["id"]
+                    self.log_test("POST /api/sessions (interview mode)", True, f"Created session: {created_session_id}")
+                    
+                    # Test getting sessions list
+                    list_response = requests.get(f"{BACKEND_URL}/sessions", timeout=10)
+                    if list_response.status_code == 200:
+                        sessions_data = list_response.json()
+                        if isinstance(sessions_data, list):
+                            # Check if our session is in the list
+                            session_found = any(s.get("id") == created_session_id for s in sessions_data)
+                            if session_found:
+                                self.log_test("GET /api/sessions (verify new session)", True, f"Found {len(sessions_data)} sessions including new one")
+                            else:
+                                self.log_test("GET /api/sessions (verify new session)", False, "New session not found in list")
+                        else:
+                            self.log_test("GET /api/sessions (verify new session)", False, "Response is not an array")
+                    else:
+                        self.log_test("GET /api/sessions (verify new session)", False, f"Status: {list_response.status_code}")
+                else:
+                    self.log_test("POST /api/sessions (interview mode)", False, "Missing required fields in response")
+            else:
+                self.log_test("POST /api/sessions (interview mode)", False, f"Status: {response.status_code}")
+        except Exception as e:
+            self.log_test("POST /api/sessions (interview mode)", False, f"Error: {str(e)}")
+            self.log_test("GET /api/sessions (verify new session)", False, f"Error: {str(e)}")
+
+    def run_new_feature_tests(self):
+        """Run tests specifically for the new features mentioned in review request"""
+        print(f"🚀 Testing Whisprly New Features")
+        print(f"Backend URL: {BACKEND_URL}")
+        print("=" * 60)
+        
+        # Test 1: Health Check
+        self.test_health_endpoints()
+        
+        # Test 2: Suggestions with Preferences
+        self.test_suggestions_with_preferences()
+        
+        # Test 3: Generate Summary
+        self.test_generate_summary()
+        
+        # Test 4: Get Summary
+        self.test_get_summary()
+        
+        # Test 5: Session Management
+        self.test_session_management_new()
+        
+        # Summary
+        print("\n" + "=" * 60)
+        print("📊 NEW FEATURES TEST SUMMARY")
+        print("=" * 60)
+        
+        passed = sum(1 for result in self.test_results if result["success"])
+        total = len(self.test_results)
+        
+        print(f"Total Tests: {total}")
+        print(f"Passed: {passed}")
+        print(f"Failed: {total - passed}")
+        print(f"Success Rate: {(passed/total)*100:.1f}%")
+        
+        # Show failed tests
+        failed_tests = [result for result in self.test_results if not result["success"]]
+        if failed_tests:
+            print("\n❌ FAILED TESTS:")
+            for test in failed_tests:
+                print(f"  - {test['test']}: {test['details']}")
+        else:
+            print("\n🎉 ALL NEW FEATURE TESTS PASSED!")
+        
+        return passed == total
     
     def run_all_tests(self):
         """Run all backend API tests"""
