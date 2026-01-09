@@ -28,8 +28,8 @@ const { width } = Dimensions.get('window');
 // API Configuration
 const API_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'https://realtalk-assist.preview.emergentagent.com';
 
-// Recording interval in milliseconds
-const RECORDING_INTERVAL = 8000; // 8 seconds chunks
+// Recording interval in milliseconds (shorter = faster responses)
+const RECORDING_INTERVAL = 4000; // 4 seconds chunks for faster responses
 
 // Types
 type Mode = 'interview' | 'business' | 'sales' | 'general';
