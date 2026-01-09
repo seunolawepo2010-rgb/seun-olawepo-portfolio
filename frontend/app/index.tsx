@@ -31,6 +31,9 @@ const API_BASE_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
 // Recording interval in milliseconds (shorter = faster responses)
 const RECORDING_INTERVAL = 4000; // 4 seconds chunks for faster responses
 
+// Detect if running on web
+const isWeb = Platform.OS === 'web';
+
 // Types
 type Mode = 'interview' | 'business' | 'sales' | 'general';
 type Screen = 'home' | 'session' | 'history' | 'sessionDetail' | 'summary' | 'preferences';
