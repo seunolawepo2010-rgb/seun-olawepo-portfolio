@@ -1946,7 +1946,7 @@ const styles = StyleSheet.create({
   noteText: { color: '#D1D5DB', fontSize: 14, lineHeight: 20, flex: 1 },
 
   // Conversation History Styles
-  historyHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+  conversationHistoryHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   historyCount: { color: '#6B7280', fontSize: 12 },
   conversationEntry: { backgroundColor: '#1A1A24', borderRadius: 14, padding: 14, marginBottom: 16, borderLeftWidth: 3, borderLeftColor: '#8B5CF6' },
   entryHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
