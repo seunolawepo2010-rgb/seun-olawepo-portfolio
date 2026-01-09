@@ -610,5 +610,19 @@ class WhisprlyAPITester:
 
 if __name__ == "__main__":
     tester = WhisprlyAPITester()
-    success = tester.run_all_tests()
+    
+    # Run the new feature tests as requested in the review
+    print("Running NEW FEATURE TESTS as requested in review...")
+    success = tester.run_new_feature_tests()
+    
+    print("\n" + "="*60)
+    print("OPTIONAL: Running full test suite for completeness...")
+    print("="*60)
+    
+    # Reset test results for full suite
+    tester.test_results = []
+    
+    # Run full test suite
+    full_success = tester.run_all_tests()
+    
     exit(0 if success else 1)
