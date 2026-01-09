@@ -111,6 +111,25 @@ interface Settings {
   transcriptEnabled: boolean;
 }
 
+// Knowledge Base types
+interface KnowledgeDocument {
+  id: string;
+  name: string;
+  file_type: string;
+  storage_type: 'persistent' | 'session';
+  content_preview: string;
+  file_size: number;
+  created_at: string;
+}
+
+interface KnowledgeNote {
+  id: string;
+  title: string;
+  storage_type: 'persistent' | 'session';
+  content_preview: string;
+  created_at: string;
+}
+
 // Conversation history entry type
 interface ConversationEntry {
   id: string;
