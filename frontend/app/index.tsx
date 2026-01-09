@@ -110,6 +110,15 @@ interface Settings {
   transcriptEnabled: boolean;
 }
 
+// Conversation history entry type
+interface ConversationEntry {
+  id: string;
+  timestamp: Date;
+  transcript: string;
+  question: string | null;
+  suggestions: Suggestion[];
+}
+
 // Mode Configurations
 const MODES: ModeConfig[] = [
   {
