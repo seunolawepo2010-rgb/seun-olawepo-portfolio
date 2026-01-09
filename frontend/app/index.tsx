@@ -820,16 +820,29 @@ export default function WhisprlyApp() {
   // START Recording
   const handleStartRecording = async () => {
     try {
-      const { status } = await Audio.requestPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission Required', 'Please grant microphone access.');
-        return;
-      }
+      if (isWeb) {
+        // Web browser recording
+        try {
+          await startWebRecording();
+        } catch (error) {
+          Alert.alert('Microphone Access', 'Please allow microphone access in your browser to use this feature.');
+          return;
+        }
+      } else {
+        // Mobile recording
+        const { status } = await Audio.requestPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission Required', 'Please grant microphone access.');
+          return;
+        }
 
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: true,
+          playsInSilentModeIOS: true,
+        });
+
+        await startNewRecordingChunk();
+      }
 
       isRecordingRef.current = true;
       isPausedRef.current = false;
@@ -837,13 +850,11 @@ export default function WhisprlyApp() {
       setLiveTranscript('Listening...');
       showToastMessage('Recording started!');
       
-      await startNewRecordingChunk();
-      
       // Set up interval for processing chunks
       recordingIntervalRef.current = setInterval(processRecordingChunk, RECORDING_INTERVAL);
     } catch (error) {
       console.error('Failed to start recording:', error);
-      Alert.alert('Error', 'Failed to start recording.');
+      Alert.alert('Error', 'Failed to start recording. Please check microphone permissions.');
     }
   };
 
@@ -853,10 +864,17 @@ export default function WhisprlyApp() {
       isPausedRef.current = true;
       setRecordingState('paused');
       
-      // Stop current recording chunk
-      if (recordingRef.current) {
-        await recordingRef.current.stopAndUnloadAsync();
-        recordingRef.current = null;
+      if (isWeb) {
+        // Stop web recording
+        if (webMediaRecorderRef.current && webMediaRecorderRef.current.state === 'recording') {
+          webMediaRecorderRef.current.pause();
+        }
+      } else {
+        // Stop current mobile recording chunk
+        if (recordingRef.current) {
+          await recordingRef.current.stopAndUnloadAsync();
+          recordingRef.current = null;
+        }
       }
       
       // Clear interval
@@ -876,10 +894,23 @@ export default function WhisprlyApp() {
     try {
       isPausedRef.current = false;
       setRecordingState('recording');
-      showToastMessage('Recording resumed!');
       
-      await startNewRecordingChunk();
+      if (isWeb) {
+        // Resume or start new web recording
+        if (webMediaRecorderRef.current && webMediaRecorderRef.current.state === 'paused') {
+          webMediaRecorderRef.current.resume();
+        } else {
+          await startWebRecording();
+        }
+      } else {
+        // Start new mobile recording chunk
+        await startNewRecordingChunk();
+      }
+      
+      // Resume interval
       recordingIntervalRef.current = setInterval(processRecordingChunk, RECORDING_INTERVAL);
+      
+      showToastMessage('Recording resumed');
     } catch (error) {
       console.error('Failed to resume recording:', error);
     }
@@ -890,21 +921,28 @@ export default function WhisprlyApp() {
     try {
       isRecordingRef.current = false;
       isPausedRef.current = false;
-      setRecordingState('idle');
       
+      // Clear interval
       if (recordingIntervalRef.current) {
         clearInterval(recordingIntervalRef.current);
         recordingIntervalRef.current = null;
       }
       
-      if (recordingRef.current) {
-        try {
+      if (isWeb) {
+        // Stop web recording and cleanup
+        if (webMediaRecorderRef.current && webMediaRecorderRef.current.state !== 'inactive') {
+          webMediaRecorderRef.current.stop();
+        }
+        cleanupWebRecording();
+      } else {
+        // Stop mobile recording
+        if (recordingRef.current) {
           await recordingRef.current.stopAndUnloadAsync();
-        } catch (e) {}
-        recordingRef.current = null;
+          recordingRef.current = null;
+        }
       }
       
-      setLiveTranscript('');
+      setRecordingState('idle');
       showToastMessage('Recording stopped');
     } catch (error) {
       console.error('Failed to stop recording:', error);
