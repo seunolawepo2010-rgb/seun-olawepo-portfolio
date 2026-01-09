@@ -243,6 +243,7 @@ export default function WhisprlyApp() {
   // Load settings on mount
   useEffect(() => {
     loadSettings();
+    loadPreferences();
   }, []);
 
   const loadSettings = async () => {
@@ -256,6 +257,17 @@ export default function WhisprlyApp() {
     }
   };
 
+  const loadPreferences = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(PREFERENCES_KEY);
+      if (stored) {
+        setPreferences({ ...DEFAULT_PREFERENCES, ...JSON.parse(stored) });
+      }
+    } catch (error) {
+      console.error('Failed to load preferences:', error);
+    }
+  };
+
   const saveSettings = async (newSettings: Settings) => {
     try {
       await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(newSettings));
@@ -264,6 +276,31 @@ export default function WhisprlyApp() {
       console.error('Failed to save settings:', error);
     }
   };
+
+  const savePreferences = async (newPreferences: ResponsePreferences) => {
+    try {
+      await AsyncStorage.setItem(PREFERENCES_KEY, JSON.stringify(newPreferences));
+      setPreferences(newPreferences);
+    } catch (error) {
+      console.error('Failed to save preferences:', error);
+    }
+  };
+
+  // Inactivity tracking
+  const resetInactivityTimer = useCallback(() => {
+    lastActivityRef.current = Date.now();
+    setShowInactivityPrompt(false);
+    
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+    }
+    
+    if (recordingState === 'recording') {
+      inactivityTimerRef.current = setTimeout(() => {
+        setShowInactivityPrompt(true);
+      }, INACTIVITY_TIMEOUT);
+    }
+  }, [recordingState]);
 
   // Haptic feedback
   const triggerHaptic = useCallback(() => {
