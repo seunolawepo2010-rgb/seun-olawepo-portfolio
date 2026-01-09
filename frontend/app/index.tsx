@@ -265,6 +265,15 @@ export default function WhisprlyApp() {
   const [conversationHistory, setConversationHistory] = useState<ConversationEntry[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
 
+  // Knowledge Base state
+  const [knowledgeDocuments, setKnowledgeDocuments] = useState<KnowledgeDocument[]>([]);
+  const [knowledgeNotes, setKnowledgeNotes] = useState<KnowledgeNote[]>([]);
+  const [isUploadingDoc, setIsUploadingDoc] = useState(false);
+  const [showAddNoteModal, setShowAddNoteModal] = useState(false);
+  const [newNoteTitle, setNewNoteTitle] = useState('');
+  const [newNoteContent, setNewNoteContent] = useState('');
+  const [newNoteStorageType, setNewNoteStorageType] = useState<'persistent' | 'session'>('persistent');
+
   // Refs
   const recordingRef = useRef<Audio.Recording | null>(null);
   const sessionTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -285,6 +294,7 @@ export default function WhisprlyApp() {
   useEffect(() => {
     loadSettings();
     loadPreferences();
+    loadKnowledgeBase();
   }, []);
 
   const loadSettings = async () => {
