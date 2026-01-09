@@ -1560,35 +1560,79 @@ export default function WhisprlyApp() {
           </View>
         )}
 
-        {/* Suggestions */}
-        <ScrollView style={styles.suggestionsContainer} contentContainerStyle={styles.suggestionsContent} showsVerticalScrollIndicator={false}>
-          {isLoading ? (
+        {/* Conversation History - Scrollable List */}
+        <ScrollView 
+          ref={scrollViewRef}
+          style={styles.suggestionsContainer} 
+          contentContainerStyle={styles.suggestionsContent} 
+          showsVerticalScrollIndicator={true}
+        >
+          {isLoading && conversationHistory.length === 0 ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#8B5CF6" />
               <Text style={styles.loadingText}>Generating suggestions...</Text>
             </View>
-          ) : suggestions.length > 0 ? (
+          ) : conversationHistory.length > 0 ? (
             <View>
-              <Text style={styles.suggestionsTitle}>Suggested Responses</Text>
-              {suggestions.map((suggestion, index) => (
-                <View key={index} style={styles.suggestionCard}>
-                  <View style={styles.suggestionHeader}>
-                    <View style={styles.priorityBadge}><Text style={styles.priorityText}>#{suggestion.priority}</Text></View>
-                    <View style={styles.toneBadge}><Text style={styles.toneText}>{suggestion.tone}</Text></View>
+              <View style={styles.historyHeader}>
+                <Text style={styles.suggestionsTitle}>Conversation History</Text>
+                <Text style={styles.historyCount}>{conversationHistory.length} entries</Text>
+              </View>
+              
+              {/* Display all conversation entries */}
+              {conversationHistory.map((entry, entryIndex) => (
+                <View key={entry.id} style={styles.conversationEntry}>
+                  {/* Timestamp and transcript */}
+                  <View style={styles.entryHeader}>
+                    <Text style={styles.entryNumber}>#{entryIndex + 1}</Text>
+                    <Text style={styles.entryTime}>
+                      {entry.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </Text>
                   </View>
-                  <Text style={styles.suggestionText}>{suggestion.text}</Text>
-                  <View style={styles.suggestionActions}>
-                    <TouchableOpacity style={styles.actionButton} onPress={() => copyToClipboard(suggestion.text)}>
-                      <Ionicons name="copy-outline" size={18} color="#8B5CF6" />
-                      <Text style={styles.actionButtonText}>Copy</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.actionButton} onPress={() => saveSuggestion(suggestion)}>
-                      <Ionicons name="bookmark-outline" size={18} color="#10B981" />
-                      <Text style={[styles.actionButtonText, { color: '#10B981' }]}>Save</Text>
-                    </TouchableOpacity>
-                  </View>
+                  
+                  {/* Detected Question */}
+                  {entry.question && (
+                    <View style={styles.entryQuestion}>
+                      <Ionicons name="help-circle-outline" size={14} color="#F59E0B" />
+                      <Text style={styles.entryQuestionText}>{entry.question}</Text>
+                    </View>
+                  )}
+                  
+                  {/* Transcript snippet */}
+                  <Text style={styles.entryTranscript} numberOfLines={2}>
+                    "{entry.transcript}"
+                  </Text>
+                  
+                  {/* Suggestions for this entry */}
+                  {entry.suggestions.map((suggestion, sugIndex) => (
+                    <View key={sugIndex} style={styles.suggestionCard}>
+                      <View style={styles.suggestionHeader}>
+                        <View style={styles.priorityBadge}><Text style={styles.priorityText}>#{suggestion.priority}</Text></View>
+                        <View style={styles.toneBadge}><Text style={styles.toneText}>{suggestion.tone}</Text></View>
+                      </View>
+                      <Text style={styles.suggestionText}>{suggestion.text}</Text>
+                      <View style={styles.suggestionActions}>
+                        <TouchableOpacity style={styles.actionButton} onPress={() => copyToClipboard(suggestion.text)}>
+                          <Ionicons name="copy-outline" size={18} color="#8B5CF6" />
+                          <Text style={styles.actionButtonText}>Copy</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.actionButton} onPress={() => saveSuggestion(suggestion)}>
+                          <Ionicons name="bookmark-outline" size={18} color="#10B981" />
+                          <Text style={[styles.actionButtonText, { color: '#10B981' }]}>Save</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ))}
                 </View>
               ))}
+              
+              {/* Loading indicator for new suggestions */}
+              {isLoading && (
+                <View style={styles.loadingMore}>
+                  <ActivityIndicator size="small" color="#8B5CF6" />
+                  <Text style={styles.loadingMoreText}>Getting new suggestions...</Text>
+                </View>
+              )}
             </View>
           ) : (
             <View style={styles.emptyState}>
@@ -1600,6 +1644,7 @@ export default function WhisprlyApp() {
                 <Text style={styles.instructionText}>1. Tap the mic to start listening</Text>
                 <Text style={styles.instructionText}>2. The app will hear your meeting</Text>
                 <Text style={styles.instructionText}>3. Get instant response suggestions</Text>
+                <Text style={styles.instructionText}>4. Scroll up to see previous answers</Text>
               </View>
             </View>
           )}
