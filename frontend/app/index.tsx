@@ -242,6 +242,11 @@ export default function WhisprlyApp() {
   const isPausedRef = useRef<boolean>(false);
   const lastActivityRef = useRef<number>(Date.now());
   const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  // Web Audio API refs (for browser support)
+  const webMediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const webAudioChunksRef = useRef<Blob[]>([]);
+  const webStreamRef = useRef<MediaStream | null>(null);
 
   // Load settings on mount
   useEffect(() => {
