@@ -239,7 +239,7 @@ export default function WhisprlyApp() {
   };
 
   const fetchSuggestions = async (text: string) => {
-    if (!text.trim() || text.length < 10) return;
+    if (!text.trim() || text.length < 5) return;
 
     setIsLoading(true);
     try {
