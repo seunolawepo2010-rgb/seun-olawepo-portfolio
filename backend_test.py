@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Whisprly v2.0 Backend API Test Suite
-Tests all backend endpoints for the conversation assistant app
+Whisprly Backend API Test Suite - Focus on New Features
+Tests the new features: preferences, summary generation, and session management
 """
 
 import requests
