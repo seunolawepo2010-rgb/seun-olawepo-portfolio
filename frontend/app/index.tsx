@@ -1563,6 +1563,7 @@ export default function WhisprlyApp() {
     case 'session': return renderSessionScreen();
     case 'history': return renderHistoryScreen();
     case 'sessionDetail': return renderSessionDetailScreen();
+    case 'summary': return renderSummaryScreen();
     default: return renderHomeScreen();
   }
 }
