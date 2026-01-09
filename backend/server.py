@@ -134,6 +134,43 @@ class StatusCheck(BaseModel):
 class StatusCheckCreate(BaseModel):
     client_name: str
 
+# ==================== New Models for Response Preferences ====================
+
+class ResponsePreferences(BaseModel):
+    tone: str = "neutral"  # confident, neutral, executive, friendly, concise
+    style: str = "direct"  # direct, explanation, followup, star
+    risk_level: str = "balanced"  # conservative, balanced, assertive
+    # Interview-specific settings
+    role_type: Optional[str] = None  # product_manager, engineer, grc, sales, etc.
+    seniority_level: Optional[str] = None  # ic, manager, director
+    preferred_frameworks: Optional[List[str]] = None
+
+class TranscriptInputWithPreferences(BaseModel):
+    transcript: str
+    mode: str = "general"
+    session_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    context: Optional[List[str]] = None
+    preferences: Optional[ResponsePreferences] = None
+
+class ActionItem(BaseModel):
+    task: str
+    owner: Optional[str] = None
+    due_date: Optional[str] = None
+
+class MeetingSummary(BaseModel):
+    summary_points: List[str]
+    action_items: List[ActionItem]
+    key_highlights: List[str]
+    mode: str
+    duration: int
+    generated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class GenerateSummaryInput(BaseModel):
+    session_id: str
+    full_transcript: str
+    mode: str
+    duration: int
+
 # ==================== System Prompts ====================
 
 MODE_PROMPTS = {
