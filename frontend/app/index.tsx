@@ -240,6 +240,10 @@ export default function WhisprlyApp() {
   const [meetingSummary, setMeetingSummary] = useState<MeetingSummary | null>(null);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [showInactivityPrompt, setShowInactivityPrompt] = useState(false);
+  
+  // Conversation history during active session
+  const [conversationHistory, setConversationHistory] = useState<ConversationEntry[]>([]);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // Refs
   const recordingRef = useRef<Audio.Recording | null>(null);
