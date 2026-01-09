@@ -612,19 +612,16 @@ export default function WhisprlyApp() {
     try {
       console.log('Transcribing audio from:', audioUri);
       
-      // Check if file exists first
-      const fileInfo = await FileSystem.getInfoAsync(audioUri);
-      console.log('File info:', JSON.stringify(fileInfo));
-      
-      if (!fileInfo.exists) {
-        console.log('Audio file does not exist:', audioUri);
+      // Read file as base64 directly (skip file exists check to avoid deprecated API)
+      let base64Audio: string;
+      try {
+        base64Audio = await FileSystem.readAsStringAsync(audioUri, {
+          encoding: 'base64',
+        });
+      } catch (readError) {
+        console.log('Failed to read audio file:', readError);
         return '';
       }
-      
-      // Read file as base64 using expo-file-system (proper React Native method)
-      const base64Audio = await FileSystem.readAsStringAsync(audioUri, {
-        encoding: 'base64',
-      });
       
       console.log('Base64 audio length:', base64Audio?.length || 0);
       
