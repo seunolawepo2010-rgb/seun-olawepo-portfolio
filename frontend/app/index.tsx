@@ -1783,4 +1783,6 @@ const styles = StyleSheet.create({
   doneButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
   headerCenter: { alignItems: 'center', flex: 1 },
   headerRight: { width: 60, alignItems: 'flex-end' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 },
+  headerTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '700' },
 });
