@@ -337,6 +337,153 @@ export default function WhisprlyApp() {
     }
   };
 
+  // Knowledge Base functions
+  const loadKnowledgeBase = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/knowledge?session_id=${sessionId || ''}`);
+      const data = await response.json();
+      setKnowledgeDocuments(data.documents || []);
+      setKnowledgeNotes(data.notes || []);
+    } catch (error) {
+      console.error('Failed to load knowledge base:', error);
+    }
+  };
+
+  const uploadDocument = async (storageType: 'persistent' | 'session' = 'persistent') => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: [
+          'application/pdf',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+          'text/plain',
+        ],
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return;
+      }
+
+      const file = result.assets[0];
+      
+      // Check file size (10MB limit)
+      if (file.size && file.size > 10 * 1024 * 1024) {
+        Alert.alert('File too large', 'Maximum file size is 10MB');
+        return;
+      }
+
+      setIsUploadingDoc(true);
+
+      // Read file and upload
+      const formData = new FormData();
+      formData.append('file', {
+        uri: file.uri,
+        type: file.mimeType || 'application/octet-stream',
+        name: file.name,
+      } as any);
+      formData.append('storage_type', storageType);
+      if (sessionId) {
+        formData.append('session_id', sessionId);
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/knowledge/document`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Upload failed');
+      }
+
+      showToastMessage('Document uploaded successfully!');
+      await loadKnowledgeBase();
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      Alert.alert('Upload Failed', error.message || 'Failed to upload document');
+    } finally {
+      setIsUploadingDoc(false);
+    }
+  };
+
+  const addNote = async () => {
+    if (!newNoteTitle.trim() || !newNoteContent.trim()) {
+      Alert.alert('Error', 'Please enter both title and content');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('title', newNoteTitle.trim());
+      formData.append('content', newNoteContent.trim());
+      formData.append('storage_type', newNoteStorageType);
+      if (sessionId) {
+        formData.append('session_id', sessionId);
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/knowledge/note`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add note');
+      }
+
+      setNewNoteTitle('');
+      setNewNoteContent('');
+      setShowAddNoteModal(false);
+      showToastMessage('Note added successfully!');
+      await loadKnowledgeBase();
+    } catch (error) {
+      console.error('Add note error:', error);
+      Alert.alert('Error', 'Failed to add note');
+    }
+  };
+
+  const deleteDocument = async (docId: string) => {
+    Alert.alert('Delete Document', 'Are you sure you want to delete this document?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await fetch(`${API_BASE_URL}/api/knowledge/document/${docId}`, { method: 'DELETE' });
+            showToastMessage('Document deleted');
+            await loadKnowledgeBase();
+          } catch (error) {
+            Alert.alert('Error', 'Failed to delete document');
+          }
+        },
+      },
+    ]);
+  };
+
+  const deleteNote = async (noteId: string) => {
+    Alert.alert('Delete Note', 'Are you sure you want to delete this note?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await fetch(`${API_BASE_URL}/api/knowledge/note/${noteId}`, { method: 'DELETE' });
+            showToastMessage('Note deleted');
+            await loadKnowledgeBase();
+          } catch (error) {
+            Alert.alert('Error', 'Failed to delete note');
+          }
+        },
+      },
+    ]);
+  };
+
   // Inactivity tracking
   const resetInactivityTimer = useCallback(() => {
     lastActivityRef.current = Date.now();
