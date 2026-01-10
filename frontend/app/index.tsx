@@ -1994,12 +1994,199 @@ export default function WhisprlyApp() {
     );
   };
 
+  // Render Knowledge Base Screen
+  const renderKnowledgeBaseScreen = () => (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => setCurrentScreen('home')} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerTitle}>Knowledge Base</Text>
+        </View>
+        <View style={styles.headerRight} />
+      </View>
+
+      <ScrollView style={styles.kbContent} contentContainerStyle={styles.kbContentContainer}>
+        {/* Documents Section */}
+        <View style={styles.kbSection}>
+          <View style={styles.kbSectionHeader}>
+            <View style={styles.kbSectionTitleRow}>
+              <Ionicons name="document-text-outline" size={22} color="#8B5CF6" />
+              <Text style={styles.kbSectionTitle}>Documents</Text>
+              <Text style={styles.kbCount}>{knowledgeDocuments.length}</Text>
+            </View>
+            <TouchableOpacity 
+              style={styles.kbAddButton} 
+              onPress={() => {
+                Alert.alert('Upload Document', 'Choose storage type:', [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Session Only', onPress: () => uploadDocument('session') },
+                  { text: 'Permanent', onPress: () => uploadDocument('persistent') },
+                ]);
+              }}
+              disabled={isUploadingDoc}
+            >
+              {isUploadingDoc ? (
+                <ActivityIndicator size="small" color="#8B5CF6" />
+              ) : (
+                <>
+                  <Ionicons name="add" size={18} color="#8B5CF6" />
+                  <Text style={styles.kbAddButtonText}>Add</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {knowledgeDocuments.length === 0 ? (
+            <View style={styles.kbEmpty}>
+              <Ionicons name="cloud-upload-outline" size={40} color="#4B5563" />
+              <Text style={styles.kbEmptyText}>No documents yet</Text>
+              <Text style={styles.kbEmptySubtext}>Upload PDF, Word, Excel, or PowerPoint</Text>
+            </View>
+          ) : (
+            knowledgeDocuments.map((doc) => (
+              <View key={doc.id} style={styles.kbItem}>
+                <View style={styles.kbItemIcon}>
+                  <Ionicons 
+                    name={
+                      doc.file_type === 'pdf' ? 'document' :
+                      doc.file_type === 'docx' ? 'document-text' :
+                      doc.file_type === 'xlsx' ? 'grid' :
+                      doc.file_type === 'pptx' ? 'easel' : 'document-outline'
+                    } 
+                    size={24} 
+                    color="#8B5CF6" 
+                  />
+                </View>
+                <View style={styles.kbItemContent}>
+                  <Text style={styles.kbItemName} numberOfLines={1}>{doc.name}</Text>
+                  <Text style={styles.kbItemMeta}>
+                    {doc.file_type.toUpperCase()} • {(doc.file_size / 1024).toFixed(1)}KB • {doc.storage_type === 'session' ? '📌 Session' : '💾 Saved'}
+                  </Text>
+                  <Text style={styles.kbItemPreview} numberOfLines={2}>{doc.content_preview}</Text>
+                </View>
+                <TouchableOpacity onPress={() => deleteDocument(doc.id)} style={styles.kbDeleteButton}>
+                  <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                </TouchableOpacity>
+              </View>
+            ))
+          )}
+        </View>
+
+        {/* Notes Section */}
+        <View style={styles.kbSection}>
+          <View style={styles.kbSectionHeader}>
+            <View style={styles.kbSectionTitleRow}>
+              <Ionicons name="create-outline" size={22} color="#10B981" />
+              <Text style={styles.kbSectionTitle}>Notes</Text>
+              <Text style={styles.kbCount}>{knowledgeNotes.length}</Text>
+            </View>
+            <TouchableOpacity style={styles.kbAddButton} onPress={() => setShowAddNoteModal(true)}>
+              <Ionicons name="add" size={18} color="#10B981" />
+              <Text style={[styles.kbAddButtonText, { color: '#10B981' }]}>Add</Text>
+            </TouchableOpacity>
+          </View>
+
+          {knowledgeNotes.length === 0 ? (
+            <View style={styles.kbEmpty}>
+              <Ionicons name="pencil-outline" size={40} color="#4B5563" />
+              <Text style={styles.kbEmptyText}>No notes yet</Text>
+              <Text style={styles.kbEmptySubtext}>Add notes for quick reference</Text>
+            </View>
+          ) : (
+            knowledgeNotes.map((note) => (
+              <View key={note.id} style={styles.kbItem}>
+                <View style={[styles.kbItemIcon, { backgroundColor: '#10B98120' }]}>
+                  <Ionicons name="document-text" size={24} color="#10B981" />
+                </View>
+                <View style={styles.kbItemContent}>
+                  <Text style={styles.kbItemName}>{note.title}</Text>
+                  <Text style={styles.kbItemMeta}>{note.storage_type === 'session' ? '📌 Session' : '💾 Saved'}</Text>
+                  <Text style={styles.kbItemPreview} numberOfLines={2}>{note.content_preview}</Text>
+                </View>
+                <TouchableOpacity onPress={() => deleteNote(note.id)} style={styles.kbDeleteButton}>
+                  <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                </TouchableOpacity>
+              </View>
+            ))
+          )}
+        </View>
+
+        {/* Info Box */}
+        <View style={styles.kbInfoBox}>
+          <Ionicons name="information-circle-outline" size={20} color="#6B7280" />
+          <Text style={styles.kbInfoText}>
+            Documents and notes are used by the AI to provide more accurate and contextual suggestions during your meetings and interviews.
+          </Text>
+        </View>
+      </ScrollView>
+
+      {/* Add Note Modal */}
+      <Modal visible={showAddNoteModal} transparent animationType="slide">
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
+          <View style={styles.addNoteModal}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Add Note</Text>
+              <TouchableOpacity onPress={() => setShowAddNoteModal(false)}>
+                <Ionicons name="close" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+
+            <TextInput
+              style={styles.noteInput}
+              placeholder="Note title"
+              placeholderTextColor="#6B7280"
+              value={newNoteTitle}
+              onChangeText={setNewNoteTitle}
+            />
+
+            <TextInput
+              style={[styles.noteInput, styles.noteContentInput]}
+              placeholder="Note content (e.g., key talking points, company info, product details)"
+              placeholderTextColor="#6B7280"
+              value={newNoteContent}
+              onChangeText={setNewNoteContent}
+              multiline
+              numberOfLines={6}
+              textAlignVertical="top"
+            />
+
+            <View style={styles.storageTypeRow}>
+              <Text style={styles.storageTypeLabel}>Storage:</Text>
+              <TouchableOpacity 
+                style={[styles.storageTypeOption, newNoteStorageType === 'persistent' && styles.storageTypeSelected]}
+                onPress={() => setNewNoteStorageType('persistent')}
+              >
+                <Text style={[styles.storageTypeText, newNoteStorageType === 'persistent' && styles.storageTypeTextSelected]}>💾 Permanent</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.storageTypeOption, newNoteStorageType === 'session' && styles.storageTypeSelected]}
+                onPress={() => setNewNoteStorageType('session')}
+              >
+                <Text style={[styles.storageTypeText, newNoteStorageType === 'session' && styles.storageTypeTextSelected]}>📌 Session</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity style={styles.saveNoteButton} onPress={addNote}>
+              <Text style={styles.saveNoteButtonText}>Save Note</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {renderToast()}
+    </SafeAreaView>
+  );
+
   // Main render
   switch (currentScreen) {
     case 'session': return renderSessionScreen();
     case 'history': return renderHistoryScreen();
     case 'sessionDetail': return renderSessionDetailScreen();
     case 'summary': return renderSummaryScreen();
+    case 'knowledge': return renderKnowledgeBaseScreen();
     default: return renderHomeScreen();
   }
 }
