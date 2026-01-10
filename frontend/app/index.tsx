@@ -2314,6 +2314,46 @@ const styles = StyleSheet.create({
   noteCard: { backgroundColor: '#1A1A24', borderRadius: 12, padding: 14, marginBottom: 8, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
   noteText: { color: '#D1D5DB', fontSize: 14, lineHeight: 20, flex: 1 },
 
+  // Knowledge Base Styles
+  kbContent: { flex: 1 },
+  kbContentContainer: { padding: 16 },
+  kbSection: { marginBottom: 24 },
+  kbSectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+  kbSectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  kbSectionTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '700' },
+  kbCount: { backgroundColor: '#2D2D3A', color: '#9CA3AF', fontSize: 12, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
+  kbAddButton: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#2D2D3A', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8 },
+  kbAddButtonText: { color: '#8B5CF6', fontSize: 14, fontWeight: '600' },
+  kbEmpty: { alignItems: 'center', padding: 32, backgroundColor: '#1A1A24', borderRadius: 12, borderWidth: 1, borderColor: '#2D2D3A', borderStyle: 'dashed' },
+  kbEmptyText: { color: '#6B7280', fontSize: 15, marginTop: 12 },
+  kbEmptySubtext: { color: '#4B5563', fontSize: 13, marginTop: 4 },
+  kbItem: { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: '#1A1A24', borderRadius: 12, padding: 12, marginBottom: 10 },
+  kbItemIcon: { width: 44, height: 44, borderRadius: 10, backgroundColor: '#8B5CF620', alignItems: 'center', justifyContent: 'center' },
+  kbItemContent: { flex: 1, marginLeft: 12 },
+  kbItemName: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
+  kbItemMeta: { color: '#6B7280', fontSize: 12, marginTop: 2 },
+  kbItemPreview: { color: '#9CA3AF', fontSize: 13, marginTop: 6, lineHeight: 18 },
+  kbDeleteButton: { padding: 8 },
+  kbInfoBox: { flexDirection: 'row', gap: 10, backgroundColor: '#1A1A24', borderRadius: 12, padding: 14, marginTop: 8 },
+  kbInfoText: { flex: 1, color: '#6B7280', fontSize: 13, lineHeight: 18 },
+  
+  // Add Note Modal
+  addNoteModal: { backgroundColor: '#1A1A2E', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, maxHeight: '80%' },
+  noteInput: { backgroundColor: '#2D2D3A', borderRadius: 12, padding: 14, color: '#FFFFFF', fontSize: 15, marginBottom: 12 },
+  noteContentInput: { minHeight: 150, textAlignVertical: 'top' },
+  storageTypeRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
+  storageTypeLabel: { color: '#9CA3AF', fontSize: 14 },
+  storageTypeOption: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 8, backgroundColor: '#2D2D3A' },
+  storageTypeSelected: { backgroundColor: '#8B5CF620', borderWidth: 1, borderColor: '#8B5CF6' },
+  storageTypeText: { color: '#9CA3AF', fontSize: 13 },
+  storageTypeTextSelected: { color: '#8B5CF6' },
+  saveNoteButton: { backgroundColor: '#10B981', paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
+  saveNoteButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
+  
+  // Knowledge Base Button in Settings
+  knowledgeBaseButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 12, paddingVertical: 14, borderRadius: 12, backgroundColor: '#10B98110', borderWidth: 1, borderColor: '#10B981' },
+  knowledgeBaseButtonText: { color: '#10B981', fontSize: 15, fontWeight: '600' },
+
   // Conversation History Styles
   conversationHistoryHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   historyCount: { color: '#6B7280', fontSize: 12 },
