@@ -1367,6 +1367,14 @@ export default function WhisprlyApp() {
             <Ionicons name="options-outline" size={20} color="#8B5CF6" />
             <Text style={styles.preferencesButtonText}>Response Preferences</Text>
           </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.knowledgeBaseButton} 
+            onPress={() => { setShowSettingsModal(false); setCurrentScreen('knowledge'); }}
+          >
+            <Ionicons name="library-outline" size={20} color="#10B981" />
+            <Text style={styles.knowledgeBaseButtonText}>Knowledge Base</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </Modal>
