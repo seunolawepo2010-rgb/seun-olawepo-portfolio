@@ -20,6 +20,7 @@ from PyPDF2 import PdfReader
 from docx import Document as DocxDocument
 from openpyxl import load_workbook
 from pptx import Presentation
+import xlrd  # For legacy .xls files
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
