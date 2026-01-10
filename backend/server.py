@@ -401,7 +401,9 @@ def extract_text_from_file(file_content: bytes, file_type: str) -> str:
         "pdf": extract_text_from_pdf,
         "docx": extract_text_from_docx,
         "xlsx": extract_text_from_xlsx,
+        "xls": extract_text_from_xls,
         "pptx": extract_text_from_pptx,
+        "ppt": extract_text_from_pptx,  # Try pptx extractor for ppt
         "txt": lambda x: x.decode("utf-8", errors="ignore")
     }
     extractor = extractors.get(file_type.lower())
