@@ -348,7 +348,7 @@ def extract_text_from_docx(file_content: bytes) -> str:
         return ""
 
 def extract_text_from_xlsx(file_content: bytes) -> str:
-    """Extract text from Excel file"""
+    """Extract text from Excel file (.xlsx)"""
     try:
         wb = load_workbook(io.BytesIO(file_content), data_only=True)
         text_parts = []
@@ -356,11 +356,28 @@ def extract_text_from_xlsx(file_content: bytes) -> str:
             text_parts.append(f"Sheet: {sheet.title}")
             for row in sheet.iter_rows(values_only=True):
                 row_text = " | ".join([str(cell) if cell is not None else "" for cell in row])
-                if row_text.strip():
+                if row_text.strip() and row_text.strip() != "|":
                     text_parts.append(row_text)
         return "\n".join(text_parts).strip()
     except Exception as e:
         logger.error(f"XLSX extraction error: {e}")
+        return ""
+
+def extract_text_from_xls(file_content: bytes) -> str:
+    """Extract text from legacy Excel file (.xls)"""
+    try:
+        wb = xlrd.open_workbook(file_contents=file_content)
+        text_parts = []
+        for sheet in wb.sheets():
+            text_parts.append(f"Sheet: {sheet.name}")
+            for row_idx in range(sheet.nrows):
+                row = sheet.row_values(row_idx)
+                row_text = " | ".join([str(cell) if cell else "" for cell in row])
+                if row_text.strip() and row_text.strip() != "|":
+                    text_parts.append(row_text)
+        return "\n".join(text_parts).strip()
+    except Exception as e:
+        logger.error(f"XLS extraction error: {e}")
         return ""
 
 def extract_text_from_pptx(file_content: bytes) -> str:
