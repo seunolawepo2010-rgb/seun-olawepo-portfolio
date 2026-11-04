@@ -11,15 +11,29 @@ function sessionId() {
   return s;
 }
 
-export const api = axios.create({ baseURL: `${BACKEND}/api`, withCredentials: true });
+export const api = axios.create({ baseURL: `${BACKEND}/api`, withCredentials: true, timeout: 45000 });
 api.interceptors.request.use((cfg) => {
   cfg.headers["X-Demo-Session"] = sessionId();
   return cfg;
 });
+api.interceptors.response.use(null, async (err) => {
+  const cfg = err.config;
+  const transient = !err.response || [502, 503, 504].includes(err.response.status);
+  if (cfg && cfg.method === "get" && transient && !cfg._retried) {
+    cfg._retried = true;
+    await new Promise((r) => { setTimeout(r, 1500); });
+    return api(cfg);
+  }
+  return Promise.reject(err);
+});
+
+const UNREACHABLE = "The demo service is temporarily unreachable. Please try again in a moment.";
 
 export function errMsg(e) {
+  if (!e?.response || [502, 503, 504].includes(e.response.status)) return UNREACHABLE;
+  if (e.response.status >= 500) return "Something went wrong on our side. Please try again.";
   const d = e?.response?.data?.detail;
-  if (d == null) return e?.message || "Something went wrong";
+  if (d == null) return "Something went wrong";
   if (typeof d === "string") return d;
   if (Array.isArray(d)) return d.map((x) => x?.msg || JSON.stringify(x)).join(" ");
   return d.msg || String(d);

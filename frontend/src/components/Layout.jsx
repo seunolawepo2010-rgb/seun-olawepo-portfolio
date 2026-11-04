@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
+import { ErrorBoundary } from "./ErrorBoundary";
 import { Menu, X, Download } from "lucide-react";
 import { api, download } from "../lib/api";
 
@@ -39,7 +40,7 @@ export default function Layout() {
           </nav>
         )}
       </header>
-      <main id="main"><Outlet /></main>
+      <main id="main"><ErrorBoundary resetKey={loc.pathname}><Outlet /></ErrorBoundary></main>
       <footer className="mt-20 bg-[#0B132B] text-slate-300">
         <div className="mx-auto grid max-w-7xl gap-8 px-5 py-12 sm:px-8 md:grid-cols-3">
           <div>
