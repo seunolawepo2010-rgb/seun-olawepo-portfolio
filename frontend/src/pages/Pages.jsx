@@ -189,7 +189,7 @@ export function Resume() {
   if (!c) return <Loading />;
   return (
     <div>
-      <PageHeader eyebrow="Resume" title="Resume">{c.has_resume ? "Download my latest uploaded resume." : "A PDF resume generated from the experience and skills on this site."}</PageHeader>
+      <PageHeader eyebrow="Resume" title="Resume">Download my professional resume (PDF).</PageHeader>
       <div className="mx-auto max-w-4xl px-5 py-12 sm:px-8">
         <button onClick={downloadResume} className="inline-flex items-center gap-2 rounded-md bg-teal-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-teal-800" data-testid="resume-download"><Download className="h-4 w-4" />Download Resume</button>
         <div className="mt-8 space-y-3">{c.experience.map((e) => <Card key={e.slug}><p className="font-heading text-sm font-semibold">{e.title} · {e.employer}</p><p className="font-mono text-xs text-slate-500">{e.start} – {e.end}</p></Card>)}</div>

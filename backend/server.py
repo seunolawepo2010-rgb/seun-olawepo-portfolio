@@ -93,18 +93,15 @@ async def content_bundle():
     return await bundle()
 
 
+RESUME_PDF = Path(__file__).parent / "assets" / "Seun_Olawepo_Professional_Resume.pdf"
+
+
 @api.get("/resume")
 async def resume():
     f = await db.files.find_one({"kind": "resume"}, P)
     if f:
         return Response(f["data"], media_type=f["content_type"], headers={"Content-Disposition": f'attachment; filename="{f["filename"]}"'})
-    b = await bundle()
-    pr = b["profile"]
-    secs = [("Summary", "text", pr["summary"]), ("Highlights", "text", "\n".join(f"{m['value']} {m['label']}" for m in pr["metrics"]))]
-    for e in b["experience"]:
-        secs.append((f"{e['title']} — {e['employer']} ({e['start']} – {e['end']})", "text", "\n".join(f"• {h}" for h in e["highlights"])))
-    secs.append(("Skills", "text", "\n".join(f"{c}: {', '.join(s['name'] for s in b['skills'] if s['category'] == c)}" for c in dict.fromkeys(s["category"] for s in b["skills"]))))
-    return pdf_response(build_pdf(pr["name"], pr["headline"], secs), "Seun_Olawepo_Resume.pdf")
+    return Response(RESUME_PDF.read_bytes(), media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="{RESUME_PDF.name}"', "Cache-Control": "no-cache"})
 
 
 class Contact(BaseModel):

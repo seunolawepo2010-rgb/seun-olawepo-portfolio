@@ -1,5 +1,9 @@
 from core import db, P, new_id, now
 
+D3_TEXT = ("D3 Command is a functional AI software platform I independently developed, bringing together AI agents, workflow automation, document processing, business intelligence, "
+           "and cybersecurity capabilities. My work includes AI feature development, product launches, model evaluation, agent workflows, API/token cost management, model latency, and product unit economics.")
+
+
 PROFILE = {
     "key": "profile", "name": "Seun Olawepo", "site_title": "Seun Olawepo | Enterprise Technology & AI Governance",
     "headline": "Senior Cybersecurity GRC & IT Risk Professional | ServiceNow IRM | AI Governance & AI Agent Management | Program & Agile Delivery",
@@ -9,7 +13,7 @@ PROFILE = {
                 {"value": "70+", "label": "Audit findings tracked"}, {"value": "6", "label": "Enterprise departments collaborated across"}],
     "github_url": "", "linkedin_url": "", "public_email": "", "location": "",
     "d3_command": {"title": "D3 Command | Independent AI Product Development",
-                   "description": "D3 Command is a functional AI software product I developed independently using Emergent. It is separate from my employment history and from this portfolio's fictional demonstrations.",
+                   "description": D3_TEXT,
                    "capabilities": ["AI agents", "Workflow automation", "Document processing", "Business intelligence", "Cybersecurity capabilities"],
                    "experience": ["AI/ML feature development", "AI feature launches", "Model evaluation", "AI agent workflows", "API/token cost considerations", "Model latency", "AI product unit economics", "Product iteration"],
                    "links": ["https://www.d3command.com", "https://app.d3command.com"]},
@@ -93,6 +97,8 @@ async def seed_content():
     prof = await db.content.find_one({"key": "profile"}, P)
     if not prof.get("ucf_added"):
         await db.content.update_one({"key": "profile"}, {"$set": {"summary": (prof.get("summary") or "") + "\n\n" + UCF_LINE, "ucf_added": True}})
+    if prof.get("d3_command") and not prof.get("d3_text_v2"):
+        await db.content.update_one({"key": "profile"}, {"$set": {"d3_command.description": D3_TEXT, "d3_text_v2": True}})
     slug, t, lab, ch, sc, ap, te, fw, dl = UCF_CASE
     await db.case_studies.update_one({"slug": slug}, {"$setOnInsert": {"id": slug, "slug": slug, "title": t, "lab": lab, "challenge": ch, "scope": sc, "approach": ap, "technology": te, "frameworks": fw,
                                      "deliverables": dl, "published": True, "order": -1, "evidence": "Interactive regulatory change records, synchronization executions and the downloadable impact report.",

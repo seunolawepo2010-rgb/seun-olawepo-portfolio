@@ -9,7 +9,7 @@ export const NAV = [
   ["/agents", "AI Agent Command Center"], ["/irm", "ServiceNow IRM"], ["/case-studies", "Projects & Case Studies"], ["/certifications", "Certifications & Education"], ["/resume", "Resume"], ["/contact", "Contact"],
 ];
 
-export const downloadResume = () => download("/resume", "Seun_Olawepo_Resume.pdf");
+export const downloadResume = () => download("/resume", "Seun_Olawepo_Professional_Resume.pdf");
 
 export default function Layout() {
   const [open, setOpen] = useState(false);
