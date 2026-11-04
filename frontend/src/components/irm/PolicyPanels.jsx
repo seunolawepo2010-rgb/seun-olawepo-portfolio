@@ -86,7 +86,7 @@ export function PolicyPanels({ rec, records, role, open, onDone }) {
 export function ChangePanel({ rec, records, role, open, onDone }) {
   const [busy, setBusy] = useState(false);
   const ids = new Set([...(rec.control_ids || []), ...(rec.policy_ids || []), ...(rec.revision_policy_ids || []), ...(rec.issue_ids || []), rec.impact_id, rec.requirement_id, rec.obligation_id]);
-  const linked = records.filter((r) => ids.has(r.id) || r.reg_change_id === rec.id);
+  const linked = records.filter((r) => ids.has(r.id) || r.reg_change_id === rec.id).map((r) => ({ ...r, title: label(r) }));
   const ai = rec.ai_analysis;
   const analyze = async () => {
     setBusy(true);

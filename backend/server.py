@@ -27,6 +27,7 @@ from content import seed_content, bundle, clean_item, CONTENT_FIELDS, PROFILE_FI
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 LABS = ["irm", "servicenow", "cyber", "audit", "vendor", "aigov", "agents", "pm", "safe", "ir", "grc"]
 INDEXES = {
+    "ucf_cron_runs": [IndexModel([("run_id", ASCENDING)], name="run_id", unique=True)],
     "records": [IndexModel([("session", ASCENDING), ("lab", ASCENDING), ("type", ASCENDING)], name="s_lab_type"), IndexModel([("session", ASCENDING), ("id", ASCENDING)], name="s_id")],
     "executions": [IndexModel([("id", ASCENDING)], name="id", unique=True), IndexModel([("session", ASCENDING), ("created_at", DESCENDING)], name="s_created")],
     "approvals": [IndexModel([("session", ASCENDING), ("status", ASCENDING)], name="s_status")],
@@ -213,7 +214,8 @@ async def lab_action(lab: str, name: str, request: Request, s=Depends(session_de
     if not isinstance(payload, dict):
         raise HTTPException(422, "Payload must be an object")
     result = await fn(s, payload)
-    await audit(s, f"action:{name}", lab)
+    if name not in ("meta", "ucf_dashboard"):
+        await audit(s, f"action:{name}", lab)
     return result
 
 

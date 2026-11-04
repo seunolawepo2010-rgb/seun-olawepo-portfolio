@@ -1,0 +1,38 @@
+{
+  "summary": "Tested the IRM navigation restructure, the policy-related sections, the UCF Regulatory Change Monitoring module (simulated feed), cron/admin endpoints and regressions, on both backend and frontend. Backend: 67/67 pytest pass (13 new UCF tests plus the existing suite). 2 existing assertions had to be updated because the new seeds (compliance_owner role, seeded AUP v3.0 revision policy) changed the counts. No app bugs were found. All requested UI flows passed: collapsible hierarchy, all 28 leaf nav items with breadcrumbs and filtered views, policy lifecycle with role switching and a 403 toast, policy related sections with campaign launch and exception request, UCF tabs, sync/no-change/failure/executive rejection, retry from Workflow Executions, the 20-step recruiter demo with PDF download, the reg change record view (AI run/review_ai/assess_impact/report), mobile nav at 390px, the home featured card, the admin UCF tab, and /tour. Only minor UX and code-quality items remain.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/cron/ucf-daily (ucf.scheduled_check)", "issue": "The idempotency check is find_one followed by insert_one, so 2 concurrent deliveries with the same x-webhook-id can both run. Sequential repeats were deduped correctly (verified in DB). Fix: add a unique index on ucf_cron_runs.run_id and insert first, catching DuplicateKeyError."},
+      {"endpoint": "ucf.st_retrieve", "issue": "db.ucf_feed.find(...).to_list(100) has no sort, so results are in arbitrary order with a hard cap of 100. Low impact."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Regulatory change record view (grc-record-view)", "issues": ["The field grid shows ai_analysis as a long raw JSON/text blob that repeats the formatted regchange-ai card. Add ai_analysis (and approval_history) to the HIDE set.", "In the regchange-linked table, control rows show '—' in the Title column because controls use 'name'. Fall back to r.name."]},
+      {"screen": "/irm desktop navigator", "issues": ["Clicking an item low in the long navigator (e.g. Audit History, Workflow Executions) keeps the current scroll position, so the user sees an empty area on the right. Scroll to the top of the content when the module changes."]},
+      {"screen": "Admin dashboard", "issues": ["The tab label shows 'Ucf'. It should be 'UCF'."]},
+      {"screen": "Audit History (fresh session)", "issues": ["Only shows 'action:meta' rows with detail '—'. The read-only meta calls clutter the audit log; consider not auditing them."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_ucf.py", "/app/backend/tests/test_grc_irm.py", "/app/backend/tests/test_portfolio_labs.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Optional: hide ai_analysis/approval_history from the generic field grid in RecordView",
+    "Optional: scroll the content to the top on nav change in GrcWorkspace",
+    "Optional: rename the admin tab label to 'UCF'",
+    "Optional: unique index on ucf_cron_runs.run_id for race-safe idempotency"
+  ],
+  "critical_code_review_comments": [
+    "scheduled_check idempotency is not atomic (see backend minor).",
+    "review_ai stays available after acceptance, so the AI review can be overwritten. Acceptable, but consider limiting it to a single review or keeping a review history.",
+    "a_assess (ucf) puts every mapped control into 'Needs Reassessment', but closing the issue only resets the issue's first control. Other controls need a manual assess_control pass before submit_for_validation can succeed. The demo handles this, but it can confuse manual users. The guard message lists the controls clearly."
+  ],
+  "updated_files": ["/app/backend/tests/test_ucf.py (new)", "/app/backend/tests/test_grc_irm.py (role count 11->12; reset test made relative to the seeded policy count)"],
+  "success_rate": {"backend": "100% (67/67)", "frontend": "100% of requested flows"},
+  "seed_data_creation": "None. Only per-session TEST- demo sessions were used. 1 TEST-cron-* entry in db.ucf_cron_runs was deleted after the test. The cron test added 1 'Scheduled daily check' sync_run to the shared monitor session, as allowed by the request.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Run: export REACT_APP_BACKEND_URL=$(grep REACT_APP_BACKEND_URL /app/frontend/.env | cut -d= -f2); pytest /app/backend/tests. test_ucf.py covers seeds, 12 KPIs, sync/no-change/executive reject, dedupe, failure+notification+retry, config/map roles, the full gap lifecycle (AI review, 403 for auditor on assess_impact, guard listing outstanding items, issue/task/policy closure, validate, PDF), no-gap retired path, public status, shared-session rejection, cron 401/200/idempotency, admin monitor. A fresh session has 8 seeded reg_changes and 4 policies. The AI agent runs in simulation mode (labeled). UI testids: grc-nav-*, grc-nav-group-*, ucf-tab-*, ucf-demo-run/step-N, ucf-table-changes-row-N, execution-N / execution-retry-<id>, form-grc-create-policy-*."
+}

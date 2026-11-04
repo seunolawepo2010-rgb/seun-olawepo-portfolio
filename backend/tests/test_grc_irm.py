@@ -57,7 +57,7 @@ def c():
 class TestMetaSeeds:
     def test_meta(self, c):
         m = act(c, "meta")
-        assert len(m["roles"]) == 11 and "employee" in m["roles"]
+        assert len(m["roles"]) == 12 and "employee" in m["roles"] and "compliance_owner" in m["roles"]
         assert set(m["transitions"]) >= {"policy", "campaign", "ack", "exception", "risk", "issue", "task"}
 
     def test_seeds(self, c):
@@ -273,12 +273,13 @@ class TestResetIsolation:
         a, b = sess(), sess()
         act(b, "create_policy", {"role": "policy_owner", **POL})
         nb = len(recs(b, "policy"))
+        base = len(recs(a, "policy"))
         act(a, "create_policy", {"role": "policy_owner", **POL})
-        assert len(recs(a, "policy")) == 4
+        assert len(recs(a, "policy")) == base + 1
         r = a.post(f"{API}/demo/reset")
         assert r.status_code == 200
-        assert len(recs(a, "policy")) == 3
-        assert len(recs(b, "policy")) == nb == 4
+        assert len(recs(a, "policy")) == base
+        assert len(recs(b, "policy")) == nb == base + 1
 
 
 class TestContent:

@@ -55,6 +55,14 @@ Recruiters, CISOs and CIOs, GRC hiring managers, ServiceNow technical managers, 
   - Seeded completed records, labeled as fictional.
 - 2026-11-04: Added 7 certifications (by category, linked to labs), education (2 degrees) and new frameworks: GDPR, CCPA, ISO/IEC 27701, NIST SP 800-171 and CMMC (also in the audit lab). Certificate upload is available in admin. 54/54 pytest pass (iteration_3).
 - Pending (user-ordered sequence): deploy (needs 50 ECU confirmation) → verify URL → custom domain (Emergent sells domains in Manage Publishes → Domain; SSL is included; manual DNS: A @ 162.159.142.117 and 172.66.2.113, CNAME www → apex) → user updates the resume → upload the resume in admin.
+- 2026-11-04: Restructured the IRM navigator into a collapsible enterprise hierarchy (`components/irm/IrmNav.jsx`, 28 leaf views). Policy records now show related Campaigns, Acknowledgments, Exceptions, Controls, Approval History and Regulatory Changes, with inline "Initiate campaign" and "Request exception" (`components/irm/PolicyPanels.jsx`). Added risk_assessment records, Control Objectives (derived), Acknowledgment Reports and Audit History.
+- 2026-11-04: UCF Regulatory Change Monitoring (`backend/ucf.py`, `pages/UcfModule.jsx`). Uses a SIMULATED feed only.
+  - Records: requirement inventory (14), obligations, feed notices, sync runs (5-step engine workflow, dedupe by ucf_ref@version, failures with retry), and the reg_change lifecycle Impact Assessment → Remediation/Validation → Closed.
+  - Automation: an identified gap creates an issue and a remediation task automatically; a policy revision draft is created when required.
+  - Analysis: AI Regulatory Change Analysis Agent (advisory; review_ai is the human review step).
+  - Output: 12-KPI dashboard, PDF impact report, and a 20-step recruiter demo.
+  - Scheduling: daily cron `.emergent/crons.yml` → POST /api/cron/ucf-daily (WEBHOOK_CRON_SECRET), which runs against the shared session `ucf-shared-monitor`. Visitors cannot use that session. Admin tab "UCF" shows the shared monitor.
+  - Content: a UCF experience line was added to the profile summary and a UCF case study was added; neither is tied to an employer. 67/67 pytest pass (iteration_4).
 
 ## Backlog
 - P1: Deploy to production and set a custom domain. Upload the real resume PDF, add verified certifications and the GitHub URL in admin.

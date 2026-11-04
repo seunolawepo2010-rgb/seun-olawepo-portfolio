@@ -169,7 +169,7 @@ export function Admin() {
       <div className="flex items-center justify-between"><h1 className="font-heading text-2xl font-bold">Administration</h1><button onClick={logout} className="inline-flex items-center gap-1 text-sm text-slate-600" data-testid="admin-logout"><LogOut className="h-4 w-4" />Sign out</button></div>
       <Tabs defaultValue="overview" className="mt-6">
         <TabsList className="flex h-auto flex-wrap justify-start">
-          {["overview", "profile", "experience", "skills", "certifications", "education", "case_studies", "articles", "messages", "resume", "ucf", "settings"].map((t) => <TabsTrigger key={t} value={t} data-testid={`admin-tab-${t}`} className="capitalize">{t.replace("_", " ")}{t === "messages" && ov?.messages_unread ? ` (${ov.messages_unread})` : ""}</TabsTrigger>)}
+          {["overview", "profile", "experience", "skills", "certifications", "education", "case_studies", "articles", "messages", "resume", "ucf", "settings"].map((t) => <TabsTrigger key={t} value={t} data-testid={`admin-tab-${t}`} className="capitalize">{t === "ucf" ? "UCF" : t.replace("_", " ")}{t === "messages" && ov?.messages_unread ? ` (${ov.messages_unread})` : ""}</TabsTrigger>)}
         </TabsList>
         <TabsContent value="overview" className="mt-5 space-y-4">
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{[["Demo sessions", ov.sessions], ["Workflow executions", ov.executions], ["Unread messages", ov.messages_unread], ["Live AI calls today", ov.ai_calls_today]].map(([l, v]) => <Card key={l}><p className="font-mono text-[10px] uppercase text-slate-500">{l}</p><p className="font-heading text-2xl font-bold">{v}</p></Card>)}</div>

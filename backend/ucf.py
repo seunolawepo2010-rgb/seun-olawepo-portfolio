@@ -92,7 +92,7 @@ async def st_connect(s, ctx):
 
 async def st_retrieve(s, ctx):
     cutoff = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
-    g = await db.ucf_feed.find({"published_at": {"$gte": cutoff}}, P).to_list(100)
+    g = await db.ucf_feed.find({"published_at": {"$gte": cutoff}}, P).sort("published_at", 1).to_list(500)
     loc = await find(s, LAB, "feed_notice", state="Pending")
     ctx["notices"] = [{k: n.get(k) for k in NOTICE_KEYS} for n in g] + [{**{k: n.get(k) for k in NOTICE_KEYS}, "record_id": n["id"]} for n in loc]
     return {"shared_feed_notices": len(g), "session_notices": len(loc)}
@@ -383,9 +383,11 @@ async def change_report(s, rid):
 
 # ---------- scheduled daily check (shared monitor; visitor sessions are never modified) ----------
 async def scheduled_check(run_id):
-    if await db.ucf_cron_runs.find_one({"run_id": run_id}):
+    from pymongo.errors import DuplicateKeyError
+    try:
+        await db.ucf_cron_runs.insert_one({"run_id": run_id, "at": now(), "status": "running"})
+    except DuplicateKeyError:
         return
-    await db.ucf_cron_runs.insert_one({"run_id": run_id, "at": now(), "status": "running"})
     try:
         from seed_labs import ensure_seeded
         pub = None

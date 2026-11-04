@@ -32,7 +32,7 @@ const VIEWS = {
 const FORMS = { "pol-new": "policy", "exc-new": "exception" };
 const TYPE_VIEW = { policy: "pol-all", campaign: "camp", ack: "ack", exception: "exc-all", control: "control", assessment: "assessment", risk: "risk", risk_assessment: "risk_assessment", issue: "issue", task: "task", notification: "notification" };
 const ROLE_LABEL = (r) => r.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()).replace("Grc", "GRC");
-const HIDE = new Set(["session", "lab", "type", "history", "id", "updated_at"]);
+const HIDE = new Set(["session", "lab", "type", "history", "id", "updated_at", "ai_analysis", "approval_history"]);
 const LINKS = ["policy_id", "control_id", "issue_id", "campaign_id", "risk_id", "assessment_id", "reg_change_id", "requirement_id", "obligation_id", "impact_id"];
 const LISTS = ["control_ids", "policy_ids", "revision_policy_ids", "issue_ids"];
 const linked = (a, b) => LINKS.some((k) => a[k] === b.id) || LISTS.some((k) => (a[k] || []).includes(b.id));
@@ -85,7 +85,7 @@ function RecordView({ rec, records, meta, role, onDone, open }) {
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-heading text-lg font-bold">{rec.number} · {rec.title || rec.name || rec.statement || rec.employee || rec.subject}</h3><Badge testid="grc-record-state">{rec.state || "—"}</Badge></div>
         {rec.seeded && <p className="mt-1 text-[11px] text-amber-700">Fictional seeded demonstration record</p>}
-        <dl className="mt-4 grid gap-x-6 gap-y-2 text-xs sm:grid-cols-2 lg:grid-cols-3">{Object.entries(rec).filter(([k]) => !HIDE.has(k) && !k.endsWith("_id")).map(([k, v]) => <div key={k}><dt className="font-mono text-[10px] uppercase text-slate-500">{k.replace(/_/g, " ")}</dt><dd className="whitespace-pre-wrap text-slate-800">{fmt(v)}</dd></div>)}</dl>
+        <dl className="mt-4 grid gap-x-6 gap-y-2 text-xs sm:grid-cols-2 lg:grid-cols-3">{Object.entries(rec).filter(([k]) => !HIDE.has(k) && !k.endsWith("_id") && !k.endsWith("_ids")).map(([k, v]) => <div key={k}><dt className="font-mono text-[10px] uppercase text-slate-500">{k.replace(/_/g, " ")}</dt><dd className="whitespace-pre-wrap text-slate-800">{fmt(v)}</dd></div>)}</dl>
       </Card>
       {rec.type === "policy" && <PolicyPanels rec={rec} records={records} role={role} open={open} onDone={onDone} />}
       {rec.type === "reg_change" && <ChangePanel rec={rec} records={records} role={role} open={open} onDone={onDone} />}
@@ -190,7 +190,7 @@ export default function GrcWorkspace() {
   const rows = useMemo(() => (vw ? records.filter((r) => r.type === vw.type && (!vw.filter || vw.filter(r)) && JSON.stringify(r).toLowerCase().includes(q.toLowerCase())).reverse() : []), [records, vw, q]);
   const current = sel && records.find((r) => r.id === sel);
   const open = (r) => { setMod(TYPE_VIEW[r.type] || "ucf"); setSel(r.id); setQ(""); };
-  const go = (k) => { setMod(k); setSel(null); setQ(""); };
+  const go = (k) => { setMod(k); setSel(null); setQ(""); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const title = navLabel(mod);
   if (!meta) return <div className="p-10 text-sm text-slate-500">Loading workspace…</div>;
   return (
