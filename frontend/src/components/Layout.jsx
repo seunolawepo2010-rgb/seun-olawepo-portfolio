@@ -26,7 +26,7 @@ export default function Layout() {
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-3 sm:px-8">
           <Link to="/" className="flex items-center gap-2" data-testid="brand-link">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded bg-[#0B132B] font-heading text-xs font-extrabold text-teal-300">SO</span>
-            <span className="leading-tight"><span className="block font-heading text-sm font-bold">Seun Olawepo</span><span className="block text-[11px] text-slate-500">Enterprise Technology & AI Governance</span></span>
+            <span className="leading-tight"><span className="block whitespace-nowrap font-heading text-sm font-bold">Seun Olawepo</span><span className="hidden whitespace-nowrap text-[11px] text-slate-500 2xl:block">Enterprise Technology & AI Governance</span></span>
           </Link>
           <nav className="hidden items-center gap-0.5 xl:flex" aria-label="Main">
             {NAV.slice(1).map(([to, l]) => <NavLink key={to} to={to} className={link} data-testid={`nav-${to.slice(1)}`}>{l}</NavLink>)}

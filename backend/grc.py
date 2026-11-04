@@ -151,6 +151,11 @@ async def g_issue_validate(s, r, d):
 
 async def a_issue_validate(s, r, d):
     r = await get(s, r["id"])
+    if r["state"] == "Remediation in Progress":
+        t = await new(s, "task", "auditor", f"Rework task created after failed validation of {r['number']}", issue_id=r["id"], issue=r["number"], title=f"Rework: {r['title']}",
+                      assignment_group="GRC Remediation", assigned_to=None, priority="2 - High", sla_due=in_days(14), due_date=in_days(14), action_plan="Address validation gaps", evidence=[], state="Open")
+        await notify(s, "Issue Owner", f"Validation failed for {r['number']}; rework task {t['number']} created", t)
+        return
     if r["state"] != "Closed":
         return
     if r.get("control_id"):
@@ -256,8 +261,9 @@ async def a_transition(s, p):
     rec = await log(s, rec, role, "state", f"{rec['state']} → {target} ({p['act']}){note}", state=target, **fields)
     if after:
         await after(s, rec, d)
-    await audit(s, f"grc.{rec['type']}.{p['act']}", LAB, {"record": rec["number"], "to": target, "role": role})
-    return {"record": await get(s, rec["id"]), "message": f"{rec['number']} → {target}"}
+    rec = await get(s, rec["id"])
+    await audit(s, f"grc.{rec['type']}.{p['act']}", LAB, {"record": rec["number"], "to": rec["state"], "role": role})
+    return {"record": rec, "message": f"{rec['number']} → {rec['state']}"}
 
 
 @action(LAB, "work_note")

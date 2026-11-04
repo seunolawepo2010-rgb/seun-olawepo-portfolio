@@ -385,6 +385,8 @@ async def admin_update(coll: str, iid: str, payload: dict, u=Depends(get_admin))
 async def admin_delete(coll: str, iid: str, u=Depends(get_admin)):
     coll_check(coll)
     await db[coll].delete_one({"id": iid})
+    if coll == "certifications":
+        await db.files.delete_one({"kind": f"cert:{iid}"})
     await audit("admin", f"content.{coll}.delete", "admin", {"id": iid}, u["email"])
     return {"ok": True}
 

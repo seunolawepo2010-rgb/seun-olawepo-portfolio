@@ -1,5 +1,5 @@
 from core import upd, in_days
-from grc import new, H, LAB, EMPLOYEES
+from grc import new, H, LAB, EMPLOYEES, notify
 
 SEED = "Fictional seeded demonstration record"
 
@@ -27,7 +27,8 @@ async def seed_grc(s):
     aup = await mk(s, "policy", life(-60, ["Draft", "Review", "Approved", "Published"], ["policy_owner", "approver", "policy_owner"]), title="Acceptable Use Policy", version="2.1", category="Workforce", owner="Policy Owner (fictional)",
                    regulations=["ISO 27001", "SOC 2"], control_objectives=["Acceptable use"], reviewers=["Policy Reviewer (fictional)"], approval_group="HR & Security", state="Published", reviewed=True, effective_date=in_days(-51), review_date=in_days(314))
     await mk(s, "policy", life(-400, ["Draft", "Review", "Approved", "Published", "Retired"], ["policy_owner", "approver", "policy_owner", "policy_owner"]), title="Legacy Remote Access Standard", version="1.4", category="Network",
-             owner="Policy Owner (fictional)", regulations=["NIST SP 800-53"], control_objectives=[], reviewers=["Policy Reviewer (fictional)"], approval_group="Network Governance", state="Retired", reviewed=True)
+             owner="Policy Owner (fictional)", regulations=["NIST SP 800-53"], control_objectives=[], reviewers=["Policy Reviewer (fictional)"], approval_group="Network Governance", state="Retired", reviewed=True,
+             effective_date=in_days(-391), retired_at=in_days(-200), superseded_by="Zero Trust Access Standard (fictional)")
     ctl = []
     for name, ref, st in [("Account management", "AC-2", "Effective"), ("Multi-factor authentication", "IA-2", "Effective"), ("Change control", "CM-3", "Not Assessed"), ("Backup & recovery", "CP-9", "Ineffective")]:
         ctl.append(await mk(s, "control", [(-130, "system", "created", "")], name=name, ref=ref, policy_id=isp["id"], policy=isp["number"], owner="Control Owner (fictional)", state=st))
@@ -59,6 +60,8 @@ async def seed_grc(s):
         path = ["Requested", "Review", st] if st != "Closed" else ["Requested", "Review", "Active", "Closed"]
         await mk(s, "exception", life(-100, path, ["risk_analyst", "approver", "policy_owner"]), policy_id=isp["id"], policy=isp["number"], control=ctl[1]["number"], department="IT" if st != "Rejected" else "Executive Office",
                  justification=just, compensating_controls="Enhanced monitoring", owner="Department lead (fictional)", approver="CISO (fictional)", duration_days=120, state=st, **extra)
+    await notify(s, "Issue Owner", f"{opn['number']} remediation is past due", opn, days=-2)
+    await notify(s, "Policy Reviewer (fictional)", f"Annual review due for {isp['number']}", isp, days=-1)
     for state, policy, due, groups, acked in [("Closed", isp, in_days(-100), ["Finance", "IT"], 5), ("Active", aup, in_days(-1), ["HR", "Operations", "Finance"], 3)]:
         c = await mk(s, "campaign", life(-110 if state == "Closed" else -20, ["Draft", "Active"] + (["Closed"] if state == "Closed" else []), ["grc_admin", "grc_admin"]), policy_id=policy["id"], policy=policy["number"],
                      title=f"Acknowledge {policy['title']}", groups=groups, start_date=in_days(-110 if state == "Closed" else -20), due_date=due, reminder_days=3, state=state)

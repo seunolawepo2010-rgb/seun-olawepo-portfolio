@@ -9,7 +9,7 @@ import { Badge, Card, Kpi, PageHeader, SimNotice, Eyebrow } from "../components/
 import { resetDemo } from "./LabPage";
 
 const DEMO_KEYS = new Set(["xlab_control_failure", "vendor_onboarding", "ai_registration", "project_delay", "art_dependency_conflict", "critical_incident", "agent_control_issue", "agent_grc_assessment"]);
-const labLink = (k) => (k === "agents" ? "/agents" : `/lab/${k}`);
+const labLink = (k) => (k === "agents" ? "/agents" : k === "grc" ? "/irm" : `/lab/${k}`);
 
 export function Automation() {
   const [cat, setCat] = useState([]);

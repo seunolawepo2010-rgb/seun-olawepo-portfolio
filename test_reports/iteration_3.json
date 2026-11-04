@@ -1,0 +1,48 @@
+{
+  "summary": "Iteration 3: tested the new ServiceNow IRM-style GRC lab end to end, plus content and regression. Backend: wrote a new pytest file, test_grc_irm.py, with 18 tests. They cover the policy lifecycle (skip-state 409, wrong-role 403, review-before-approve 409, required comment 422, versioning, retire blocked by an Active campaign), campaigns (Published policy required, 6 ack tasks and notifications, employee plus matching employee guard, completion_pct, close storing final_completion_pct and marking the rest Not Completed, monitoring setting Overdue, reminder #1 and #2 with escalation), exceptions (assess before approve, expires date, reject needs a comment, renewal, close needs closure_evidence), risk (residual 16 routed automatically to Treatment, treat, approve to Monitoring or Accepted, close blocked by an open issue), a failed assess_control auto-creating a linked issue, issue to remediation task, submit blocked without evidence, auditor fail sending the task back to Work in Progress, issue validate blocked until tasks are Closed, closure setting the control Effective and lowering the residual, reset isolation between sessions, PDF/CSV reports, certs, education and skills content, audit engagements with CMMC/GDPR, admin education CRUD and certificate upload. Full suite: 54/54 pass, including the existing test_portfolio_labs.py. Frontend: on /irm the E2E scenario completed all 17 steps with checkmarks and downloaded irm-governance-report.pdf. Also verified role switcher (11 roles), navigator and lists for all 10 modules, filter, record view, backend 403/409 messages surfacing as toasts, transitions, work note, related list navigation, evidence attach, validate fail, wrong-employee ack guard, dashboard campaign metrics, run monitoring, Reset Demo (confirm dialog), mobile layout. Also checked /certifications (7 certs in 3 categories plus 2 degrees), home-certifications, About education, admin education tab and 7 certificate upload inputs, and regression pages /lab/irm, /lab/safe, /agents, /tour, /lab, /automation, /lab/audit. Found and fixed one crash: /expertise threw 'Cannot read properties of undefined (reading short)'.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "DELETE /api/admin/content/certifications/{id}", "issue": "Does not delete the uploaded file (db.files kind=cert:{id}), so an orphan file stays reachable at GET /api/certifications/{id}/file. I removed the orphan my test created by its exact kind."},
+      {"endpoint": "POST /api/labs/grc/actions/transition (risk assess)", "issue": "The response message reads 'RSK… → Assessed' even when the threshold workflow has already moved the record to Treatment. The returned record is correct; only the message is stale because it is built before the after-hook runs. The E2E step 11 text in the UI shows 'Assessed' for the same reason."},
+      {"endpoint": "issue.validate with decision=fail", "issue": "Sends the issue back to 'Remediation in Progress', but all its tasks are already Closed, the only way to add a task is the issue 'assign' (Analysis only), and a_task_close moves the issue to Validation only when a task closes. The issue can then only be re-validated as-is, so re-remediation is effectively a dead loop."},
+      {"endpoint": "grc_seed", "issue": "The Retired policy 'Legacy Remote Access Standard' has no effective_date or retired date, and the seed has no notifications (the Notifications list is empty on a fresh session until an action runs)."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Expertise page (Pages.jsx line 97)", "issue": "FIXED BY TESTER: the page crashed because the 'grc' lab key used by the Privacy Compliance and Cybersecurity skill groups has no entry in labByKey. I added optional chaining, a fallback label 'ServiceNow IRM workspace', and changed labLink so 'grc' points to /irm in Pages.jsx and Automation.jsx (it previously pointed to /lab/grc). Skill badges for grc now go to /irm.", "selector": "[data-testid=skills-directory]", "priority": "CRITICAL (fixed)"},
+      {"component": "GrcWorkspace list filter", "issue": "The filter text (q state) carries over when you switch modules, e.g. 'Pending' typed in Acknowledgments makes Notifications show 0 rows. Reset q in the navigator onClick.", "selector": "[data-testid=grc-list-filter]", "priority": "MEDIUM"},
+      {"component": "GrcWorkspace create forms", "issue": "The ActionForm key includes role, so changing 'Acting as' wipes any values the user typed (e.g. a custom title) back to the defaults.", "selector": "[data-testid=form-grc-create-policy-submit]", "priority": "LOW"},
+      {"component": "Audit lab create_engagement form (lib/labs.js line 106)", "issue": "The Framework select and the tools list do not include the new frameworks (ISO/IEC 27701, NIST SP 800-171, CMMC, GDPR, CCPA). The backend accepts them, but users cannot pick them in the UI.", "selector": "lab audit framework select", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Global header (desktop 1920)", "issues": ["The nav is crowded, so the brand block 'Seun Olawepo / Enterprise Technology & AI Governance' wraps onto 5 narrow lines", "Toasts at top-right cover the right end of the nav (Certifications/Resume/Contact)"]},
+      {"screen": "Certifications cards / Home certifications", "issues": ["The CRISC card shows two near-identical links, 'ServiceNow IRM' (/lab/irm) and 'ServiceNow IRM workspace' (/irm). Rename one or drop the duplicate."]},
+      {"screen": "Short pages (admin, etc.)", "issues": ["The footer is not pinned to the bottom; on short pages, empty background shows below it at 1080 height"]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_grc_irm.py", "/app/backend/tests/test_portfolio_labs.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Reset the GrcWorkspace filter (setQ('')) when switching navigator modules",
+    "Add ISO/IEC 27701, NIST SP 800-171, CMMC, GDPR, CCPA to the audit lab framework select in lib/labs.js",
+    "Delete db.files cert:{id} when a certification is deleted",
+    "Build the transition message from the final record state, or append the routed state, so a risk assessed over the threshold reports Treatment",
+    "Decide on the issue validate=fail path: let the auditor or issue owner add a new remediation task, or reopen one",
+    "Optional: dedupe the CRISC lab links, and keep form values when the role changes"
+  ],
+  "critical_code_review_comments": [
+    "The role comes from the request body (client-chosen) and is not tied to an identity. That is acceptable for a demo; the UI states it is a simulation.",
+    "labByKey lookups without optional chaining break when a lab key ('grc') is not in the LABS catalog; check other places that index labByKey[k].",
+    "T transition table: exception 'close' and other effects use lambda + _ret wrappers. They work, but named functions would read better.",
+    "grc.py has 446 lines and GrcWorkspace.jsx has 187, both within limits."
+  ],
+  "updated_files": ["/app/backend/tests/test_grc_irm.py", "/app/frontend/src/pages/Pages.jsx", "/app/frontend/src/pages/Automation.jsx"],
+  "success_rate": {"backend": "100% (54/54)", "frontend": "~92% (Expertise crash fixed; filter persistence and audit framework select open)"},
+  "seed_data_creation": "No seed data changed. All GRC records were created in isolated TEST-* demo sessions. Admin TEST_ education and certification records were deleted by id, and the orphan cert file I created was removed by its exact kind.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "GRC lab tests are in /app/backend/tests/test_grc_irm.py; run the whole suite with pytest /app/backend/tests (pytest.ini uses xdist). The container clock is Nov 2026, so seeded relative dates look future-dated but are correct. The seeded active campaign ACM0001002 is past due, so run_monitoring produces reminders. The /irm E2E scenario passes 17/17. Next run, retest the filter reset, the audit framework select, and orphan cert file cleanup.",
+  "test_credentials": "Admin from /app/memory/test_credentials.md works (seunolawepo2010@gmail.com)."
+}

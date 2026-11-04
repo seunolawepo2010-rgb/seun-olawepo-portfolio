@@ -162,7 +162,7 @@ export default function GrcWorkspace() {
       <div className="mx-auto grid max-w-[1400px] gap-5 px-5 py-6 sm:px-8 lg:grid-cols-[230px_1fr]">
         <nav className="h-fit rounded-lg border border-slate-200 bg-white p-2 lg:sticky lg:top-20" data-testid="grc-navigator" aria-label="Application navigator">
           <p className="px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-slate-500">Application navigator</p>
-          {nav.map(([k, l]) => <button key={k} onClick={() => { setMod(k); setSel(null); }} className={`block w-full rounded px-2 py-1.5 text-left text-xs ${mod === k ? "bg-teal-50 font-semibold text-teal-800" : "text-slate-700 hover:bg-slate-50"}`} data-testid={`grc-nav-${k}`}>{l}{m && k === mod ? ` (${rows.length})` : ""}</button>)}
+          {nav.map(([k, l]) => <button key={k} onClick={() => { setMod(k); setSel(null); setQ(""); }} className={`block w-full rounded px-2 py-1.5 text-left text-xs ${mod === k ? "bg-teal-50 font-semibold text-teal-800" : "text-slate-700 hover:bg-slate-50"}`} data-testid={`grc-nav-${k}`}>{l}{m && k === mod ? ` (${rows.length})` : ""}</button>)}
         </nav>
         <div className="min-w-0 space-y-4">
           <SimNotice>Independent ServiceNow-style simulation (not an official ServiceNow product). Role permissions are enforced by the backend. Seeded records are fictional demonstration data.</SimNotice>
@@ -171,7 +171,7 @@ export default function GrcWorkspace() {
           {mod === "automation" && <><Card><Approvals approvals={approvals.filter((a) => a.lab === "grc")} onDone={refresh} /></Card><ExecutionList executions={exes} onChanged={refresh} /></>}
           {m && !current && (
             <>
-              {CREATE[mod] && <ActionForm key={role + mod} lab="grc" form={CREATE[mod]} records={records} onDone={refresh} extra={{ role }} />}
+              {CREATE[mod] && <ActionForm key={mod} lab="grc" form={CREATE[mod]} records={records} onDone={refresh} extra={{ role }} />}
               <div className="overflow-hidden rounded-lg border border-slate-200 bg-white" data-testid={`grc-list-${mod}`}>
                 <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-3 py-2"><h3 className="font-heading text-sm font-semibold">{m[1]}</h3><div className="relative"><Search className="absolute left-2 top-1.5 h-3.5 w-3.5 text-slate-400" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter" className="rounded border border-slate-300 py-1 pl-7 pr-2 text-xs" data-testid="grc-list-filter" /></div></div>
                 <div className="max-h-[520px] overflow-auto"><table className="w-full text-xs"><thead className="sticky top-0 bg-slate-50"><tr>{m[2].map((c) => <th key={c} className="px-3 py-2 text-left text-[10px] uppercase tracking-wider text-slate-500">{c.replace(/_/g, " ")}</th>)}</tr></thead>

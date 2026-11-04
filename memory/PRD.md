@@ -45,6 +45,16 @@ Recruiters, CISOs and CIOs, GRC hiring managers, ServiceNow technical managers, 
 - SEO metadata, Open Graph tags, sitemap and robots.txt.
 - Testing: 36 backend pytest cases pass (`backend/tests`), and the frontend passed E2E testing (iteration_1).
 - 2026-11-04: Recruiter Tour Mode at /tour. A one-click 9-step tour covering IRM, AI agents and SAFe PI Planning that makes real backend calls, with progress, step lock and re-run reset. Linked from the Home hero, /lab and /demo. Passed testing (iteration_2).
+- 2026-11-04: Enterprise ServiceNow IRM workspace at /irm (lab key "grc", files `grc.py` and `grc_seed.py`). It covers 11 roles with permissions enforced in the backend through the state-machine table T. It includes:
+  - Policy lifecycle: Draft → Review → Approved → Published → Retired, plus versioning.
+  - Acknowledgment campaigns: tasks, in-app notifications, reminders and escalation, and a close step that produces the completion report.
+  - Exceptions: Requested → Review (after risk assessment) → Active or Rejected → Expired or Closed, plus renewal.
+  - Risks: questionnaire scoring and threshold routing to Treatment, then approval and Monitoring or Accepted, then Closed.
+  - Failed control assessment → Issue → Remediation task. Evidence is required, auditor validation is required, a failed validation creates a rework task, and closing the issue makes the control Effective and updates the risk residual.
+  - Linked records, activity stream, work notes, attachment metadata, a scheduled monitoring workflow, a 17-step end-to-end scenario, and governance PDF/CSV reports.
+  - Seeded completed records, labeled as fictional.
+- 2026-11-04: Added 7 certifications (by category, linked to labs), education (2 degrees) and new frameworks: GDPR, CCPA, ISO/IEC 27701, NIST SP 800-171 and CMMC (also in the audit lab). Certificate upload is available in admin. 54/54 pytest pass (iteration_3).
+- Pending (user-ordered sequence): deploy (needs 50 ECU confirmation) → verify URL → custom domain (Emergent sells domains in Manage Publishes → Domain; SSL is included; manual DNS: A @ 162.159.142.117 and 172.66.2.113, CNAME www → apex) → user updates the resume → upload the resume in admin.
 
 ## Backlog
 - P1: Deploy to production and set a custom domain. Upload the real resume PDF, add verified certifications and the GitHub URL in admin.

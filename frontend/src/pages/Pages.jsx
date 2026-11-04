@@ -8,7 +8,7 @@ import { ContactForm } from "../components/ContactForm";
 import { Badge, Card, Eyebrow, PageHeader } from "../components/kit";
 
 const Loading = () => <div className="p-10 text-sm text-slate-500">Loading…</div>;
-const labLink = (k) => (k === "agents" ? "/agents" : `/lab/${k}`);
+const labLink = (k) => (k === "agents" ? "/agents" : k === "grc" ? "/irm" : `/lab/${k}`);
 
 export function About() {
   const c = useContent();
@@ -94,7 +94,7 @@ export function Expertise() {
                 <h2 className="font-heading text-base font-semibold">{cat}</h2>
                 <div className="mt-3 flex flex-wrap gap-1.5">{skills.map((s) => <Link key={s.id} to={labLink(s.labs[0])}><Badge tone="teal">{s.name}</Badge></Link>)}</div>
                 <p className="mt-4 font-mono text-[11px] uppercase tracking-wider text-slate-500">Demonstrated in</p>
-                <div className="mt-1 flex flex-wrap gap-2 text-xs">{labs.map((k) => <Link key={k} to={labLink(k)} className="text-teal-700 underline">{labByKey[k].short}</Link>)}</div>
+                <div className="mt-1 flex flex-wrap gap-2 text-xs">{labs.map((k) => <Link key={k} to={labLink(k)} className="text-teal-700 underline">{labByKey[k]?.short || (k === "grc" ? "ServiceNow IRM workspace" : k)}</Link>)}</div>
                 <p className="mt-3 font-mono text-[11px] uppercase tracking-wider text-slate-500">Related experience</p>
                 <div className="mt-1 flex flex-wrap gap-2 text-xs">{exp.map((e) => <Link key={e.slug} to={`/experience/${e.slug}`} className="text-slate-700 underline">{e.employer}</Link>)}</div>
               </Card>
@@ -153,7 +153,7 @@ export function CredentialGrid({ certs, files = [] }) {
                 {x.status && <p className="mt-2"><Badge tone="muted">{x.status}</Badge></p>}
                 <div className="mt-3 flex flex-wrap gap-2 text-xs">
                   {(x.labs || []).map((k) => labByKey[k] && <Link key={k} to={k === "grc" ? "/irm" : labLink(k)} className="text-teal-700 underline">{k === "grc" ? "ServiceNow IRM" : labByKey[k].short}</Link>)}
-                  {(x.labs || []).includes("grc") && !labByKey.grc && <Link to="/irm" className="text-teal-700 underline">ServiceNow IRM workspace</Link>}
+                  {(x.labs || []).includes("grc") && !labByKey.grc && <Link to="/irm" className="text-teal-700 underline">Enterprise IRM workspace</Link>}
                   {x.credential_url && <a href={x.credential_url} target="_blank" rel="noopener noreferrer" className="text-slate-700 underline">Verify credential</a>}
                   {files.includes(x.id) && <a href={`${process.env.REACT_APP_BACKEND_URL}/api/certifications/${x.id}/file`} target="_blank" rel="noopener noreferrer" className="text-slate-700 underline">View certificate</a>}
                 </div>
