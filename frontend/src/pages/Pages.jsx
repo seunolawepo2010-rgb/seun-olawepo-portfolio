@@ -20,6 +20,7 @@ export function About() {
       <div className="mx-auto grid max-w-7xl gap-8 px-5 py-12 sm:px-8 lg:grid-cols-3">
         <div className="lg:col-span-2">{p.summary.split("\n\n").map((t, i) => <p key={i} className="mb-4 text-sm leading-relaxed text-slate-700 sm:text-base">{t}</p>)}</div>
         <Card><Eyebrow>Verified highlights</Eyebrow>{p.metrics.map((m) => <p key={m.label} className="mt-3 text-sm"><span className="font-heading text-xl font-bold text-teal-700">{m.value}</span> {m.label}</p>)}</Card>
+        <div className="lg:col-span-3"><Eyebrow>Education</Eyebrow><div className="mt-3"><EducationList edu={c.education} /></div></div>
       </div>
     </div>
   );
@@ -137,15 +138,47 @@ export function CaseStudyDetail() {
   );
 }
 
+export function CredentialGrid({ certs, files = [] }) {
+  const cats = [...new Set(certs.map((x) => x.category || "Other"))];
+  return (
+    <div className="space-y-6" data-testid="credential-grid">
+      {cats.map((cat) => (
+        <div key={cat}>
+          <p className="font-mono text-[11px] uppercase tracking-wider text-teal-700">{cat}</p>
+          <div className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {certs.filter((x) => (x.category || "Other") === cat).map((x) => (
+              <Card key={x.id} testid={`cert-${x.id}`}>
+                <h3 className="font-heading text-sm font-semibold text-slate-900">{x.name}</h3>
+                <p className="mt-1 text-xs text-slate-600">{x.issuer}{x.date ? ` · ${x.date}` : ""}</p>
+                {x.status && <p className="mt-2"><Badge tone="muted">{x.status}</Badge></p>}
+                <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                  {(x.labs || []).map((k) => labByKey[k] && <Link key={k} to={k === "grc" ? "/irm" : labLink(k)} className="text-teal-700 underline">{k === "grc" ? "ServiceNow IRM" : labByKey[k].short}</Link>)}
+                  {(x.labs || []).includes("grc") && !labByKey.grc && <Link to="/irm" className="text-teal-700 underline">ServiceNow IRM workspace</Link>}
+                  {x.credential_url && <a href={x.credential_url} target="_blank" rel="noopener noreferrer" className="text-slate-700 underline">Verify credential</a>}
+                  {files.includes(x.id) && <a href={`${process.env.REACT_APP_BACKEND_URL}/api/certifications/${x.id}/file`} target="_blank" rel="noopener noreferrer" className="text-slate-700 underline">View certificate</a>}
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function EducationList({ edu }) {
+  return <div className="grid gap-3 sm:grid-cols-2" data-testid="education-list">{edu.map((e) => <Card key={e.id}><h3 className="font-heading text-sm font-semibold">{e.degree}</h3><p className="text-xs text-slate-700">{e.field}</p><p className="mt-1 text-xs text-slate-500">{e.institution}{e.graduation_date ? ` · ${e.graduation_date}` : ""}</p></Card>)}</div>;
+}
+
 export function Certifications() {
   const c = useContent();
   if (!c) return <Loading />;
   return (
     <div>
-      <PageHeader eyebrow="Certifications" title="Certifications & credentials">Only verified credentials are listed here.</PageHeader>
-      <div className="mx-auto max-w-4xl px-5 py-12 sm:px-8" data-testid="certifications-list">
-        {c.certifications.length === 0 ? <Card><p className="text-sm text-slate-600">Verified certifications will be listed here once added through the administration dashboard.</p></Card>
-          : c.certifications.map((x) => <Card key={x.id} className="mb-3"><h2 className="font-heading text-base font-semibold">{x.name}</h2><p className="text-sm text-slate-600">{x.issuer} {x.date ? `· ${x.date}` : ""} {x.status ? <Badge>{x.status}</Badge> : null}</p>{x.credential_url && <a href={x.credential_url} target="_blank" rel="noopener noreferrer" className="text-xs text-teal-700 underline">Verify credential</a>}</Card>)}
+      <PageHeader eyebrow="Certifications & education" title="Certifications & Education">Credentials are listed as provided by Seun Olawepo. Where no verification link is shown, the credential has not been independently verified on this site.</PageHeader>
+      <div className="mx-auto max-w-7xl space-y-10 px-5 py-12 sm:px-8" data-testid="certifications-list">
+        <CredentialGrid certs={c.certifications} files={c.cert_files} />
+        <div><p className="font-mono text-[11px] uppercase tracking-wider text-teal-700">Education</p><div className="mt-2"><EducationList edu={c.education} /></div></div>
       </div>
     </div>
   );

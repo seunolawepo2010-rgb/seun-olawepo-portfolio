@@ -50,13 +50,13 @@ export function Field({ f, value, onChange, records, row, values, tid }) {
   return <div className={f.t === "textarea" || f.t === "multirecord" ? "sm:col-span-2" : ""}>{label}{el}</div>;
 }
 
-export async function runAction(lab, action, values, fields) {
-  const payload = {};
+export async function runAction(lab, action, values, fields, extra = {}) {
+  const payload = { ...extra };
   fields.forEach((f) => { if (f.t !== "evidence") payload[f.n] = values[f.n]; });
   return (await api.post(`/labs/${lab}/actions/${action}`, payload)).data;
 }
 
-export function ActionForm({ lab, form, records, onDone }) {
+export function ActionForm({ lab, form, records, onDone, extra }) {
   const [values, setValues] = useState(() => initial(form.fields, records));
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
@@ -73,7 +73,7 @@ export function ActionForm({ lab, form, records, onDone }) {
     e.preventDefault();
     setBusy(true);
     try {
-      const res = form.createType ? (await api.post(`/labs/${lab}/records/${form.createType}`, values)).data : await runAction(lab, form.action, values, form.fields);
+      const res = form.createType ? (await api.post(`/labs/${lab}/records/${form.createType}`, values)).data : await runAction(lab, form.action, values, form.fields, extra);
       setResult(res);
       toast.success(`${form.title}: done`);
       onDone();

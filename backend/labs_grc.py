@@ -340,12 +340,14 @@ async def k_cyber(s):
 
 
 # ---------------- LAB 4: Audit ----------------
-FRAMEWORKS = ["SOX ITGC", "SOC 2", "ISO 27001", "NIST RMF", "FedRAMP", "HIPAA", "HITRUST", "PCI DSS", "GLBA", "NYDFS"]
+FRAMEWORKS = ["SOX ITGC", "SOC 2", "ISO 27001", "ISO/IEC 27701", "NIST RMF", "NIST SP 800-171", "CMMC", "FedRAMP", "HIPAA", "HITRUST", "PCI DSS", "GLBA", "NYDFS", "GDPR", "CCPA"]
 TESTS = [("User access review", "Access review testing"), ("Change management approvals", "Change management testing"),
          ("Privileged access monitoring", "Privileged access testing"), ("Backup & restore validation", "Backup and recovery testing")]
 FW_TEST = {"SOX ITGC": "Segregation of duties in financial apps", "SOC 2": "Logical access – CC6 criteria (summary)", "ISO 27001": "Statement of Applicability review",
            "NIST RMF": "Continuous monitoring strategy", "FedRAMP": "Monthly POA&M submission", "HIPAA": "ePHI access logging", "HITRUST": "Risk analysis currency",
-           "PCI DSS": "Cardholder data environment segmentation", "GLBA": "Safeguards program oversight", "NYDFS": "Annual certification readiness"}
+           "PCI DSS": "Cardholder data environment segmentation", "GLBA": "Safeguards program oversight", "NYDFS": "Annual certification readiness",
+           "ISO/IEC 27701": "PII processing records (PIMS summary)", "NIST SP 800-171": "CUI access control & SSP review", "CMMC": "Level 2 practice evidence readiness",
+           "GDPR": "Data subject request handling", "CCPA": "Consumer opt-out & notice at collection"}
 SCHEMAS["audit"] = {}
 
 

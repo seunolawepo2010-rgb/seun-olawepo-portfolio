@@ -18,14 +18,14 @@ from starlette.middleware.cors import CORSMiddleware  # noqa: E402
 
 from core import db, client, P, ACTIONS, KPIS, SCHEMAS, ins, upd, get, find, validate, audit, rate_limit, client_ip, now, new_id, log  # noqa: E402
 import engine  # noqa: E402
-import labs_grc, labs_sn, labs_ops, agents, safe  # noqa: E402,F401
+import labs_grc, labs_sn, labs_ops, agents, safe, grc  # noqa: E402,F401
 from seed_labs import session_dep, reset_session, purge_session  # noqa: E402
 from reports import build_pdf, lab_sections, execution_sections, to_csv  # noqa: E402
 from auth import router as auth_router, get_admin, seed_admin  # noqa: E402
 from content import seed_content, bundle, clean_item, CONTENT_FIELDS, PROFILE_FIELDS  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-LABS = ["irm", "servicenow", "cyber", "audit", "vendor", "aigov", "agents", "pm", "safe", "ir"]
+LABS = ["irm", "servicenow", "cyber", "audit", "vendor", "aigov", "agents", "pm", "safe", "ir", "grc"]
 INDEXES = {
     "records": [IndexModel([("session", ASCENDING), ("lab", ASCENDING), ("type", ASCENDING)], name="s_lab_type"), IndexModel([("session", ASCENDING), ("id", ASCENDING)], name="s_id")],
     "executions": [IndexModel([("id", ASCENDING)], name="id", unique=True), IndexModel([("session", ASCENDING), ("created_at", DESCENDING)], name="s_created")],
@@ -308,6 +308,7 @@ async def run_scheduler(s):
             await upd(s, r["id"], overdue_flag=True)
             await ins(s, "irm", "escalation", title=f"Overdue remediation: {r['title']}", owner=r["owner"], status="Open")
     started += (await ACTIONS[("safe", "escalate_impediments")](s, {}))["executions"]
+    started.append((await ACTIONS[("grc", "run_monitoring")](s, {}))["execution"]["id"])
     await db.scheduler_runs.insert_one({"session": s, "at": now(), "started": started})
     return started
 
@@ -359,7 +360,7 @@ def coll_check(coll):
 async def admin_create(coll: str, payload: dict, u=Depends(get_admin)):
     coll_check(coll)
     data = clean_item(coll, payload)
-    key = {"experience": "employer", "skills": "name", "certifications": "name"}.get(coll, "title")
+    key = {"experience": "employer", "skills": "name", "certifications": "name", "education": "degree"}.get(coll, "title")
     if not str(data.get(key) or "").strip():
         raise HTTPException(422, f"Field '{key}' is required")
     item = {"id": new_id(), **data, "created_at": now()}
@@ -414,6 +415,27 @@ async def admin_resume(file: UploadFile = File(...), u=Depends(get_admin)):
     await db.files.update_one({"kind": "resume"}, {"$set": {"kind": "resume", "filename": name, "content_type": ctype, "data": data, "size": len(data), "uploaded_at": now()}}, upsert=True)
     await audit("admin", "resume.upload", "admin", {"filename": name}, u["email"])
     return {"ok": True, "filename": name, "size": len(data)}
+
+
+@api.post("/admin/certifications/{cid}/file")
+async def admin_cert_file(cid: str, file: UploadFile = File(...), u=Depends(get_admin)):
+    data = await file.read()
+    if len(data) > 5 * 1024 * 1024 or not (data[:4] == b"%PDF" or data[:3] == b"\xff\xd8\xff" or data[:8] == b"\x89PNG\r\n\x1a\n"):
+        raise HTTPException(415, "PDF, JPG or PNG up to 5 MB only")
+    if not await db.certifications.find_one({"id": cid}, {"_id": 1}):
+        raise HTTPException(404, "Certification not found")
+    ctype = "application/pdf" if data[:4] == b"%PDF" else "image/png" if data[:4] == b"\x89PNG" else "image/jpeg"
+    await db.files.update_one({"kind": f"cert:{cid}"}, {"$set": {"kind": f"cert:{cid}", "filename": f"certificate-{cid}", "content_type": ctype, "data": data, "uploaded_at": now()}}, upsert=True)
+    await audit("admin", "certification.file_upload", "admin", {"id": cid}, u["email"])
+    return {"ok": True}
+
+
+@api.get("/certifications/{cid}/file")
+async def cert_file(cid: str):
+    f = await db.files.find_one({"kind": f"cert:{cid}"}, {"_id": 0})
+    if not f:
+        raise HTTPException(404, "No certificate uploaded")
+    return Response(f["data"], media_type=f["content_type"])
 
 
 class AISettings(BaseModel):

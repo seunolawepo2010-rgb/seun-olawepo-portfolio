@@ -5,7 +5,7 @@ import { api, download } from "../lib/api";
 
 export const NAV = [
   ["/", "Home"], ["/about", "About Me"], ["/experience", "Experience"], ["/expertise", "Expertise & Technology"], ["/lab", "Technology Lab"],
-  ["/agents", "AI Agent Command Center"], ["/case-studies", "Projects & Case Studies"], ["/certifications", "Certifications"], ["/resume", "Resume"], ["/contact", "Contact"],
+  ["/agents", "AI Agent Command Center"], ["/irm", "ServiceNow IRM"], ["/case-studies", "Projects & Case Studies"], ["/certifications", "Certifications & Education"], ["/resume", "Resume"], ["/contact", "Contact"],
 ];
 
 export const downloadResume = () => download("/resume", "Seun_Olawepo_Resume.pdf");

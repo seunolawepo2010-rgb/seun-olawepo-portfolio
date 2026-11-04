@@ -9,6 +9,7 @@ import { About, Experience, ExperienceDetail, Expertise, CaseStudies, CaseStudyD
 import { Automation, LabIndex, DemoTour } from "./pages/Automation";
 import { Admin, AdminLogin } from "./pages/Admin";
 import Tour from "./pages/Tour";
+import GrcWorkspace from "./pages/GrcWorkspace";
 
 function NotFound() {
   return <div className="mx-auto max-w-3xl px-5 py-24"><h1 className="font-heading text-3xl font-bold">Page not found</h1><a href="/" className="mt-4 inline-block text-teal-700">Return home</a></div>;
@@ -29,6 +30,7 @@ function App() {
             <Route path="/lab/:key" element={<LabPage />} />
             <Route path="/agents" element={<LabPage forceKey="agents" />} />
             <Route path="/automation" element={<Automation />} />
+            <Route path="/irm" element={<GrcWorkspace />} />
             <Route path="/tour" element={<Tour />} />
             <Route path="/demo" element={<DemoTour />} />
             <Route path="/case-studies" element={<CaseStudies />} />

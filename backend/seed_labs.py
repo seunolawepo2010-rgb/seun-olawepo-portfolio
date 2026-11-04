@@ -7,8 +7,9 @@ from labs_sn import seed_servicenow
 from labs_ops import seed_aigov, seed_pm, seed_ir
 from agents import seed_agents
 from safe import seed_safe
+from grc_seed import seed_grc
 
-SEEDERS = [seed_irm, seed_servicenow, seed_cyber, seed_audit, seed_vendor, seed_aigov, seed_agents, seed_pm, seed_safe, seed_ir]
+SEEDERS = [seed_irm, seed_servicenow, seed_cyber, seed_audit, seed_vendor, seed_aigov, seed_agents, seed_pm, seed_safe, seed_ir, seed_grc]
 
 
 _locks = {}
@@ -20,6 +21,9 @@ async def ensure_seeded(s):
         doc = await db.demo_sessions.find_one({"id": s})
         if doc and doc.get("seeded"):
             await db.demo_sessions.update_one({"id": s}, {"$set": {"last_seen": now()}})
+            if not doc.get("grc_seeded"):
+                await seed_grc(s)
+                await db.demo_sessions.update_one({"id": s}, {"$set": {"grc_seeded": True}})
             return
         if doc:
             await purge_session(s)
@@ -29,7 +33,7 @@ async def ensure_seeded(s):
             return
         for fn in SEEDERS:
             await fn(s)
-        await db.demo_sessions.update_one({"id": s}, {"$set": {"seeded": True}})
+        await db.demo_sessions.update_one({"id": s}, {"$set": {"seeded": True, "grc_seeded": True}})
 
 
 async def purge_session(s):

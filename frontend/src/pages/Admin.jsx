@@ -33,7 +33,8 @@ export function AdminLogin() {
 const COLL = {
   experience: ["employer", "title", "start", "end", "highlights", "labs", "order", "published"],
   skills: ["category", "name", "labs", "order"],
-  certifications: ["name", "issuer", "status", "date", "credential_url", "order"],
+  certifications: ["name", "issuer", "category", "status", "date", "credential_url", "labs", "order"],
+  education: ["degree", "field", "institution", "graduation_date", "order"],
   case_studies: ["title", "lab", "challenge", "scope", "approach", "technology", "frameworks", "deliverables", "evidence", "published"],
   articles: ["title", "date", "body", "published"],
 };
@@ -73,6 +74,7 @@ function ItemEditor({ coll, item, onSaved }) {
       ))}
       <div className="flex gap-2 sm:col-span-2">
         <button onClick={save} className="inline-flex items-center gap-1 rounded-md bg-teal-700 px-3 py-1.5 text-xs text-white" data-testid={`admin-${coll}-save-${item?.id || "new"}`}><Save className="h-3 w-3" />Save</button>
+        {item?.id && coll === "certifications" && <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-slate-300 px-3 py-1.5 text-xs"><Upload className="h-3 w-3" />Upload certificate<input type="file" accept=".pdf,.png,.jpg,.jpeg" className="hidden" data-testid={`admin-cert-upload-${item.id}`} onChange={(e) => { const fd = new FormData(); fd.append("file", e.target.files[0]); api.post(`/admin/certifications/${item.id}/file`, fd).then(() => toast.success("Certificate uploaded")).catch((x) => toast.error(errMsg(x))); }} /></label>}
         {item?.id && <button onClick={del} className="inline-flex items-center gap-1 rounded-md border border-rose-300 px-3 py-1.5 text-xs text-rose-700"><Trash2 className="h-3 w-3" />Delete</button>}
       </div>
     </div>
@@ -85,7 +87,7 @@ function CollectionTab({ coll, items, reload }) {
     <div className="space-y-3">
       <button onClick={() => setAdding(!adding)} className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs" data-testid={`admin-${coll}-add`}><Plus className="h-3 w-3" />Add</button>
       {adding && <ItemEditor coll={coll} onSaved={() => { setAdding(false); reload(); }} />}
-      {items.map((it) => <details key={it.id} className="rounded-md border border-slate-200 bg-slate-50 p-2"><summary className="cursor-pointer text-sm">{it.title || it.name || it.employer} {it.published === false && <Badge tone="muted">draft</Badge>}</summary><div className="mt-2"><ItemEditor coll={coll} item={it} onSaved={reload} /></div></details>)}
+      {items.map((it) => <details key={it.id} className="rounded-md border border-slate-200 bg-slate-50 p-2"><summary className="cursor-pointer text-sm">{it.title || it.name || it.employer || it.degree} {it.published === false && <Badge tone="muted">draft</Badge>}</summary><div className="mt-2"><ItemEditor coll={coll} item={it} onSaved={reload} /></div></details>)}
     </div>
   );
 }
@@ -166,7 +168,7 @@ export function Admin() {
       <div className="flex items-center justify-between"><h1 className="font-heading text-2xl font-bold">Administration</h1><button onClick={logout} className="inline-flex items-center gap-1 text-sm text-slate-600" data-testid="admin-logout"><LogOut className="h-4 w-4" />Sign out</button></div>
       <Tabs defaultValue="overview" className="mt-6">
         <TabsList className="flex h-auto flex-wrap justify-start">
-          {["overview", "profile", "experience", "skills", "certifications", "case_studies", "articles", "messages", "resume", "settings"].map((t) => <TabsTrigger key={t} value={t} data-testid={`admin-tab-${t}`} className="capitalize">{t.replace("_", " ")}{t === "messages" && ov?.messages_unread ? ` (${ov.messages_unread})` : ""}</TabsTrigger>)}
+          {["overview", "profile", "experience", "skills", "certifications", "education", "case_studies", "articles", "messages", "resume", "settings"].map((t) => <TabsTrigger key={t} value={t} data-testid={`admin-tab-${t}`} className="capitalize">{t.replace("_", " ")}{t === "messages" && ov?.messages_unread ? ` (${ov.messages_unread})` : ""}</TabsTrigger>)}
         </TabsList>
         <TabsContent value="overview" className="mt-5 space-y-4">
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{[["Demo sessions", ov.sessions], ["Workflow executions", ov.executions], ["Unread messages", ov.messages_unread], ["Live AI calls today", ov.ai_calls_today]].map(([l, v]) => <Card key={l}><p className="font-mono text-[10px] uppercase text-slate-500">{l}</p><p className="font-heading text-2xl font-bold">{v}</p></Card>)}</div>

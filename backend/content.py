@@ -31,8 +31,13 @@ EXPERIENCE = [
 ]
 
 SKILLS = {
-    "Cybersecurity GRC": (["NIST CSF", "NIST 800-53", "RMF", "FedRAMP", "ISO 27001", "SOC 2", "SOX ITGC", "PCI DSS", "HIPAA", "HITRUST", "GLBA", "NYDFS"], ["irm", "cyber", "audit"]),
-    "ServiceNow": (["IRM", "GRC", "Policy & Compliance", "Risk Management", "Audit Management", "Administration", "Configuration", "Development demonstrations", "Flow Designer concepts", "REST APIs"], ["irm", "servicenow"]),
+    "Cybersecurity GRC": (["NIST CSF", "NIST 800-53", "RMF", "FedRAMP", "ISO 27001", "SOC 2", "SOX ITGC", "PCI DSS", "HIPAA", "HITRUST", "GLBA", "NYDFS"], ["grc", "irm", "cyber", "audit"]),
+    "Privacy Compliance": (["GDPR", "CCPA", "ISO/IEC 27701", "HIPAA Privacy Rule"], ["grc", "aigov", "vendor"]),
+    "Financial Services Compliance": (["SOX ITGC", "GLBA", "NYDFS", "PCI DSS", "SOC 2"], ["audit", "grc", "vendor"]),
+    "Healthcare Compliance": (["HIPAA", "HITRUST"], ["audit", "grc"]),
+    "Federal & Defense": (["NIST RMF", "NIST SP 800-53", "FedRAMP", "NIST SP 800-171", "CMMC"], ["irm", "audit", "cyber"]),
+    "Third-Party Risk": (["SOC 2 report review", "Vendor tiering", "Fourth-party risk", "ISO 27001 attestation review"], ["vendor"]),
+    "ServiceNow": (["IRM", "GRC", "Policy & Compliance", "Risk Management", "Issues Management", "Audit Management", "Administration", "Configuration", "Development demonstrations", "Flow Designer concepts", "REST APIs"], ["grc", "irm", "servicenow"]),
     "AI Governance": (["NIST AI RMF", "ISO/IEC 42001", "Model risk", "Responsible AI", "AI security", "AI risk assessments"], ["aigov"]),
     "AI Agent Management": (["Agent orchestration", "Agent evaluation", "AI operations", "Human-in-the-loop workflows", "Agent monitoring", "Token economics", "Latency", "Model selection"], ["agents"]),
     "Project & Agile Delivery": (["PMP", "Scrum", "SAFe", "RTE", "PI Planning", "ART coordination", "Product Ownership", "Project management", "Program management", "Business analysis"], ["pm", "safe"]),
@@ -56,7 +61,25 @@ CASES = [
 ]
 
 
+CERTS = [("CRISC — Certified in Risk and Information Systems Control", "ISACA", "Cybersecurity, Risk & Compliance", ["grc", "irm"]),
+         ("CompTIA Security+", "CompTIA", "Cybersecurity, Risk & Compliance", ["cyber", "ir"]),
+         ("PMP — Project Management Professional", "Project Management Institute (PMI)", "Project, Program & Agile Delivery", ["pm"]),
+         ("SAFe Release Train Engineer (RTE)", "Scaled Agile, Inc.", "Project, Program & Agile Delivery", ["safe"]),
+         ("PSM I — Professional Scrum Master I", "Scrum.org", "Project, Program & Agile Delivery", ["pm", "safe"]),
+         ("PSPO I — Professional Scrum Product Owner I", "Scrum.org", "Project, Program & Agile Delivery", ["pm"]),
+         ("Pega Certified Business Architect", "Pegasystems", "Business Analysis & Enterprise Platforms", ["servicenow", "pm"])]
+EDUCATION = [("Master of Science (M.S.)", "Information Technology Project Management", "Northcentral University"), ("Bachelor of Science (B.S.)", "Civil Engineering Technology", "University of Ilorin")]
+
+
 async def seed_content():
+    if not await db.certifications.count_documents({}):
+        await db.certifications.insert_many([{"id": new_id(), "name": n, "issuer": i, "category": c, "labs": labs, "status": "Held (self-reported)", "date": "", "credential_url": "", "order": k}
+                                             for k, (n, i, c, labs) in enumerate(CERTS)])
+    if not await db.education.count_documents({}):
+        await db.education.insert_many([{"id": new_id(), "degree": d, "field": f, "institution": i, "graduation_date": "", "order": k} for k, (d, f, i) in enumerate(EDUCATION)])
+    for i, (c, (names, labs)) in enumerate(SKILLS.items()):
+        for n in names:
+            await db.skills.update_one({"category": c, "name": n}, {"$set": {"labs": labs, "order": i}, "$setOnInsert": {"id": new_id()}}, upsert=True)
     if not await db.content.find_one({"key": "profile"}):
         await db.content.insert_one({**PROFILE, "updated_at": now()})
     if not await db.experience.count_documents({}):
@@ -77,7 +100,8 @@ async def seed_content():
 CONTENT_FIELDS = {
     "experience": {"employer", "title", "start", "end", "labs", "highlights", "order", "published", "note"},
     "skills": {"category", "name", "labs", "order"},
-    "certifications": {"name", "issuer", "status", "date", "credential_url", "order"},
+    "certifications": {"name", "issuer", "status", "date", "credential_url", "order", "category", "labs"},
+    "education": {"institution", "degree", "field", "graduation_date", "order"},
     "case_studies": {"title", "lab", "challenge", "scope", "approach", "technology", "frameworks", "deliverables", "evidence", "published", "order", "disclaimer"},
     "articles": {"title", "body", "published", "date"},
 }
@@ -104,7 +128,9 @@ async def bundle(admin=False):
     return {"profile": await db.content.find_one({"key": "profile"}, P),
             "experience": await db.experience.find(q, P).sort("order", 1).to_list(100),
             "skills": await db.skills.find({}, P).sort("order", 1).to_list(500),
-            "certifications": await db.certifications.find({}, P).sort("order", 1).to_list(100),
+            "certifications": await db.certifications.find({}, {"_id": 0}).sort("order", 1).to_list(100),
+            "education": await db.education.find({}, {"_id": 0}).sort("order", 1).to_list(20),
+            "cert_files": [f["kind"][5:] for f in await db.files.find({"kind": {"$regex": "^cert:"}}, {"kind": 1, "_id": 0}).to_list(50)],
             "case_studies": await db.case_studies.find(q, P).sort("order", 1).to_list(100),
             "articles": await db.articles.find(q, P).sort("date", -1).to_list(100),
             "has_resume": bool(await db.files.find_one({"kind": "resume"}, {"_id": 1}))}

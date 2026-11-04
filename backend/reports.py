@@ -34,6 +34,9 @@ REPORT_TYPES = {
              ("program_risk", ["description", "owner", "roam"]), ("objective", ["team", "description", "business_value", "progress", "actual_value"]), ("ia_report", ["pi", "art_predictability", "features_done", "features_planned"])],
     "ir": [("incident", ["title", "severity", "phase", "status"]), ("ir_task", ["title", "status"]), ("recovery_item", ["process", "rto_hours", "hours_to_recover", "status"]),
            ("timeline", ["event", "at"]), ("bia_process", ["process", "rto_hours", "rpo_hours", "priority"])],
+    "grc": [("policy", ["number", "title", "version", "state", "effective_date"]), ("campaign", ["number", "policy", "state", "due_date", "final_completion_pct"]), ("ack", ["number", "campaign", "employee", "state", "acknowledged_at"]),
+            ("exception", ["number", "policy", "department", "risk_rating", "state", "expires"]), ("risk", ["number", "statement", "inherent", "residual", "rating", "state"]), ("control", ["number", "ref", "name", "state"]),
+            ("assessment", ["number", "control", "result", "issue"]), ("issue", ["number", "title", "severity", "state", "validation"]), ("task", ["number", "issue", "assigned_to", "state", "sla_due", "validation_result"])],
 }
 
 

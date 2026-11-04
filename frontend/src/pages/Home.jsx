@@ -7,6 +7,7 @@ import { LABS, labByKey } from "../lib/labs";
 import { CAREER_PATHS } from "../lib/roles";
 import { downloadResume } from "../components/Layout";
 import { ContactForm } from "../components/ContactForm";
+import { CredentialGrid } from "./Pages";
 import { Badge, Card, Eyebrow } from "../components/kit";
 
 const btn = "inline-flex items-center gap-2 rounded-md px-5 py-2.5 text-sm font-medium transition-colors";
@@ -72,6 +73,17 @@ export default function Home() {
         <div className="lg:col-span-2"><Eyebrow>Career timeline</Eyebrow>
           <ol className="mt-4 border-l border-slate-200">{c.experience.map((e) => <li key={e.slug} className="relative ml-4 pb-4"><span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-teal-600" /><Link to={`/experience/${e.slug}`} className="text-sm font-medium hover:text-teal-700">{e.title}</Link><p className="text-xs text-slate-500">{e.employer} · {e.start} – {e.end}</p></li>)}</ol>
         </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-5 pb-4 sm:px-8" data-testid="home-certifications">
+        <Eyebrow>Certifications</Eyebrow>
+        <h2 className="mt-2 mb-5 font-heading text-2xl font-bold tracking-tight sm:text-3xl">Professional credentials</h2>
+        <CredentialGrid certs={c.certifications} files={c.cert_files} />
+        <Link to="/certifications" className="mt-4 inline-block text-sm text-teal-700">Certifications & Education →</Link>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-5 pt-12 sm:px-8">
+        <Link to="/irm" className="block rounded-lg border-2 border-teal-600 bg-white p-6 transition-colors hover:bg-teal-50" data-testid="home-irm-flagship"><Eyebrow>Flagship demonstration</Eyebrow><h2 className="mt-2 font-heading text-xl font-bold">Enterprise ServiceNow IRM — End-to-End Governance Workflow</h2><p className="mt-2 text-sm text-slate-600">Policy lifecycle, acknowledgment campaigns, exceptions, risk assessments, issues and remediation. Covers 11 roles with backend-enforced permissions, linked records and activity streams.</p></Link>
       </section>
 
       <RoleNavigator c={c} />
