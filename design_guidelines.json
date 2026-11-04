@@ -1,0 +1,120 @@
+{
+  "project_title": "Seun Olawepo - Executive Cybersecurity GRC, ServiceNow IRM & AI Governance Platform",
+  "archetype": "Swiss & Executive Performance Pro",
+  "design_philosophy": "High-density executive clarity combined with interactive enterprise labs. Zero AI slop, no fake decorative terminals or slow animations. High contrast, precise typography, structured data tables, and interactive workflow diagrams built for CISOs, CIOs, and GRC leaders.",
+  "typography": {
+    "google_fonts_url": "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap",
+    "font_family_heading": "'Plus Jakarta Sans', sans-serif",
+    "font_family_body": "'Inter', sans-serif",
+    "font_family_mono": "'JetBrains Mono', monospace",
+    "sizes": {
+      "h1_hero": "text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight",
+      "h2_section": "text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100",
+      "h3_card": "text-lg sm:text-xl font-semibold text-slate-900 dark:text-slate-100",
+      "body_base": "text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed",
+      "mono_label": "font-mono text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-medium"
+    }
+  },
+  "colors": {
+    "palette_description": "Deep navy and charcoal structure with light gray/white cards, high-contrast dark accents, and muted teal highlights for interactive control states.",
+    "hex": {
+      "navy_dark": "#0B132B",
+      "navy_mid": "#1C2541",
+      "charcoal": "#0F172A",
+      "surface_light": "#F8FAFC",
+      "card_bg": "#FFFFFF",
+      "border": "#E2E8F0",
+      "teal_primary": "#0D9488",
+      "teal_light": "#14B8A6",
+      "teal_dark": "#0F766E",
+      "teal_subtle": "#CCFBF1",
+      "amber_warning": "#D97706",
+      "rose_danger": "#E11D48",
+      "emerald_success": "#059669"
+    },
+    "hsl_shadcn": {
+      "root": {
+        "--background": "210 40% 98%",
+        "--foreground": "222 47% 11%",
+        "--card": "0 0% 100%",
+        "--card-foreground": "222 47% 11%",
+        "--popover": "0 0% 100%",
+        "--popover-foreground": "222 47% 11%",
+        "--primary": "173 80% 32%",
+        "--primary-foreground": "210 40% 98%",
+        "--secondary": "215 25% 95%",
+        "--secondary-foreground": "222 47% 11%",
+        "--muted": "215 20% 93%",
+        "--muted-foreground": "215 16% 47%",
+        "--accent": "173 50% 94%",
+        "--accent-foreground": "173 80% 25%",
+        "--destructive": "347 77% 50%",
+        "--destructive-foreground": "210 40% 98%",
+        "--border": "214 32% 91%",
+        "--input": "214 32% 91%",
+        "--ring": "173 80% 32%",
+        "--radius": "0.375rem"
+      },
+      "dark": {
+        "--background": "222 47% 7%",
+        "--foreground": "210 40% 98%",
+        "--card": "222 40% 10%",
+        "--card-foreground": "210 40% 98%",
+        "--popover": "222 40% 10%",
+        "--popover-foreground": "210 40% 98%",
+        "--primary": "173 70% 40%",
+        "--primary-foreground": "222 47% 7%",
+        "--secondary": "217 33% 17%",
+        "--secondary-foreground": "210 40% 98%",
+        "--muted": "217 33% 17%",
+        "--muted-foreground": "215 20% 65%",
+        "--accent": "173 40% 18%",
+        "--accent-foreground": "173 70% 50%",
+        "--border": "217 33% 18%",
+        "--input": "217 33% 18%",
+        "--ring": "173 70% 40%"
+      }
+    }
+  },
+  "status_badges": {
+    "compliant": "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800",
+    "non_compliant": "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800",
+    "in_review": "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800",
+    "active_agent": "bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800",
+    "in_progress": "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-400 dark:border-sky-800"
+  },
+  "chart_colors": {
+    "teal": "#0D9488",
+    "navy": "#1E293B",
+    "sky": "#0284C7",
+    "amber": "#D97706",
+    "emerald": "#10B981",
+    "rose": "#F43F5E"
+  },
+  "layout_patterns": {
+    "header": "Sticky glassmorphic bar (backdrop-blur-md bg-white/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 z-50) with Brand Logo, Persona Role Switcher dropdown, Navigation Links, and 'Book Consultation' CTA.",
+    "role_selector": "Pill switcher allowing tailored view filtering: 'Executive View (CISO)', 'ServiceNow Architect', 'AI Governance Director', 'Agile Delivery Lead'. Filters experience, highlighted metrics, and suggested labs.",
+    "portfolio_grid": "Grid layout: grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6. Clean white cards with border-slate-200, subtle shadow-sm, hover:border-teal-500 hover:shadow-md transition-all duration-200.",
+    "lab_workspace_shell": "Dual-pane or tabbed layout: Top Executive Summary KPI bar -> Left Control/Input Panel & Guided Tour Controls -> Center/Right Simulation Canvas (Tables, Graphs, Telemetry, Controls Matrix) -> Bottom Execution Log & Control Stream.",
+    "safe_pi_board": "Horizontal scrolling matrix: 5 Agile Teams (rows) x 5 Iterations (columns). Drag-and-drop or interactive card dependency mapper with risk tags and milestone flags."
+  },
+  "component_styling_rules": {
+    "buttons": "Pill or rounded-md edges. Primary: bg-teal-700 hover:bg-teal-800 text-white font-medium px-4 py-2 shadow-sm. Secondary: bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300.",
+    "cards": "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 shadow-sm hover:border-slate-300 transition-colors",
+    "tables": "Dense executive formatting. Light slate header (bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 font-semibold text-xs uppercase tracking-wider). Hoverable rows with data-testid on action triggers.",
+    "modals": "Shadcn Dialog primitive styled with subtle glass backdrop, clear header titles, concise form controls, and accessible focus management."
+  },
+  "testing_requirements": {
+    "mandatory_attribute": "data-testid",
+    "convention": "kebab-case, role/function specific (e.g. data-testid='role-selector-ciso', data-testid='lab-servicenow-run-simulation-button', data-testid='pi-board-team-card-1').",
+    "app_type_note": "Ensure JavaScript (.js/.jsx) files are used throughout the application codebase."
+  },
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
+    "Use JavaScript (.js / .jsx) components as per project setup.",
+    "Maintain strict APCA/WCAG contrast ratios. Never place dark text on dark backgrounds or white text on light buttons.",
+    "Every interactive button, tab, filter, and input MUST contain explicit `data-testid` attributes.",
+    "Keep animations smooth and restrained (framer-motion opacity and slight y-translation only). No dramatic spinners or fake terminals.",
+    "Always wrap tables, dashboards, and charts in clean containers with visible headers, filter chips, and reset states.",
+    "Use sonner for user feedback toast notifications on lab actions, form submissions, and configuration changes."
+  ]
+}
