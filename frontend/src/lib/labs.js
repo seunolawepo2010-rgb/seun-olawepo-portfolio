@@ -225,7 +225,7 @@ export const LABS = [
     forms: [
       { action: "start_pi", title: "1 · Start PI & schedule planning", fields: [F("name", "PI name", "text", { d: "PI 1 (simulation)" }), F("start_date", "PI start", "date", { d: today() }), F("planning_date", "PI Planning date", "date", { d: today() })] },
       { action: "assign_feature", title: "5 · Assign feature to team (breakout)", fields: [rec("feature_id", "Feature", "feature", (r) => `${r.name} (WSJF ${r.wsjf}, ${r.size} pts)`), rec("team_id", "Team", "team"), sel("iteration", "Iteration", ["1", "2", "3", "4", "5"])] },
-      { action: "add_dependency", title: "8 · Add dependency", fields: [rec("consumer_id", "Consumer feature (needs)", "feature"), rec("provider_id", "Provider feature (delivers)", "feature")] },
+      { action: "add_dependency", title: "8 · Add dependency", fields: [rec("consumer_id", "Consumer feature (needs)", "feature"), { ...rec("provider_id", "Provider feature (delivers)", "feature"), idx: 1 }] },
       { action: "set_capacity", title: "6 · Estimate capacity", fields: [rec("team_id", "Team", "team"), sel("iteration", "Iteration", ["1", "2", "3", "4", "5"]), F("capacity", "Capacity (points)", "number", { d: 25 })] },
       { action: "create_objective", title: "12 · Create PI objective", fields: [rec("team_id", "Team", "team"), F("description", "Objective", "text", { d: "Deliver executive risk dashboard MVP" }), F("business_value", "Business value (1-10)", "number", { d: 8 }), F("committed", "Committed", "bool", { d: true }), F("feature_ids", "Linked features", "multirecord", { rt: "feature", rl: (r) => r.name })] },
       { action: "vote", title: "13 · Confidence vote", fields: [rec("team_id", "Team", "team"), F("confidence", "Fist of five (1-5)", "number", { d: 4 })] },

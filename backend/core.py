@@ -159,7 +159,7 @@ def rate_limit(key, limit, window):
 
 def client_ip(request: Request):
     fwd = request.headers.get("x-forwarded-for", "")
-    return fwd.split(",")[0].strip() if fwd else (request.client.host if request.client else "unknown")
+    return fwd.split(",")[-1].strip() if fwd else (request.client.host if request.client else "unknown")
 
 
 SESSION_RE = re.compile(r"^[a-zA-Z0-9-]{8,64}$")

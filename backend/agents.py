@@ -130,9 +130,9 @@ async def execute_agent(s, agent, task, ctx=None, mode="auto", tools_needed=None
             fallback = f"Live call failed ({type(e).__name__}); fell back to simulation"
     out = simulate(agent, task, ctx)
     tout = int(len(out) // 4 * PRICING.get(agent["model"], PRICING["claude-haiku-5-5"])["verbosity"])
-    return await ins(s, LAB, "agent_run", **base, mode="simulation", status="success", output=out, latency_ms=modeled_latency(agent["model"], tout, task),
-                     tokens_in=tin, tokens_out=tout, cost_usd=cost(agent["model"], tin, tout), fallback_reason=fallback, token_basis="estimated", latency_basis="modeled (simulation)",
-                     retries=1 if fallback and "failed" in fallback else 0)
+    return await ins(s, LAB, "agent_run", **{**base, "retries": 1 if fallback and "failed" in fallback else 0}, mode="simulation", status="success", output=out,
+                     latency_ms=modeled_latency(agent["model"], tout, task), tokens_in=tin, tokens_out=tout, cost_usd=cost(agent["model"], tin, tout), fallback_reason=fallback,
+                     token_basis="estimated", latency_basis="modeled (simulation)")
 
 
 async def agent_by_name(s, name):
@@ -142,8 +142,12 @@ async def agent_by_name(s, name):
     return a[0]
 
 
+HELPERS = {"Intake Agent", "Evidence Agent", "Risk Agent", "Compliance Agent"}
+
+
 async def run_named_agent(s, name, task, ctx=None, tools=None, workflow=None):
-    return await execute_agent(s, await agent_by_name(s, name), task, ctx, tools_needed=tools, workflow=workflow)
+    mode = "simulation" if name in HELPERS else "auto"  # conserve live quota: helper agents are deterministic
+    return await execute_agent(s, await agent_by_name(s, name), task, ctx, mode=mode, tools_needed=tools, workflow=workflow)
 
 
 # ---- Multi-agent enterprise risk assessment ----

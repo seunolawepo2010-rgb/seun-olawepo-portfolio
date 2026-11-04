@@ -29,6 +29,7 @@ export function useLab(key) {
 }
 
 export async function resetDemo(refresh) {
+  if (!window.confirm("Reset all demo data in this browser to the initial fictional dataset?")) return;
   try {
     await api.post("/demo/reset");
     toast.success("Demo data reset");

@@ -60,7 +60,7 @@ class PwChange(BaseModel):
 @router.post("/login")
 async def login(body: Login, request: Request, response: Response):
     email = body.email.lower()
-    ident = f"{client_ip(request)}:{email}"
+    ident = f"email:{email}"
     att = await db.login_attempts.find_one({"identifier": ident})
     if att and att.get("count", 0) >= 5 and att.get("locked_until", "") > now():
         raise HTTPException(429, "Too many failed attempts. Try again in 15 minutes.")

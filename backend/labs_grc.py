@@ -267,7 +267,7 @@ async def st_cy_risk(s, ctx):
     inh = L * a["criticality"]
     r = await ins(s, "cyber", "cyber_risk", title=f"Exploitation of {v['title']}", asset=a["name"], threat="Vulnerability exploitation", likelihood=L,
                   impact=a["criticality"], inherent=inh, control_effectiveness=0, residual=float(inh), rating=rate(inh), csf_function="Identify",
-                  nist_control="RA-5 / SI-2", status="Open", source=f"Vulnerability {v['plugin_id']}")
+                  nist_control="RA-5 / SI-2", status="Open", source=f"Vulnerability {v.get('plugin_id') or v['title']}")
     ctx.update(risk_id=r["id"], rating=r["rating"])
     return {"risk_id": r["id"], "inherent": inh, "rating": r["rating"]}
 

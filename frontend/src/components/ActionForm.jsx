@@ -10,7 +10,7 @@ const input = "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text
 export function initial(fields, records, row) {
   const v = {};
   fields.forEach((f) => {
-    if (f.t === "record") v[f.n] = records.find((r) => r.type === f.rt)?.id || "";
+    if (f.t === "record") v[f.n] = records.filter((r) => r.type === f.rt)[f.idx || 0]?.id || records.find((r) => r.type === f.rt)?.id || "";
     else if (f.t === "rowselect") v[f.n] = f.from(row || {})[0] || "";
     else if (f.t === "multirecord") v[f.n] = [];
     else if (f.t === "bool") v[f.n] = !!f.d;
@@ -61,7 +61,7 @@ export function ActionForm({ lab, form, records, onDone }) {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
   const tid = `form-${lab}-${slug(form.action)}`;
-  const recCount = useMemo(() => records.length, [records]);
+  const recCount = useMemo(() => records.map((r) => r.id).join(","), [records]);
   useEffect(() => {
     setValues((v) => {
       const next = { ...v };

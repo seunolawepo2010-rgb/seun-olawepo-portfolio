@@ -1,10 +1,12 @@
 import time
+from contextvars import ContextVar
 from fastapi import HTTPException
 from core import db, P, now, new_id, audit, log
 
 APPROVAL = "APPROVAL"
 WORKFLOWS = {}
 MAX_ATTEMPTS = 3
+FAULT = ContextVar("fault_injection", default=False)
 
 
 def workflow(key, name, lab, trigger, description, steps, cross_lab=False):
@@ -21,6 +23,8 @@ def catalog():
 
 async def start(s, key, ctx, trigger="manual"):
     wf = WORKFLOWS[key]
+    if FAULT.get():
+        ctx = {**ctx, "inject_failure_step": 1}
     exe = {"id": new_id("EXE-"), "session": s, "workflow": key, "name": wf["name"], "lab": wf["lab"], "cross_lab": wf["cross_lab"],
            "status": "running", "trigger": trigger, "ctx": ctx, "current": 0, "created_at": now(), "updated_at": now(),
            "steps": [{"name": n, "kind": "approval" if f == APPROVAL else "automated", "status": "pending", "attempts": 0,

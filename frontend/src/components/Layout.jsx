@@ -25,7 +25,7 @@ export default function Layout() {
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-3 sm:px-8">
           <Link to="/" className="flex items-center gap-2" data-testid="brand-link">
-            <span className="grid h-8 w-8 place-items-center rounded bg-[#0B132B] font-heading text-sm font-extrabold text-teal-300">SO</span>
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded bg-[#0B132B] font-heading text-xs font-extrabold text-teal-300">SO</span>
             <span className="leading-tight"><span className="block font-heading text-sm font-bold">Seun Olawepo</span><span className="block text-[11px] text-slate-500">Enterprise Technology & AI Governance</span></span>
           </Link>
           <nav className="hidden items-center gap-0.5 xl:flex" aria-label="Main">

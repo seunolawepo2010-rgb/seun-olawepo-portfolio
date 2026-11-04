@@ -1,4 +1,4 @@
-import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Card, Kpi, fmt } from "./kit";
 
 const COLORS = ["#0D9488", "#1E293B", "#0284C7", "#D97706", "#10B981", "#F43F5E", "#64748B"];
@@ -11,7 +11,7 @@ function Chart({ c, i }) {
         {c.data.length === 0 ? <p className="pt-16 text-center text-xs text-slate-400">No data yet</p> : i % 2 === 0 ? (
           <ResponsiveContainer><BarChart data={c.data}><XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} /><YAxis allowDecimals={false} tick={{ fontSize: 10 }} /><Tooltip /><Bar dataKey="value" radius={[3, 3, 0, 0]}>{c.data.map((_, j) => <Cell key={j} fill={COLORS[j % COLORS.length]} />)}</Bar></BarChart></ResponsiveContainer>
         ) : (
-          <ResponsiveContainer><PieChart><Pie data={c.data} dataKey="value" nameKey="name" innerRadius={45} outerRadius={80} label={({ name, value }) => `${name}: ${value}`} labelLine={false} fontSize={10}>{c.data.map((_, j) => <Cell key={j} fill={COLORS[j % COLORS.length]} />)}</Pie><Tooltip /></PieChart></ResponsiveContainer>
+          <ResponsiveContainer><PieChart><Pie data={c.data} dataKey="value" nameKey="name" innerRadius={40} outerRadius={70} label={({ value }) => value} fontSize={10}>{c.data.map((_, j) => <Cell key={j} fill={COLORS[j % COLORS.length]} />)}</Pie><Tooltip /><Legend wrapperStyle={{ fontSize: 11 }} /></PieChart></ResponsiveContainer>
         )}
       </div>
     </Card>

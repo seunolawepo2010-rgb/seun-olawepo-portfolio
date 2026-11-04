@@ -40,7 +40,8 @@ async def purge_session(s):
 
 
 async def reset_session(s):
-    await purge_session(s)
+    async with _locks.setdefault(s, asyncio.Lock()):
+        await purge_session(s)
     await ensure_seeded(s)
 
 

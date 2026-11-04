@@ -1,0 +1,57 @@
+{
+  "summary": "First full run. Backend: 36 pytest cases (/app/backend/tests/test_portfolio_labs.py) covering public content, resume PDF, contact, session isolation, all 10 labs (IRM WF1 cross-lab, ServiceNow table/record/422/flow/ACL/REST/change lifecycle, cyber, audit, vendor, AI gov, agents, PM, SAFe, IR), the 8 automation demo triggers, fault injection/retry, scheduler, analytics, execution PDF, PDF+CSV reports for all 10 labs, reset, admin 401s/cookie login/skill CRUD/resume 415/brute-force lockout. The first run had 2 failures caused by real bugs (agents simulation path 500, cyber workflow KeyError). I fixed both; after that all 36 passed. Frontend (Playwright): all 24 public routes render with no page errors. Also checked: role selector, skills search, resume download, contact form (shows success, message appears in the admin inbox, email_status=sent), IRM full flow in the UI (fail+propagate, approve, Complete remediation, Effective, PDF/CSV download), default submit of every lab form, AI Gov approval to 'Approved – Monitoring', Agents lab (security block, evaluate, cost compare, sensitive action and assessment both pausing for approval, simulation test_agent, KPIs), Automation Center (run-workflow, inject-failure shows 2 attempts, scheduler, execution PDF), SAFe (start, assign, over-capacity cell, conflict banner, 5 votes, finalize to Committed, I&A), PM kanban/health check, IR create incident and Recovered with RTO met, admin dashboard tabs, mobile at 390px (no horizontal overflow, menu works). Found and fixed 1 frontend bug: after Reset Demo, forms submitted stale record IDs.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "POST /api/labs/agents/actions/test_agent (and every simulation/fallback agent run)", "issue": "500 TypeError: core.ins() got multiple values for keyword argument 'retries'. In agents.execute_agent, the simulation return passed **base (which already has retries) plus retries=. Every simulation run, including fallback after the daily live quota runs out, crashed. FIXED by testing agent (merged into base dict).", "priority": "CRITICAL"},
+      {"endpoint": "POST /api/labs/cyber/actions/add_vulnerability (cvss>=7, no plugin_id)", "issue": "The cyber_high_risk workflow failed at step 'Classify & create risk record' with KeyError 'plugin_id', because plugin_id is optional in validate(). FIXED (v.get('plugin_id') or v['title']) in labs_grc.py.", "priority": "HIGH"},
+      {"endpoint": "POST /api/auth/login (brute-force lockout)", "issue": "Lockout can be bypassed. The identifier is f'{client_ip}:{email}', and client_ip takes the FIRST X-Forwarded-For value, which the client controls. Verified: after the 6th attempt returned 429, the same email with header 'X-Forwarded-For: 1.2.3.4' got 401 (allowed to try again). The same spoofing bypasses every rate_limit (contact, per-IP).", "priority": "HIGH"}
+    ],
+    "minor": [
+      {"endpoint": "GET /api/labs/safe/dashboard", "issue": "IndexError 500 recorded in error_logs (safe.current_pi does find(...)[-1] on an empty list). Most likely a race: reset_session purges the records outside the per-session lock, so requests running at the same time see seeded=True with no records. Fix: run purge and seed inside the lock, and make current_pi raise 404/409 instead of IndexError."},
+      {"endpoint": "POST /api/admin/content/{coll}", "issue": "No required-field validation. POST {} creates an empty skill/cert. The admin UI also let a skill be saved with name=None."},
+      {"endpoint": "POST /api/automation/run/{key} inject_failure", "issue": "Fault injection monkeypatches the module-global engine.start during awaits. A workflow from another session running at the same moment would also get the injected fault. Pass the flag through ctx instead."},
+      {"endpoint": "Live AI quota", "issue": "One multi-agent assessment (run_assessment / agent_grc_assessment demo trigger) uses about 6 live calls, half of the 12/day session limit. The global limit of 60/day was 39 used after this test run. Consider running the workflow sub-agents in simulation mode, or counting one assessment as a single call."},
+      {"endpoint": "POST /api/admin/resume", "issue": "Accepts DOCX as well as PDF; the requirement says PDF only."},
+      {"endpoint": "POST /api/labs/safe/actions/vote", "issue": "Votes and objectives are accepted while the PI is 'Not Started'."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "ActionForm (all labs)", "issue": "After Reset Demo, record-select fields kept stale IDs. The useEffect depended on records.length, which is unchanged after reset, so submitting gave 'control not found' / 'team not found' until the page was reloaded. FIXED: the dependency is now the joined record IDs. Verified that reset followed by test_control succeeds.", "selector": "[data-testid^='form-'] select", "priority": "HIGH"},
+      {"component": "SAFe add-dependency form", "issue": "Consumer and provider default to the same feature, so the default submit always errors with 'A feature cannot depend on itself'. Default the provider to a different feature.", "selector": "form-safe-add-dependency", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Lab forms / dialogs", "issues": ["Action results are shown as raw JSON (e.g. finalize_pi, inspect_adapt, recovery_update {\"rto_met\": true}). Render them as formatted summaries.", "Row-action dialogs show the raw record ID (e.g. '430c1d8a68e7') as the subtitle.", "Date fields use the browser's native date picker (audit engagement, SAFe start_pi) instead of the shadcn Calendar.", "Labs with a single form (aigov, audit, vendor) leave the right half of the 2-column grid empty."]},
+      {"screen": "Dashboards", "issues": ["Donut charts (Findings by severity, Runs by status) have no legend or labels, so the colours cannot be interpreted."]},
+      {"screen": "Header (desktop)", "issues": ["The 'SO' brand badge looks clipped/cramped at 1920px (text overflows the small square)."]},
+      {"screen": "Contact", "issues": ["Inputs rely on placeholders only, with no visible labels (accessibility)."]},
+      {"screen": "Lab header", "issues": ["Reset Demo runs immediately with no confirmation."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_portfolio_labs.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Fix the brute-force/rate-limit bypass: do not trust the first X-Forwarded-For value. Lock by email (plus the trusted right-most proxy IP).",
+    "Make reset_session run under the per-session lock, and harden safe.current_pi against an empty list (it caused the 500 in error_logs).",
+    "Add required-field validation to admin content create/update.",
+    "Reduce live-AI consumption of the multi-agent workflows (about 6 calls per run against limits of 12/session and 60/global).",
+    "Pass inject_failure through ctx instead of monkeypatching engine.start globally.",
+    "Render ResultView output as human-readable text instead of JSON; add legends to the donut charts; replace native date inputs with the shadcn Calendar; give the SAFe add-dependency provider a different default.",
+    "Decide whether DOCX resume upload is allowed (the spec says PDF only)."
+  ],
+  "critical_code_review_comments": [
+    "agents.execute_agent: the simulation branch passed retries twice. Fixed, but add a unit test for mode=simulation plus quota exhaustion.",
+    "engine.decide/_save use id-only filters after a session-scoped lookup. That is fine today, but keep session in every write filter as defence in depth.",
+    "vendor.answer_questionnaire divides by len(q['questions']), which raises ZeroDivisionError if a questionnaire has no questions.",
+    "agents.rollback_agent calls upd(s, agent_id) without checking that the record type is agent, so it can overwrite any record in the session with snapshot fields.",
+    "server.wf_run art_dependency_conflict indexes teams[4] and feature names directly; this raises KeyError/IndexError if seed data changes."
+  ],
+  "updated_files": ["/app/backend/agents.py", "/app/backend/labs_grc.py", "/app/frontend/src/components/ActionForm.jsx", "/app/backend/tests/test_portfolio_labs.py"],
+  "success_rate": {"backend": "100% (36/36) after the 2 fixes; 94% before", "frontend": "~95% (stale-ID bug fixed; remaining items are design/UX)"},
+  "test_credentials": "Admin from /app/memory/test_credentials.md works (seunolawepo2010@gmail.com). The password was not changed. bcrypt hash starts with $2b$. Cookies are httpOnly, Secure, SameSite=None. CORS sends an explicit origin with allow-credentials true.",
+  "seed_data_creation": "Demo data lives only in isolated TEST-* demo sessions. Admin content I created (TEST skills, TEST_Cert, one empty skill) was deleted by ID. Two contact messages remain in the admin inbox because there is no delete endpoint: 'TEST_Api Contact' and 'TEST_UI Contact' (sender delivered@resend.dev). Profile was saved unchanged.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Run: cd /app/backend && REACT_APP_BACKEND_URL=<url> python -m pytest tests/test_portfolio_labs.py (pytest.ini forces -n 2). WARNING: each full run uses about 15 live AI calls from the global 60/day (TestAutomation demo triggers for agent_grc_assessment/agent_control_issue, and TestAgents.run_assessment). The brute-force test uses a random TEST email, so the admin is never locked. Not tested: change-password, the admin AI-toggle save (only presence checked), the admin articles/case-studies edit UI, valid PDF resume upload (skipped so the user's resume is not overwritten), purge-stale.",
+  "rca of the issue": "1) Agents 500: execute_agent builds base={..., 'retries': 0} and the simulation return called ins(**base, retries=...), which raises TypeError. 2) Cyber workflow KeyError: st_cy_risk read v['plugin_id'], but plugin_id is optional. 3) Stale form IDs after reset: ActionForm re-synced record selects only when records.length changed; reset re-seeds with the same count but new IDs. 4) Lockout bypass: client_ip() returns XFF.split(',')[0], which is attacker-controlled."
+}

@@ -30,7 +30,17 @@ async def seed_safe(s):
 
 
 async def current_pi(s):
-    return (await find(s, LAB, "pi"))[-1]
+    pis = await find(s, LAB, "pi")
+    if not pis:
+        raise HTTPException(409, "Demo data is being prepared – please retry")
+    return pis[-1]
+
+
+async def require_started(s):
+    pi = await current_pi(s)
+    if pi["status"] == "Not Started":
+        raise HTTPException(409, "Start the Program Increment first")
+    return pi
 
 
 async def board(s):
@@ -194,6 +204,7 @@ async def a_risk(s, p):
 @action(LAB, "create_objective")
 async def a_obj(s, p):
     d = validate({"team_id": ("str", True, 40), "description": ("str", True, 300), "business_value": ("int", True, (1, 10)), "committed": ("bool", False, None), "feature_ids": ("list", False, None)}, p)
+    await require_started(s)
     t = await get(s, d["team_id"], "team")
     return {"objective": await ins(s, LAB, "objective", team=t["name"], team_id=t["id"], description=d["description"], business_value=d["business_value"], committed=d.get("committed", True),
                                    feature_ids=d.get("feature_ids", []), progress=0, actual_value=0)}
@@ -202,7 +213,7 @@ async def a_obj(s, p):
 @action(LAB, "vote")
 async def a_vote(s, p):
     d = validate({"team_id": ("str", True, 40), "confidence": ("int", True, (1, 5))}, p)
-    pi = await current_pi(s)
+    pi = await require_started(s)
     t = await get(s, d["team_id"], "team")
     votes = {**pi.get("votes", {}), t["name"]: d["confidence"]}
     avg = round(sum(votes.values()) / len(votes), 2)

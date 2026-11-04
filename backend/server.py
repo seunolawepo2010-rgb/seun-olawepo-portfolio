@@ -208,7 +208,7 @@ async def demo_reset(s=Depends(session_dep)):
 @api.get("/audit-log")
 async def audit_log(lab: str = "", s=Depends(session_dep)):
     q = {"session": s, **({"lab": lab} if lab else {})}
-    return await db.audit.find(q, P).sort("at", -1).to_list(200)
+    return await db.audit.find(q, {"_id": 0}).sort("at", -1).to_list(200)
 
 
 @api.get("/ai/status")
@@ -231,7 +231,7 @@ async def wf_list(lab: str = "", s=Depends(session_dep)):
 
 @api.get("/automation/executions/{eid}")
 async def wf_get(eid: str, s=Depends(session_dep)):
-    e = await db.executions.find_one({"session": s, "id": eid}, P)
+    e = await db.executions.find_one({"session": s, "id": eid}, {"_id": 0})
     if not e:
         raise HTTPException(404, "Execution not found")
     return e
@@ -251,7 +251,7 @@ async def wf_retry(eid: str, s=Depends(session_dep)):
 @api.get("/automation/approvals")
 async def approvals(lab: str = "", status: str = "pending", s=Depends(session_dep)):
     q = {"session": s, **({"lab": lab} if lab else {}), **({"status": status} if status else {})}
-    return await db.approvals.find(q, P).sort("requested_at", -1).to_list(200)
+    return await db.approvals.find(q, {"_id": 0}).sort("requested_at", -1).to_list(200)
 
 
 class Decision(BaseModel):
@@ -294,18 +294,11 @@ async def wf_run(key: str, body: RunReq, s=Depends(session_dep)):
         raise HTTPException(404, "No demo trigger for this workflow")
     lab, act, mk = DEMO_TRIGGERS[key]
     payload = mk(await find(s, lab))
-    if body.inject_failure:
-        engine_ctx_flag = {"inject_failure_step": 1}
-        orig = engine.start
-
-        async def start_with_fault(s_, k_, ctx, trigger="manual"):
-            return await orig(s_, k_, {**ctx, **engine_ctx_flag}, trigger)
-        engine.start = start_with_fault
-        try:
-            return await ACTIONS[(lab, act)](s, payload)
-        finally:
-            engine.start = orig
-    return await ACTIONS[(lab, act)](s, payload)
+    token = engine.FAULT.set(body.inject_failure)
+    try:
+        return await ACTIONS[(lab, act)](s, payload)
+    finally:
+        engine.FAULT.reset(token)
 
 
 async def run_scheduler(s):
@@ -354,7 +347,7 @@ async def admin_profile(payload: dict, u=Depends(get_admin)):
     data = {k: v for k, v in payload.items() if k in PROFILE_FIELDS}
     await db.content.update_one({"key": "profile"}, {"$set": {**data, "updated_at": now()}})
     await audit("admin", "content.profile.update", "admin", {"fields": list(data)}, u["email"])
-    return await db.content.find_one({"key": "profile"}, P)
+    return await db.content.find_one({"key": "profile"}, {"_id": 0})
 
 
 def coll_check(coll):
@@ -365,7 +358,11 @@ def coll_check(coll):
 @api.post("/admin/content/{coll}")
 async def admin_create(coll: str, payload: dict, u=Depends(get_admin)):
     coll_check(coll)
-    item = {"id": new_id(), **clean_item(coll, payload), "created_at": now()}
+    data = clean_item(coll, payload)
+    key = {"experience": "employer", "skills": "name", "certifications": "name"}.get(coll, "title")
+    if not str(data.get(key) or "").strip():
+        raise HTTPException(422, f"Field '{key}' is required")
+    item = {"id": new_id(), **data, "created_at": now()}
     if coll in ("case_studies", "articles", "experience"):
         item["slug"] = item["id"]
     await db[coll].insert_one(dict(item))
@@ -380,7 +377,7 @@ async def admin_update(coll: str, iid: str, payload: dict, u=Depends(get_admin))
     if not res.matched_count:
         raise HTTPException(404, "Item not found")
     await audit("admin", f"content.{coll}.update", "admin", {"id": iid}, u["email"])
-    return await db[coll].find_one({"id": iid}, P)
+    return await db[coll].find_one({"id": iid}, {"_id": 0})
 
 
 @api.delete("/admin/content/{coll}/{iid}")
@@ -393,7 +390,7 @@ async def admin_delete(coll: str, iid: str, u=Depends(get_admin)):
 
 @api.get("/admin/messages")
 async def admin_messages(u=Depends(get_admin)):
-    return await db.messages.find({}, P).sort("created_at", -1).to_list(500)
+    return await db.messages.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
 
 
 @api.patch("/admin/messages/{mid}")
