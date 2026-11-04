@@ -107,7 +107,11 @@ export default function Tour() {
     try {
       if (i === 0 && fresh && doneCount === 0) await api.post("/demo/reset");
       const r = await step.run(ctx);
-      setResults((x) => ({ ...x, [step.key]: r }));
+      const stage = step.key.split("-")[0];
+      setResults((x) => {
+        const next = step.key.endsWith("-0") ? Object.fromEntries(Object.entries(x).filter(([k]) => !k.startsWith(`${stage}-`))) : { ...x };
+        return { ...next, [step.key]: r };
+      });
     } catch (e) {
       toast.error(e.response ? errMsg(e) : e.message);
     } finally {
@@ -141,14 +145,14 @@ export default function Tour() {
             <div className="mb-3 flex flex-wrap items-center gap-3">
               <span className="font-mono text-xs text-teal-700">STOP {si + 1}</span>
               <h2 className="font-heading text-lg font-bold text-slate-900">{s.title}</h2>
-              <Badge tone="muted"><Clock className="mr-1 inline h-3 w-3" />~{s.minutes} min</Badge>
+              <span className="inline-flex items-center gap-1 text-[11px] text-slate-500" data-testid={`tour-minutes-${s.key}`}><Clock className="h-3 w-3" /><Badge tone="muted">{`~${s.minutes} min`}</Badge></span>
               <Link to={s.lab} className="text-xs text-teal-700 underline" data-testid={`tour-open-${s.key}`}>Open full lab</Link>
             </div>
             <div className="space-y-2">
               {s.steps.map((st, i) => {
                 const step = { ...st, key: `${s.key}-${i}` };
                 const gi = all.findIndex((x) => x.key === step.key);
-                return <StepRow key={step.key} step={step} idx={i} state={results[step.key]} busy={busy === step.key} locked={i > 0 && !results[`${s.key}-${i - 1}`]} onRun={() => run(step, gi)} />;
+                return <StepRow key={step.key} step={step} idx={i} state={results[step.key]} busy={busy === step.key} locked={i > 0 && (!results[`${s.key}-${i - 1}`] || !!results[step.key])} onRun={() => run(step, gi)} />;
               })}
             </div>
           </section>

@@ -288,8 +288,8 @@ async def wf_run(key: str, body: RunReq, s=Depends(session_dep)):
         pi = await safe.current_pi(s)
         if pi["status"] == "Not Started":
             await ACTIONS[("safe", "start_pi")](s, {"name": "PI 1 (simulation)", "start_date": now()[:10], "planning_date": now()[:10]})
-        await ACTIONS[("safe", "assign_feature")](s, {"feature_id": feats["Executive risk dashboard"]["id"], "team_id": teams[0]["id"], "iteration": 2})
-        return await ACTIONS[("safe", "assign_feature")](s, {"feature_id": feats["Unified risk scoring API"]["id"], "team_id": teams[4]["id"], "iteration": 3})
+        await ACTIONS[("safe", "assign_feature")](s, {"feature_id": feats["Unified risk scoring API"]["id"], "team_id": teams[4]["id"], "iteration": 3})
+        return await ACTIONS[("safe", "assign_feature")](s, {"feature_id": feats["Executive risk dashboard"]["id"], "team_id": teams[0]["id"], "iteration": 2})
     if key not in DEMO_TRIGGERS:
         raise HTTPException(404, "No demo trigger for this workflow")
     lab, act, mk = DEMO_TRIGGERS[key]

@@ -44,6 +44,7 @@ Recruiters, CISOs and CIOs, GRC hiring managers, ServiceNow technical managers, 
 - Admin: content CRUD, messages, resume upload, AI settings, overview of logs, page views and errors, stale-session purge, password change.
 - SEO metadata, Open Graph tags, sitemap and robots.txt.
 - Testing: 36 backend pytest cases pass (`backend/tests`), and the frontend passed E2E testing (iteration_1).
+- 2026-11-04: Recruiter Tour Mode at /tour. A one-click 9-step tour covering IRM, AI agents and SAFe PI Planning that makes real backend calls, with progress, step lock and re-run reset. Linked from the Home hero, /lab and /demo. Passed testing (iteration_2).
 
 ## Backlog
 - P1: Deploy to production and set a custom domain. Upload the real resume PDF, add verified certifications and the GitHub URL in admin.

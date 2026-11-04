@@ -1,0 +1,37 @@
+{
+  "summary": "Tested Recruiter Tour Mode with Playwright (frontend only). Passed: the home link cta-recruiter-tour opens /tour; lab-index-tour on /lab and demo-open-tour on /demo both open /tour. Steps after the first in each stop start locked (irm-1..3, agents-1..2, safe-1 disabled). Run the whole tour with fresh data finished 9/9 in about 9-12s: progress bar at 100% and tour-complete shown. IRM: AC-2 is marked Ineffective and a graph waits at the human gate; approval shows 'Risk Critical (score 20), owner IAM Team – A. Patel, due 2026-11-19'; remediation closes with 'control retested Effective'; irm-lab-report.pdf downloads. Agents: the assessment pauses for human review (rating Medium, 2 gaps); approval shows the report text in a <pre>; the security test returns BLOCKED (allowlist plus prompt-injection). SAFe: shows the dependency conflict text, 1 escalation and the ART Sync agenda. Individual Run step buttons all work. A second whole-tour run after reload with fresh data completed 9/9. On mobile (390px) there is no horizontal overflow and the whole tour completed. Regression: /, /lab/irm and /agents render. No page errors or error toasts during the normal flows. Fixed 1 UI bug: the stop duration badge showed '[object Object],~,2, min'.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Tour stop header Badge", "issue": "The badge rendered '[object Object],~,2, min' because Badge does String(children) and was given an icon plus text. FIXED: the Clock icon is now outside the Badge and the badge gets a template string; added data-testid tour-minutes-<stage>.", "selector": "[data-testid^='tour-minutes-']", "priority": "MEDIUM"},
+      {"component": "Tour 'Run again' on approval steps", "issue": "After the agents stop is done, clicking 'Run again' on agents-1 (or on irm-1 without first re-running irm-0) gives the toast 'No pending approval found for this workflow — run the previous step first'. The button invites an action that cannot succeed. Hide or disable Run again on approval steps, or have it re-run the prerequisite step automatically.", "selector": "[data-testid='tour-run-agents-1']", "priority": "LOW"},
+      {"component": "Tour 'Run again' on step 0", "issue": "Re-running irm-0 (or agents-0) does not clear the results of later steps in that stop. Those steps still show as done with data from the old workflow and stay unlocked. The progress count stays 9/9 even though the new workflow is waiting for approval.", "selector": "[data-testid='tour-run-irm-0']", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/tour mobile 390px", "issues": ["The StepGraph shows each step as a narrow card at about 60% width with an arrow column beside it, so a single result is about 8 cards tall. Consider a compact list or a collapsed graph on mobile."]},
+      {"screen": "/tour SAFe results", "issues": ["Two wordings describe the same conflict: the safe-0 conflict reason says 'Provider lands I3 ≥ consumer I2', while the safe-1 agenda item says 'Provider not planned' (it was created before the provider was scheduled). This reads as contradictory to a recruiter."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Disable or hide 'Run again' on approval steps (irm-1, agents-1) when there is no pending approval, or chain them after re-running the previous step.",
+    "When an earlier step is re-run, clear the results of later steps in the same stop so the locks and progress stay accurate.",
+    "In runAll, stop the loop after the first failed step. Today run() swallows the error, so later steps run on stale or missing ctx and stack up error toasts (e.g. c.irmExe undefined leads to a TypeError toast).",
+    "Make the SAFe agenda wording match the final conflict reason.",
+    "Optional: offer a 'Restart tour' that clears results. 'Run the whole tour' does nothing once all 9 steps are done."
+  ],
+  "critical_code_review_comments": [
+    "Tour.run: `doneCount` is read from the render closure. It works today because only i===0 triggers the reset, but runAll calls run() in a loop with stale state, so use a ref or functional state for this.",
+    "runAll does not abort on error (run() catches every exception), which is the cascade-failure risk above.",
+    "The approve() helper takes the first approval whose execution_id matches. If multiple tours run in one session, this is fine because execution_id is unique.",
+    "Tour ctx lives in useState({}) and is mutated directly; it is lost on reload. This is acceptable because the locks prevent orphaned steps, but a useRef would be cleaner."
+  ],
+  "updated_files": ["/app/frontend/src/pages/Tour.jsx"],
+  "success_rate": {"backend": "N/A (not requested)", "frontend": "100% of requested flows pass; 1 cosmetic bug fixed; 2 low-priority UX issues"},
+  "seed_data_creation": "None. The tour ran only in isolated browser demo sessions (it calls /api/demo/reset for that session). The contact form was not submitted.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "The tour runs fast (~10s for all 9 steps; the agents steps finished in a few seconds, possibly in simulation mode). Each run of the agents stop uses AI quota. Sonner toasts are readable via '[data-sonner-toaster] li'.",
+  "rca of the issue": "Badge bug: kit.Badge renders {String(children)}, and children was the array [<Clock/>, '~', 2, ' min'], which stringifies to '[object Object],~,2, min'."
+}
