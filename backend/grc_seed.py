@@ -36,9 +36,13 @@ async def seed_grc(s):
                     business_service="Online Banking (fictional)", assets=["Customer Portal", "Core Ledger DB"], category="Cybersecurity", owner="Risk Owner (fictional)", likelihood=3, impact=5, inherent=15, control_effectiveness=60,
                     residual=6.0, rating="Medium", treatment="Mitigate", mitigation_plan="Automate deprovisioning; quarterly access reviews", questionnaire={"MFA enforced?": "yes", "Quarterly access review?": "yes", "Automated deprovisioning?": "no"}, state="Monitoring", review_date=in_days(30))
     await upd(s, ctl[0]["id"], risk_id=risk["id"], risk=risk["number"])
-    await mk(s, "risk", life(-70, ["Identified", "Assessed", "Pending Approval", "Accepted"], ["risk_analyst", "risk_analyst", "approver"]), statement="Legacy mainframe cannot support MFA", business_service="Payments (fictional)",
+    await mk(s, "risk_assessment", [(-87, "risk_analyst", "created", "")], risk_id=risk["id"], risk=risk["number"], likelihood=3, impact=5, control_effectiveness=60, inherent=15, residual=6.0, rating="Medium",
+             questionnaire=risk["questionnaire"], assessor="Risk Analyst (fictional)", state="Completed")
+    r2 = await mk(s, "risk", life(-70, ["Identified", "Assessed", "Pending Approval", "Accepted"], ["risk_analyst", "risk_analyst", "approver"]), statement="Legacy mainframe cannot support MFA", business_service="Payments (fictional)",
              assets=["Mainframe"], category="Technology", owner="Risk Owner (fictional)", likelihood=2, impact=4, inherent=8, control_effectiveness=40, residual=4.8, rating="Low", treatment="Accept",
              mitigation_plan="Network isolation; replacement planned", state="Accepted")
+    await mk(s, "risk_assessment", [(-67, "risk_analyst", "created", "")], risk_id=r2["id"], risk=r2["number"], likelihood=2, impact=4, control_effectiveness=40, inherent=8, residual=4.8, rating="Low",
+             assessor="Risk Analyst (fictional)", state="Completed")
     a1 = await mk(s, "assessment", [(-40, "auditor", "created", "")], control_id=ctl[0]["id"], control=ctl[0]["number"], result="pass", notes="Validated: 25/25 samples compliant", state="Completed")
     a2 = await mk(s, "assessment", [(-45, "auditor", "created", "")], control_id=ctl[3]["id"], control=ctl[3]["number"], result="fail", notes="Restore test overdue 11 months", state="Completed")
     _ = a1

@@ -34,6 +34,8 @@ AGENTS = [
     ("SAFe RTE Coordination Agent", "Prepare ART Sync agenda from dependencies", ["read_pi_board", "create_task"], "Program board", "ART Sync agenda"),
     ("Incident Response Agent", "Recommend containment actions", ["read_incidents", "create_task"], "Incident record", "Response recommendations"),
     ("Reporting Agent", "Compile executive reports", ["generate_report"], "Workflow outputs", "Executive report"),
+    ("Regulatory Change Analysis Agent", "Summarize regulatory changes, identify affected policies/controls, recommend impact priorities and draft remediation actions for human review",
+     ["map_obligations", "read_controls", "generate_report"], "Simulated UCF change notification", "Advisory change analysis (human review required)"),
     ("Intake Agent", "Triage assessment requests (workflow helper)", ["read_controls"], "Request", "Scoped request"),
     ("Evidence Agent", "Identify missing documentation (workflow helper)", ["read_evidence"], "Evidence packages", "Missing evidence list"),
     ("Risk Agent", "Calculate preliminary risk (workflow helper)", ["calc_risk"], "Gaps", "Preliminary risk"),
@@ -42,9 +44,15 @@ AGENTS = [
 BOUNDARY = "Use only the provided fictional data. Never request credentials, never take external actions, never output personal data. Flag uncertainty. Max 120 words."
 
 
+def agent_row(name):
+    n, o, t, i, out = next(a for a in AGENTS if a[0] == name)
+    extra = " Your output is advisory only and never a legal interpretation; a human must review it before any mapping or record changes." if "Regulatory" in n else ""
+    return {"name": n, "role": n.replace(" Agent", ""), "objective": o, "instructions": f"You are the {n}. {o}. Be concise and evidence-based.{extra}", "tools": t,
+            "inputs": i, "outputs": out, "boundaries": BOUNDARY, "model": "claude-haiku-5-5", "status": "active", "version": 1}
+
+
 async def seed_agents(s):
-    rows = [{"name": n, "role": n.replace(" Agent", ""), "objective": o, "instructions": f"You are the {n}. {o}. Be concise and evidence-based.", "tools": t,
-             "inputs": i, "outputs": out, "boundaries": BOUNDARY, "model": "claude-haiku-5-5", "status": "active", "version": 1} for n, o, t, i, out in AGENTS]
+    rows = [agent_row(a[0]) for a in AGENTS]
     docs = await bulk(s, LAB, "agent", rows)
     await bulk(s, LAB, "agent_version", [{"agent_id": d["id"], "agent": d["name"], "version": 1, "snapshot": {k: d[k] for k in ("instructions", "tools", "model", "objective")}, "note": "Initial"} for d in docs])
 

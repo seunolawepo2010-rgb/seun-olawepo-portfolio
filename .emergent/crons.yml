@@ -1,0 +1,8 @@
+crons:
+  - name: ucf-daily-check
+    description: "Daily simulated UCF regulatory feed check that logs detected changes or no-change results"
+    cron: "0 6 * * *"
+    # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
+    endpoint: "{{BASE_URL}}/api/cron/ucf-daily"
+    method: POST
+    enabled: true

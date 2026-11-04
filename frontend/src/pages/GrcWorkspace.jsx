@@ -1,4 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { IrmNav, navLabel } from "../components/irm/IrmNav";
+import { PolicyPanels, ChangePanel, RecTable } from "../components/irm/PolicyPanels";
+import UcfModule from "./UcfModule";
 import { toast } from "sonner";
 import { Search, Download, RotateCcw, Play, Loader2, CheckCircle2 } from "lucide-react";
 import { api, download, errMsg } from "../lib/api";
@@ -9,27 +13,42 @@ import { Approvals, ExecutionList } from "../components/Executions";
 import { Badge, Card, SimNotice, fmt } from "../components/kit";
 
 const F = (n, l, t = "text", x = {}) => ({ n, l, t, ...x });
-const MODULES = [
-  ["policy", "Policies", ["number", "title", "version", "category", "state", "effective_date"]], ["control", "Controls", ["number", "ref", "name", "policy", "state"]],
-  ["assessment", "Control Assessments", ["number", "control", "result", "issue", "created_at"]], ["campaign", "Acknowledgment Campaigns", ["number", "policy", "groups", "due_date", "state", "final_completion_pct"]],
-  ["ack", "Acknowledgments", ["number", "campaign", "employee", "group", "state", "acknowledged_at", "reminders"]], ["exception", "Policy Exceptions", ["number", "policy", "department", "risk_rating", "approver", "state", "expires"]],
-  ["risk", "Risks", ["number", "statement", "inherent", "residual", "rating", "treatment", "state"]], ["issue", "Issues", ["number", "title", "source", "severity", "control", "state"]],
-  ["task", "Remediation Tasks", ["number", "issue", "assigned_to", "priority", "sla_due", "state", "validation_result"]], ["notification", "Notifications", ["number", "to", "subject", "related", "channel", "created_at"]],
-];
+const PC = ["number", "title", "version", "owner", "category", "state", "effective_date"];
+const EC = ["number", "policy", "department", "risk_rating", "approver", "state", "expires"];
+const V = (type, cols, filter, create) => ({ type, cols, filter, create });
+const VIEWS = {
+  "pol-all": V("policy", PC), "pol-review": V("policy", PC, (r) => r.state === "Review" && !r.reviewed), "pol-approval": V("policy", PC, (r) => r.state === "Review" && r.reviewed),
+  "pol-published": V("policy", PC, (r) => r.state === "Published"), "pol-retired": V("policy", PC, (r) => r.state === "Retired"),
+  camp: V("campaign", ["number", "policy", "groups", "due_date", "state", "final_completion_pct"], null, "campaign"), ack: V("ack", ["number", "campaign", "employee", "group", "state", "acknowledged_at", "reminders"]),
+  "exc-all": V("exception", EC), "exc-pending": V("exception", EC, (r) => r.state === "Review"), "exc-active": V("exception", EC, (r) => r.state === "Active"),
+  "exc-closed": V("exception", EC, (r) => ["Closed", "Rejected", "Expired"].includes(r.state)),
+  control: V("control", ["number", "ref", "name", "policy", "state"]), assessment: V("assessment", ["number", "control", "result", "issue", "created_at"], null, "assessment"),
+  risk: V("risk", ["number", "statement", "inherent", "residual", "rating", "treatment", "state"], null, "risk"),
+  risk_assessment: V("risk_assessment", ["number", "risk", "likelihood", "impact", "control_effectiveness", "inherent", "residual", "rating", "created_at"]),
+  treatment: V("risk", ["number", "statement", "treatment", "mitigation_plan", "residual", "approver", "state"], (r) => r.treatment || ["Treatment", "Pending Approval", "Monitoring", "Accepted"].includes(r.state)),
+  issue: V("issue", ["number", "title", "source", "severity", "control", "reg_change", "state"]), task: V("task", ["number", "issue", "assigned_to", "priority", "sla_due", "state", "validation_result"]),
+  notification: V("notification", ["number", "to", "subject", "related", "channel", "created_at"]),
+};
+const FORMS = { "pol-new": "policy", "exc-new": "exception" };
+const TYPE_VIEW = { policy: "pol-all", campaign: "camp", ack: "ack", exception: "exc-all", control: "control", assessment: "assessment", risk: "risk", risk_assessment: "risk_assessment", issue: "issue", task: "task", notification: "notification" };
 const ROLE_LABEL = (r) => r.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()).replace("Grc", "GRC");
 const HIDE = new Set(["session", "lab", "type", "history", "id", "updated_at"]);
-const LINKS = ["policy_id", "control_id", "issue_id", "campaign_id", "risk_id", "assessment_id"];
+const LINKS = ["policy_id", "control_id", "issue_id", "campaign_id", "risk_id", "assessment_id", "reg_change_id", "requirement_id", "obligation_id", "impact_id"];
+const LISTS = ["control_ids", "policy_ids", "revision_policy_ids", "issue_ids"];
+const linked = (a, b) => LINKS.some((k) => a[k] === b.id) || LISTS.some((k) => (a[k] || []).includes(b.id));
 const Q = ["MFA enforced for privileged access?", "Access reviewed quarterly?", "Automated deprovisioning?", "Logging & monitoring in place?"];
 const CREATE = {
   policy: { action: "create_policy", title: "New policy (Draft)", fields: [F("title", "Title", "text", { d: "Information Security Policy v4" }), F("category", "Category", "text", { d: "Information Security" }), F("regulations", "Applicable regulations (comma)", "text", { d: "NIST SP 800-53, ISO 27001, GLBA" }), F("control_objectives", "Control objectives (comma)", "text", { d: "Privileged access review, Encryption at rest" }), F("reviewers", "Reviewers (comma)", "text", { d: "Policy Reviewer (fictional)" }), F("approval_group", "Approval group", "text", { d: "Information Security Governance Committee" }), F("content", "Policy text", "textarea", { d: "Purpose, scope, requirements, exceptions and enforcement (fictional)." })] },
   campaign: { action: "create_campaign", title: "New acknowledgment campaign", fields: [F("policy_id", "Published policy", "record", { rt: "policy", rl: (r) => `${r.number} ${r.title} (${r.state})` }), F("groups", "Target groups (comma: Finance, IT, HR, Operations)", "text", { d: "Finance, IT" }), F("start_date", "Start", "date", { d: new Date().toISOString().slice(0, 10) }), F("due_date", "Due", "date", { d: new Date(Date.now() + 14 * 864e5).toISOString().slice(0, 10) }), F("reminder_days", "Reminder every (days)", "number", { d: 3 })] },
   exception: { action: "create_exception", title: "Request policy exception", fields: [F("policy_id", "Policy", "record", { rt: "policy", rl: (r) => `${r.number} ${r.title}` }), F("control_id", "Control", "record", { rt: "control", rl: (r) => `${r.number} ${r.name}` }), F("department", "Requesting department", "text", { d: "Finance" }), F("justification", "Business justification", "textarea", { d: "Legacy ERP cannot enforce MFA until Q3 upgrade." }), F("compensating_controls", "Compensating controls", "textarea", { d: "IP allowlisting, enhanced logging, weekly review" }), F("duration_days", "Duration (days)", "number", { d: 90 })] },
   risk: { action: "create_risk", title: "Identify risk", fields: [F("statement", "Risk statement", "textarea", { d: "Privileged accounts may be misused due to infrequent review" }), F("business_service", "Business service", "text", { d: "Online Banking (fictional)" }), F("assets", "Related assets (comma)", "text", { d: "Core Ledger DB, Admin Portal" }), F("category", "Category", "text", { d: "Cybersecurity" }), F("control_ids", "Associated controls", "multirecord", { rt: "control", rl: (r) => `${r.number} ${r.name}` })] },
-  control: { action: "assess_control", title: "Perform control assessment", fields: [F("control_id", "Control", "record", { rt: "control", rl: (r) => `${r.number} ${r.name} (${r.state})` }), F("result", "Result", "select", { o: ["fail", "pass"], d: "fail" }), F("severity", "Issue severity if failed", "select", { o: ["High", "Critical", "Medium", "Low"], d: "High" }), F("notes", "Test notes", "textarea", { d: "3 of 20 sampled privileged accounts lacked review evidence." })] },
+  assessment: { action: "assess_control", title: "Perform control assessment", fields: [F("control_id", "Control", "record", { rt: "control", rl: (r) => `${r.number} ${r.name} (${r.state})` }), F("result", "Result", "select", { o: ["fail", "pass"], d: "fail" }), F("severity", "Issue severity if failed", "select", { o: ["High", "Critical", "Medium", "Low"], d: "High" }), F("notes", "Test notes", "textarea", { d: "3 of 20 sampled privileged accounts lacked review evidence." })] },
 };
 
+const SEL = { controls_sufficient: ["no", "yes"], policy_revision: ["no", "yes"], ai_decision: ["accept", "reject"] };
+
 function TransitionForm({ rec, act, spec, role, employees, onDone }) {
-  const [v, setV] = useState(() => Object.fromEntries(spec.requires.map((k) => [k, k === "employee" ? rec.employee : k === "decision" || k === "result" ? "pass" : k === "treatment" ? "Mitigate" : ""])));
+  const [v, setV] = useState(() => Object.fromEntries(spec.requires.map((k) => [k, k === "employee" ? rec.employee : k === "decision" || k === "result" ? "pass" : k === "treatment" ? "Mitigate" : SEL[k] ? SEL[k][0] : ""])));
   const [q, setQ] = useState(Object.fromEntries(Q.map((x) => [x, "yes"])));
   const go = async () => {
     try {
@@ -42,9 +61,9 @@ function TransitionForm({ rec, act, spec, role, employees, onDone }) {
   return (
     <div className="rounded-md border border-slate-200 p-3" data-testid={`grc-transition-${act}`}>
       <div className="grid gap-2 sm:grid-cols-2">
-        {spec.requires.map((k) => (k === "decision" || k === "result" || k === "treatment" || k === "employee" ? (
+        {spec.requires.map((k) => (k === "decision" || k === "result" || k === "treatment" || k === "employee" || SEL[k] ? (
           <select key={k} aria-label={k} className="rounded border border-slate-300 px-2 py-1 text-xs" value={v[k]} onChange={(e) => setV({ ...v, [k]: e.target.value })} data-testid={`grc-transition-${act}-${k}`}>
-            {(k === "treatment" ? ["Mitigate", "Transfer", "Avoid", "Accept"] : k === "employee" ? Object.values(employees).flat() : ["pass", "fail"]).map((o) => <option key={o}>{o}</option>)}
+            {(SEL[k] || (k === "treatment" ? ["Mitigate", "Transfer", "Avoid", "Accept"] : k === "employee" ? Object.values(employees).flat() : ["pass", "fail"])).map((o) => <option key={o}>{o}</option>)}
           </select>
         ) : <input key={k} placeholder={k.replace(/_/g, " ")} type={k === "due_date" ? "date" : "text"} className="rounded border border-slate-300 px-2 py-1 text-xs" value={v[k]} onChange={(e) => setV({ ...v, [k]: e.target.value })} data-testid={`grc-transition-${act}-${k}`} />))}
         {rec.type === "risk" && act === "assess" && Q.map((x) => <label key={x} className="flex items-center justify-between gap-2 text-xs">{x}<select value={q[x]} onChange={(e) => setQ({ ...q, [x]: e.target.value })} className="rounded border px-1"><option>yes</option><option>no</option></select></label>)}
@@ -59,7 +78,7 @@ function RecordView({ rec, records, meta, role, onDone, open }) {
   const [note, setNote] = useState("");
   const [att, setAtt] = useState({ name: "", description: "" });
   const specs = Object.entries(meta.transitions[rec.type] || {}).filter(([, sp]) => sp.from.includes(rec.state));
-  const related = records.filter((r) => r.id !== rec.id && (LINKS.some((k) => r[k] === rec.id) || LINKS.some((k) => rec[k] === r.id)));
+  const related = records.filter((r) => r.id !== rec.id && (linked(r, rec) || linked(rec, r)));
   const post = (a, body) => api.post(`/labs/grc/actions/${a}`, { id: rec.id, role, ...body }).then(() => { toast.success("Saved"); onDone(); }).catch((e) => toast.error(errMsg(e)));
   return (
     <div className="space-y-4" data-testid="grc-record-view">
@@ -68,6 +87,8 @@ function RecordView({ rec, records, meta, role, onDone, open }) {
         {rec.seeded && <p className="mt-1 text-[11px] text-amber-700">Fictional seeded demonstration record</p>}
         <dl className="mt-4 grid gap-x-6 gap-y-2 text-xs sm:grid-cols-2 lg:grid-cols-3">{Object.entries(rec).filter(([k]) => !HIDE.has(k) && !k.endsWith("_id")).map(([k, v]) => <div key={k}><dt className="font-mono text-[10px] uppercase text-slate-500">{k.replace(/_/g, " ")}</dt><dd className="whitespace-pre-wrap text-slate-800">{fmt(v)}</dd></div>)}</dl>
       </Card>
+      {rec.type === "policy" && <PolicyPanels rec={rec} records={records} role={role} open={open} onDone={onDone} />}
+      {rec.type === "reg_change" && <ChangePanel rec={rec} records={records} role={role} open={open} onDone={onDone} />}
       {specs.length > 0 && <Card><h4 className="mb-2 font-heading text-sm font-semibold">Available workflow actions (state: {rec.state})</h4><div className="space-y-2">{specs.map(([a, sp]) => <TransitionForm key={a + rec.updated_at} rec={rec} act={a} spec={sp} role={role} employees={meta.employees} onDone={onDone} />)}</div></Card>}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card testid="grc-related-list"><h4 className="font-heading text-sm font-semibold">Related records ({related.length})</h4>{related.map((r) => <button key={r.id} onClick={() => open(r)} className="mt-2 flex w-full justify-between rounded border border-slate-100 px-2 py-1 text-left text-xs hover:border-teal-500"><span>{r.number} · {r.title || r.name || r.employee || r.subject || r.result}</span><Badge>{r.state || r.type}</Badge></button>)}</Card>
@@ -131,21 +152,47 @@ function Scenario({ onDone }) {
   );
 }
 
+function CampaignTable({ dash }) {
+  return <Card testid="grc-campaign-metrics"><h4 className="font-heading text-sm font-semibold">Campaign completion (calculated from acknowledgment records)</h4><RecTable rows={dash.campaigns} cols={["campaign", "policy", "state", "total", "acknowledged", "pending", "overdue", "completion_pct"]} testid="grc-campaign-table" /></Card>;
+}
+
+function AckReport({ dash, records }) {
+  const acks = records.filter((r) => r.type === "ack");
+  const groups = [...new Set(acks.map((a) => a.group))].map((g) => { const x = acks.filter((a) => a.group === g); const d = x.filter((a) => a.state === "Acknowledged").length; return { group: g, total: x.length, acknowledged: d, pending: x.length - d, completion_pct: x.length ? Math.round((d / x.length) * 1000) / 10 : 0 }; });
+  return (
+    <div className="space-y-4" data-testid="grc-ack-report">
+      <CampaignTable dash={dash} />
+      <Card testid="grc-ack-by-group"><div className="flex justify-between"><h4 className="font-heading text-sm font-semibold">Completion by target group</h4><button onClick={() => download("/labs/grc/report?format=csv", "irm-records.csv")} className="inline-flex items-center gap-1 text-xs text-teal-700" data-testid="grc-ack-report-csv"><Download className="h-3 w-3" />CSV</button></div><RecTable rows={groups} cols={["group", "total", "acknowledged", "pending", "completion_pct"]} testid="grc-ack-group-table" /></Card>
+    </div>
+  );
+}
+
+function Objectives({ records, open }) {
+  const ctls = records.filter((r) => r.type === "control");
+  const rows = records.filter((r) => r.type === "policy" && r.state !== "Retired").flatMap((p) => (p.control_objectives || []).map((o) => { const c = ctls.find((x) => x.policy_id === p.id && x.name === o); return { id: c?.id || `${p.id}-${o}`, objective: o, policy: `${p.number} v${p.version}`, policy_state: p.state, control: c?.number, control_state: c?.state, _c: c }; }));
+  return <Card testid="grc-objectives"><h3 className="mb-2 font-heading text-sm font-semibold">Control Objectives ({rows.length}) – derived from policy records</h3><RecTable rows={rows} cols={["objective", "policy", "policy_state", "control", "control_state"]} onRow={(r) => r._c && open(r._c)} testid="grc-objectives-table" /></Card>;
+}
+
 export default function GrcWorkspace() {
   const { records, dash, exes, approvals, refresh } = useLab("grc");
   const [meta, setMeta] = useState(null);
   const [role, setRole] = useState(localStorage.getItem("grc_role") || "grc_admin");
-  const [mod, setMod] = useState("scenario");
+  const [params] = useSearchParams();
+  const [mod, setMod] = useState(params.get("module") || "scenario");
   const [q, setQ] = useState("");
   const [sel, setSel] = useState(null);
+  const [audit, setAudit] = useState([]);
   useEffect(() => { api.post("/labs/grc/actions/meta", {}).then((r) => setMeta(r.data)); }, []);
   useEffect(() => { localStorage.setItem("grc_role", role); }, [role]);
-  const m = MODULES.find((x) => x[0] === mod);
-  const rows = useMemo(() => (m ? records.filter((r) => r.type === m[0] && JSON.stringify(r).toLowerCase().includes(q.toLowerCase())).reverse() : []), [records, m, q]);
+  useEffect(() => { if (mod === "audit") { api.get("/audit-log?lab=grc").then((r) => setAudit(r.data)); } }, [mod, records]);
+  const vw = VIEWS[mod];
+  const counts = useMemo(() => Object.fromEntries(Object.entries(VIEWS).map(([k, v]) => [k, records.filter((r) => r.type === v.type && (!v.filter || v.filter(r))).length])), [records]);
+  const rows = useMemo(() => (vw ? records.filter((r) => r.type === vw.type && (!vw.filter || vw.filter(r)) && JSON.stringify(r).toLowerCase().includes(q.toLowerCase())).reverse() : []), [records, vw, q]);
   const current = sel && records.find((r) => r.id === sel);
-  const open = (r) => { setMod(r.type); setSel(r.id); };
+  const open = (r) => { setMod(TYPE_VIEW[r.type] || "ucf"); setSel(r.id); setQ(""); };
+  const go = (k) => { setMod(k); setSel(null); setQ(""); };
+  const title = navLabel(mod);
   if (!meta) return <div className="p-10 text-sm text-slate-500">Loading workspace…</div>;
-  const nav = [["scenario", "▶ End-to-End Scenario"], ["dashboard", "Executive Dashboard"], ...MODULES.map(([k, l]) => [k, l]), ["automation", "Workflow Executions"]];
   return (
     <div>
       <section className="bg-[#0B132B] text-white"><div className="mx-auto max-w-[1400px] px-5 py-8 sm:px-8">
@@ -159,27 +206,31 @@ export default function GrcWorkspace() {
           <button onClick={() => api.post("/labs/grc/actions/run_monitoring", {}).then(() => { toast.success("Monitoring rules executed"); refresh(); })} className="rounded border border-slate-600 px-3 py-1.5" data-testid="grc-run-monitoring">Run SLA / reminder monitoring</button>
         </div>
       </div></section>
-      <div className="mx-auto grid max-w-[1400px] gap-5 px-5 py-6 sm:px-8 lg:grid-cols-[230px_1fr]">
-        <nav className="h-fit rounded-lg border border-slate-200 bg-white p-2 lg:sticky lg:top-20" data-testid="grc-navigator" aria-label="Application navigator">
-          <p className="px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-slate-500">Application navigator</p>
-          {nav.map(([k, l]) => <button key={k} onClick={() => { setMod(k); setSel(null); setQ(""); }} className={`block w-full rounded px-2 py-1.5 text-left text-xs ${mod === k ? "bg-teal-50 font-semibold text-teal-800" : "text-slate-700 hover:bg-slate-50"}`} data-testid={`grc-nav-${k}`}>{l}{m && k === mod ? ` (${rows.length})` : ""}</button>)}
-        </nav>
+      <div className="mx-auto grid max-w-[1400px] gap-5 px-5 py-6 sm:px-8 lg:grid-cols-[270px_1fr]">
+        <IrmNav mod={mod} go={go} counts={counts} />
         <div className="min-w-0 space-y-4">
+          <p className="font-mono text-[10px] uppercase tracking-wider text-slate-500" data-testid="grc-breadcrumb">ServiceNow IRM / {title}</p>
           <SimNotice>Independent ServiceNow-style simulation (not an official ServiceNow product). Role permissions are enforced by the backend. Seeded records are fictional demonstration data.</SimNotice>
-          {mod === "scenario" && <Scenario onDone={refresh} />}
-          {mod === "dashboard" && dash && <><Dashboard dash={dash} /><Card testid="grc-campaign-metrics"><h4 className="font-heading text-sm font-semibold">Campaign completion (calculated from acknowledgment records)</h4><table className="mt-2 w-full text-xs"><thead><tr className="text-left text-slate-500">{["campaign", "policy", "state", "total", "acknowledged", "pending", "overdue", "completion_pct"].map((h) => <th key={h}>{h.replace("_", " ")}</th>)}</tr></thead><tbody>{dash.campaigns.map((c) => <tr key={c.campaign} className="border-t border-slate-100">{Object.values(c).map((v, i) => <td key={i} className="py-1">{v}</td>)}</tr>)}</tbody></table></Card></>}
-          {mod === "automation" && <><Card><Approvals approvals={approvals.filter((a) => a.lab === "grc")} onDone={refresh} /></Card><ExecutionList executions={exes} onChanged={refresh} /></>}
-          {m && !current && (
+          {!current && mod === "scenario" && <Scenario onDone={refresh} />}
+          {!current && mod === "dashboard" && dash && <><Dashboard dash={dash} /><CampaignTable dash={dash} /></>}
+          {!current && mod === "ack-report" && dash && <AckReport dash={dash} records={records} />}
+          {!current && mod === "objectives" && <Objectives records={records} open={open} />}
+          {!current && mod === "audit" && <Card testid="grc-audit-history"><h3 className="mb-2 font-heading text-sm font-semibold">Audit History (this demo session)</h3><RecTable rows={audit} cols={["at", "action", "detail"]} testid="grc-audit-table" /></Card>}
+          {!current && mod === "ucf" && <UcfModule records={records} role={role} refresh={refresh} open={open} />}
+          {!current && mod === "automation" && <><Card><Approvals approvals={approvals.filter((a) => a.lab === "grc")} onDone={refresh} /></Card><ExecutionList executions={exes} onChanged={refresh} /></>}
+          {!current && FORMS[mod] && <ActionForm key={mod} lab="grc" form={CREATE[FORMS[mod]]} records={records} onDone={refresh} extra={{ role }} />}
+          {vw && !current && (
             <>
-              {CREATE[mod] && <ActionForm key={mod} lab="grc" form={CREATE[mod]} records={records} onDone={refresh} extra={{ role }} />}
+              {vw.create && <ActionForm key={mod} lab="grc" form={CREATE[vw.create]} records={records} onDone={refresh} extra={{ role }} />}
               <div className="overflow-hidden rounded-lg border border-slate-200 bg-white" data-testid={`grc-list-${mod}`}>
-                <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-3 py-2"><h3 className="font-heading text-sm font-semibold">{m[1]}</h3><div className="relative"><Search className="absolute left-2 top-1.5 h-3.5 w-3.5 text-slate-400" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter" className="rounded border border-slate-300 py-1 pl-7 pr-2 text-xs" data-testid="grc-list-filter" /></div></div>
-                <div className="max-h-[520px] overflow-auto"><table className="w-full text-xs"><thead className="sticky top-0 bg-slate-50"><tr>{m[2].map((c) => <th key={c} className="px-3 py-2 text-left text-[10px] uppercase tracking-wider text-slate-500">{c.replace(/_/g, " ")}</th>)}</tr></thead>
-                  <tbody>{rows.map((r, i) => <tr key={r.id} onClick={() => setSel(r.id)} className="cursor-pointer border-t border-slate-100 hover:bg-teal-50/40" data-testid={`grc-row-${mod}-${i}`}>{m[2].map((c) => <td key={c} className="max-w-xs truncate px-3 py-2">{c === "state" || c === "result" || c === "risk_rating" || c === "rating" ? <Badge>{fmt(r[c])}</Badge> : fmt(r[c])}</td>)}</tr>)}</tbody></table></div>
+                <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-3 py-2"><h3 className="font-heading text-sm font-semibold">{title} ({rows.length})</h3><div className="relative"><Search className="absolute left-2 top-1.5 h-3.5 w-3.5 text-slate-400" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter" className="rounded border border-slate-300 py-1 pl-7 pr-2 text-xs" data-testid="grc-list-filter" /></div></div>
+                <div className="max-h-[520px] overflow-auto"><table className="w-full text-xs"><thead className="sticky top-0 bg-slate-50"><tr>{vw.cols.map((c) => <th key={c} className="px-3 py-2 text-left text-[10px] uppercase tracking-wider text-slate-500">{c.replace(/_/g, " ")}</th>)}</tr></thead>
+                  <tbody>{rows.map((r, i) => <tr key={r.id} onClick={() => setSel(r.id)} className="cursor-pointer border-t border-slate-100 hover:bg-teal-50/40" data-testid={`grc-row-${mod}-${i}`}>{vw.cols.map((c) => <td key={c} className="max-w-xs truncate px-3 py-2">{c === "state" || c === "result" || c === "risk_rating" || c === "rating" ? <Badge>{fmt(r[c])}</Badge> : fmt(r[c])}</td>)}</tr>)}</tbody></table>
+                  {!rows.length && <p className="px-3 py-4 text-xs text-slate-500">No records in this view</p>}</div>
               </div>
             </>
           )}
-          {current && <><button onClick={() => setSel(null)} className="text-xs text-teal-700" data-testid="grc-back-to-list">← Back to {m?.[1]}</button><RecordView rec={current} records={records} meta={meta} role={role} onDone={refresh} open={open} /></>}
+          {current && <><button onClick={() => setSel(null)} className="text-xs text-teal-700" data-testid="grc-back-to-list">← Back to {title}</button><RecordView rec={current} records={records} meta={meta} role={role} onDone={refresh} open={open} /></>}
         </div>
       </div>
     </div>

@@ -18,7 +18,7 @@ from starlette.middleware.cors import CORSMiddleware  # noqa: E402
 
 from core import db, client, P, ACTIONS, KPIS, SCHEMAS, ins, upd, get, find, validate, audit, rate_limit, client_ip, now, new_id, log  # noqa: E402
 import engine  # noqa: E402
-import labs_grc, labs_sn, labs_ops, agents, safe, grc  # noqa: E402,F401
+import labs_grc, labs_sn, labs_ops, agents, safe, grc, ucf  # noqa: E402,F401
 from seed_labs import session_dep, reset_session, purge_session  # noqa: E402
 from reports import build_pdf, lab_sections, execution_sections, to_csv  # noqa: E402
 from auth import router as auth_router, get_admin, seed_admin  # noqa: E402
@@ -51,6 +51,40 @@ def pdf_response(data, name):
 @api.get("/health")
 async def health():
     return {"status": "ok", "time": now()}
+
+
+_bg = set()
+
+
+@api.post("/cron/ucf-daily")
+async def cron_ucf_daily(request: Request):
+    # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
+    import hmac
+    auth = request.headers.get("authorization", "")
+    if not auth.startswith("Bearer ") or not hmac.compare_digest(auth[7:].encode(), os.environ["WEBHOOK_CRON_SECRET"].encode()):
+        raise HTTPException(401, "Unauthorized")
+    try:
+        body = await request.json()
+    except Exception:  # noqa: BLE001
+        raise HTTPException(400, "Invalid body")
+    if not isinstance(body, dict):
+        raise HTTPException(400, "Invalid body")
+    run_id = request.headers.get("x-webhook-id") or body.get("run_id") or new_id("run-")
+    t = asyncio.create_task(ucf.scheduled_check(str(run_id)))
+    _bg.add(t)
+    t.add_done_callback(_bg.discard)
+    return {"accepted": True, "run_id": run_id}
+
+
+@api.get("/ucf/status")
+async def ucf_status():
+    runs = [{k: r.get(k) for k in ("at", "status", "result", "published", "ended_at")} for r in await db.ucf_cron_runs.find({}, P).sort("at", -1).to_list(10)]
+    return {"mode": ucf.MODE, "schedule": "Daily check at 06:00 UTC + on-demand", "recent_scheduled_checks": runs, "shared_feed_notices": await db.ucf_feed.count_documents({})}
+
+
+@api.get("/labs/grc/ucf/report/{rid}")
+async def ucf_report(rid: str, s=Depends(session_dep)):
+    return pdf_response(await ucf.change_report(s, rid), f"regulatory-change-impact-{rid}.pdf")
 
 
 @api.get("/content/bundle")
@@ -338,6 +372,21 @@ async def wf_analytics(s=Depends(session_dep)):
 
 
 # ---------- admin ----------
+@api.get("/admin/ucf/monitor")
+async def admin_ucf(u=Depends(get_admin)):
+    from seed_labs import ensure_seeded
+    await ensure_seeded(ucf.SHARED)
+    return {"metrics": await ucf.ucf_metrics(ucf.SHARED), "config": (await find(ucf.SHARED, "grc", "ucf_config"))[0],
+            "sync_runs": (await find(ucf.SHARED, "grc", "sync_run"))[-15:][::-1], "changes": (await find(ucf.SHARED, "grc", "reg_change"))[-15:][::-1],
+            "scheduled_checks": await db.ucf_cron_runs.find({}, P).sort("at", -1).to_list(15)}
+
+
+@api.post("/admin/ucf/run-check")
+async def admin_ucf_run(u=Depends(get_admin)):
+    await ucf.scheduled_check(new_id("admin-"))
+    return {"ok": True}
+
+
 @api.get("/admin/content")
 async def admin_content(u=Depends(get_admin)):
     return await bundle(admin=True)

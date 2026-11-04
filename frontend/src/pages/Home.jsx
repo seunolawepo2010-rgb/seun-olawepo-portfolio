@@ -84,6 +84,7 @@ export default function Home() {
 
       <section className="mx-auto max-w-7xl px-5 pt-12 sm:px-8">
         <Link to="/irm" className="block rounded-lg border-2 border-teal-600 bg-white p-6 transition-colors hover:bg-teal-50" data-testid="home-irm-flagship"><Eyebrow>Flagship demonstration</Eyebrow><h2 className="mt-2 font-heading text-xl font-bold">Enterprise ServiceNow IRM — End-to-End Governance Workflow</h2><p className="mt-2 text-sm text-slate-600">Policy lifecycle, acknowledgment campaigns, exceptions, risk assessments, issues and remediation. Covers 11 roles with backend-enforced permissions, linked records and activity streams.</p></Link>
+        <Link to="/irm?module=ucf" className="mt-4 block rounded-lg border border-slate-300 bg-white p-6 transition-colors hover:border-teal-600 hover:bg-teal-50" data-testid="home-ucf-featured"><Eyebrow>Featured demonstration</Eyebrow><h2 className="mt-2 font-heading text-xl font-bold">ServiceNow IRM + UCF | Automated Regulatory Change Monitoring</h2><p className="mt-2 text-sm text-slate-600">Trigger a simulated UCF regulatory update and follow it through the whole process: notification, impact assessment, policy and control updates, remediation, validation and closure. Based on my hands-on configuration of the UCF integration with ServiceNow IRM. The feed is clearly labeled as simulated.</p></Link>
       </section>
 
       <RoleNavigator c={c} />

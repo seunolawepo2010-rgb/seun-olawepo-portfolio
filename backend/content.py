@@ -37,13 +37,21 @@ SKILLS = {
     "Healthcare Compliance": (["HIPAA", "HITRUST"], ["audit", "grc"]),
     "Federal & Defense": (["NIST RMF", "NIST SP 800-53", "FedRAMP", "NIST SP 800-171", "CMMC"], ["irm", "audit", "cyber"]),
     "Third-Party Risk": (["SOC 2 report review", "Vendor tiering", "Fourth-party risk", "ISO 27001 attestation review"], ["vendor"]),
-    "ServiceNow": (["IRM", "GRC", "Policy & Compliance", "Risk Management", "Issues Management", "Audit Management", "Administration", "Configuration", "Development demonstrations", "Flow Designer concepts", "REST APIs"], ["grc", "irm", "servicenow"]),
+    "ServiceNow": (["IRM", "GRC", "Policy & Compliance", "Risk Management", "Issues Management", "Audit Management", "Administration", "Configuration", "Development demonstrations", "Flow Designer concepts", "REST APIs", "UCF integration", "Regulatory Change Management", "Continuous compliance monitoring"], ["grc", "irm", "servicenow"]),
     "AI Governance": (["NIST AI RMF", "ISO/IEC 42001", "Model risk", "Responsible AI", "AI security", "AI risk assessments"], ["aigov"]),
     "AI Agent Management": (["Agent orchestration", "Agent evaluation", "AI operations", "Human-in-the-loop workflows", "Agent monitoring", "Token economics", "Latency", "Model selection"], ["agents"]),
     "Project & Agile Delivery": (["PMP", "Scrum", "SAFe", "RTE", "PI Planning", "ART coordination", "Product Ownership", "Project management", "Program management", "Business analysis"], ["pm", "safe"]),
     "Enterprise Tools": (["ServiceNow", "OneTrust", "Azure DevOps", "Jira", "Confluence", "SharePoint", "Power BI", "Power Apps", "SQL", "Microsoft Project", "GitHub"], ["servicenow", "pm"]),
     "Security Operations": (["Tenable", "Qualys", "Entra ID", "SailPoint", "CyberArk", "Vulnerability management", "Incident response", "BCDR"], ["cyber", "ir"]),
 }
+
+UCF_LINE = "Hands-on ServiceNow IRM experience includes personally configuring the Unified Compliance Framework (UCF) integration with ServiceNow IRM to support automated regulatory change notifications and continuous compliance monitoring."
+UCF_CASE = ("servicenow-irm-ucf", "ServiceNow IRM + UCF | Automated Regulatory Change Monitoring", "grc",
+            "Manually checking each regulator and framework publisher for updates is slow and risks missing compliance changes.",
+            "Regulatory content inventory, change notifications, requirement-to-policy/control mapping, impact assessment, remediation and closure. Builds on my hands-on experience configuring the UCF integration with ServiceNow IRM.",
+            "Receive UCF-style change notifications, de-duplicate, create regulatory change records, notify compliance owners, assess impact, create issues/remediation and policy revisions for gaps, validate and close.",
+            "ServiceNow IRM-style workspace with a clearly labeled SIMULATED UCF feed (no live UCF connection)", "HIPAA, HITRUST, GLBA, CCPA, GDPR, NYDFS, PCI DSS, SOC 2, ISO 27001, NIST CSF, NIST SP 800-53, FedRAMP, SOX ITGC, ISO/IEC 42001",
+            "Integration dashboard, sync history, regulatory change records, impact assessments, regulatory change impact report (PDF)")
 
 CASES = [
     ("servicenow-irm-migration", "ServiceNow IRM Migration", "irm", "Risk, control and issue data scattered across spreadsheets limits visibility and auditability.", "Risk register, control library, issues, policies.", "Map data model, define taxonomy and scoring, configure workflows, migrate and validate.", "ServiceNow-style IRM simulator", "NIST SP 800-53, NIST CSF", "Data model, scoring rules, approval workflow, executive dashboard"),
@@ -81,7 +89,14 @@ async def seed_content():
         for n in names:
             await db.skills.update_one({"category": c, "name": n}, {"$set": {"labs": labs, "order": i}, "$setOnInsert": {"id": new_id()}}, upsert=True)
     if not await db.content.find_one({"key": "profile"}):
-        await db.content.insert_one({**PROFILE, "updated_at": now()})
+        await db.content.insert_one({**PROFILE, "summary": PROFILE["summary"] + "\n\n" + UCF_LINE, "ucf_added": True, "updated_at": now()})
+    prof = await db.content.find_one({"key": "profile"}, P)
+    if not prof.get("ucf_added"):
+        await db.content.update_one({"key": "profile"}, {"$set": {"summary": (prof.get("summary") or "") + "\n\n" + UCF_LINE, "ucf_added": True}})
+    slug, t, lab, ch, sc, ap, te, fw, dl = UCF_CASE
+    await db.case_studies.update_one({"slug": slug}, {"$setOnInsert": {"id": slug, "slug": slug, "title": t, "lab": lab, "challenge": ch, "scope": sc, "approach": ap, "technology": te, "frameworks": fw,
+                                     "deliverables": dl, "published": True, "order": -1, "evidence": "Interactive regulatory change records, synchronization executions and the downloadable impact report.",
+                                     "disclaimer": "Demonstration uses fictional, simulated regulatory content and is not an employer record. The experience statement reflects my own hands-on work."}}, upsert=True)
     if not await db.experience.count_documents({}):
         await db.experience.insert_many([{"id": slug, "slug": slug, "employer": e, "title": t, "start": st, "end": en, "labs": labs, "highlights": h, "order": i, "published": True,
                                           "note": "Summary of areas of responsibility. Edit in admin."} for i, (slug, e, t, st, en, labs, h) in enumerate(EXPERIENCE)])

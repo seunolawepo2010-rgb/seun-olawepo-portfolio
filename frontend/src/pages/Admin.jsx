@@ -5,6 +5,7 @@ import { LogOut, Upload, Trash2, Plus, Save } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { api, errMsg } from "../lib/api";
 import { Badge, Card, fmt } from "../components/kit";
+import { UcfAdmin } from "./UcfModule";
 
 const input = "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-teal-600 focus:outline-none";
 
@@ -168,7 +169,7 @@ export function Admin() {
       <div className="flex items-center justify-between"><h1 className="font-heading text-2xl font-bold">Administration</h1><button onClick={logout} className="inline-flex items-center gap-1 text-sm text-slate-600" data-testid="admin-logout"><LogOut className="h-4 w-4" />Sign out</button></div>
       <Tabs defaultValue="overview" className="mt-6">
         <TabsList className="flex h-auto flex-wrap justify-start">
-          {["overview", "profile", "experience", "skills", "certifications", "education", "case_studies", "articles", "messages", "resume", "settings"].map((t) => <TabsTrigger key={t} value={t} data-testid={`admin-tab-${t}`} className="capitalize">{t.replace("_", " ")}{t === "messages" && ov?.messages_unread ? ` (${ov.messages_unread})` : ""}</TabsTrigger>)}
+          {["overview", "profile", "experience", "skills", "certifications", "education", "case_studies", "articles", "messages", "resume", "ucf", "settings"].map((t) => <TabsTrigger key={t} value={t} data-testid={`admin-tab-${t}`} className="capitalize">{t.replace("_", " ")}{t === "messages" && ov?.messages_unread ? ` (${ov.messages_unread})` : ""}</TabsTrigger>)}
         </TabsList>
         <TabsContent value="overview" className="mt-5 space-y-4">
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{[["Demo sessions", ov.sessions], ["Workflow executions", ov.executions], ["Unread messages", ov.messages_unread], ["Live AI calls today", ov.ai_calls_today]].map(([l, v]) => <Card key={l}><p className="font-mono text-[10px] uppercase text-slate-500">{l}</p><p className="font-heading text-2xl font-bold">{v}</p></Card>)}</div>
@@ -186,6 +187,7 @@ export function Admin() {
           {msgs.length === 0 && <p className="text-sm text-slate-500">No messages yet.</p>}
           {msgs.map((m) => <Card key={m.id}><div className="flex justify-between gap-2"><p className="text-sm font-medium">{m.name} · {m.email} {m.company && `· ${m.company}`}</p>{!m.read ? <button onClick={() => api.patch(`/admin/messages/${m.id}`).then(reload)} className="text-xs text-teal-700">Mark read</button> : <Badge tone="muted">read</Badge>}</div><p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{m.message}</p><p className="mt-2 text-[11px] text-slate-500">{fmt(m.created_at)} · email: {m.email_status}</p></Card>)}
         </TabsContent>
+        <TabsContent value="ucf" className="mt-5"><UcfAdmin /></TabsContent>
         <TabsContent value="resume" className="mt-5"><Card><p className="text-sm">{c.has_resume ? "A resume file is uploaded and served at Download Resume." : "No file uploaded — visitors get a PDF generated from your profile."}</p><label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-md bg-teal-700 px-4 py-2 text-sm text-white"><Upload className="h-4 w-4" />Upload PDF/DOCX (max 5 MB)<input type="file" accept=".pdf,.docx" className="hidden" onChange={upload} data-testid="admin-resume-upload" /></label></Card></TabsContent>
         <TabsContent value="settings" className="mt-5"><SettingsTab /></TabsContent>
       </Tabs>

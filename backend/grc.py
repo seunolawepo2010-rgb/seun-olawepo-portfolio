@@ -4,7 +4,7 @@ import engine
 
 LAB = "grc"
 SCHEMAS[LAB] = {}
-ROLES = ["grc_admin", "policy_owner", "policy_reviewer", "approver", "risk_analyst", "control_owner", "issue_owner", "remediation_owner", "auditor", "employee", "executive"]
+ROLES = ["grc_admin", "policy_owner", "policy_reviewer", "approver", "risk_analyst", "control_owner", "issue_owner", "remediation_owner", "auditor", "employee", "executive", "compliance_owner"]
 PREFIX = {"policy": "POL", "control": "CTL", "assessment": "CAS", "campaign": "ACM", "ack": "ACK", "exception": "EXC", "risk": "RSK", "issue": "ISS", "task": "RTK", "notification": "NTF"}
 EMPLOYEES = {"Finance": ["Avery Brooks", "Jordan Lee", "Priya Nair"], "IT": ["Marcus Hall", "Elena Ruiz", "Tom Becker"], "HR": ["Grace Kim", "Samuel Ortiz"], "Operations": ["Nina Patel", "Owen Carter"]}
 REGS = ["NIST SP 800-53", "NIST CSF", "ISO 27001", "SOC 2", "SOX ITGC", "PCI DSS", "HIPAA", "GLBA", "NYDFS", "GDPR", "CCPA"]
@@ -124,6 +124,8 @@ async def e_risk_assess(s, r, d):
 
 async def a_risk_assess(s, r, d):
     r = await get(s, r["id"])
+    await new(s, "risk_assessment", "risk_analyst", f"Assessment of {r['number']} recorded", risk_id=r["id"], risk=r["number"], likelihood=r["likelihood"], impact=r["impact"],
+              control_effectiveness=r["control_effectiveness"], inherent=r["inherent"], residual=r["residual"], rating=r["rating"], questionnaire=r.get("questionnaire"), assessor="Risk Analyst (fictional)", state="Completed")
     if r["residual"] >= THRESHOLD:
         await engine.start(s, "grc_risk_threshold", {"risk_id": r["id"], "_lab": LAB}, "risk_threshold_exceeded")
 
@@ -434,7 +436,7 @@ async def a_monitor(s, p):
 
 @kpi(LAB)
 async def k_grc(s):
-    pols, acks, exc, iss, tasks, risks, camps = [await find(s, LAB, t) for t in ("policy", "ack", "exception", "issue", "task", "risk", "campaign")]
+    pols, acks, exc, iss, tasks, risks, camps, rcs = [await find(s, LAB, t) for t in ("policy", "ack", "exception", "issue", "task", "risk", "campaign", "reg_change")]
     cs = []
     for c in camps:
         a = [x for x in acks if x["campaign_id"] == c["id"]]
@@ -446,7 +448,9 @@ async def k_grc(s):
                      {"label": "Active campaign completion", "value": f"{round(100 * sum(x['state'] == 'Acknowledged' for x in active) / len(active), 1)}%" if active else "n/a"},
                      {"label": "Active exceptions", "value": sum(e["state"] == "Active" for e in exc)}, {"label": "Open issues", "value": sum(i["state"] != "Closed" for i in iss)},
                      {"label": "Tasks past SLA", "value": sum(t["state"] not in ("Completed", "Closed") and t.get("sla_due", "9") < today() for t in tasks)},
-                     {"label": "High/Critical risks", "value": sum(r.get("rating") in ("High", "Critical") and r["state"] not in ("Closed",) for r in risks)}],
+                     {"label": "High/Critical risks", "value": sum(r.get("rating") in ("High", "Critical") and r["state"] not in ("Closed",) for r in risks)},
+                     {"label": "Open regulatory changes", "value": sum(c["state"] != "Closed" for c in rcs)}, {"label": "Regulatory changes closed", "value": sum(c["state"] == "Closed" for c in rcs)}],
             "charts": [{"title": "Policies by state", "data": by_status(pols, "state")}, {"title": "Exceptions by state", "data": by_status(exc, "state")},
-                       {"title": "Issues by state", "data": by_status(iss, "state")}, {"title": "Remediation tasks by state", "data": by_status(tasks, "state")}],
+                       {"title": "Issues by state", "data": by_status(iss, "state")}, {"title": "Remediation tasks by state", "data": by_status(tasks, "state")},
+                       {"title": "Regulatory changes by state", "data": by_status(rcs, "state")}],
             "campaigns": cs}
