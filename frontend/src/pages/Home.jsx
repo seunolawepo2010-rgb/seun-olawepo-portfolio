@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Download, FlaskConical, Bot, Briefcase, ExternalLink, ShieldCheck, Workflow, Brain, Layers } from "lucide-react";
+import { ArrowRight, Download, FlaskConical, Bot, Briefcase, ExternalLink, ShieldCheck, Workflow, Brain, Layers, Play } from "lucide-react";
 import { useContent } from "../context/ContentContext";
 import { LABS, labByKey } from "../lib/labs";
 import { CAREER_PATHS } from "../lib/roles";
@@ -60,6 +60,7 @@ export default function Home() {
             <Link to="/agents" className={`${btn} border border-slate-500 text-white hover:border-teal-300`} data-testid="cta-run-agent-demo"><Bot className="h-4 w-4" />Run AI Agent Demo</Link>
             <button onClick={downloadResume} className={`${btn} border border-slate-500 text-white hover:border-teal-300`} data-testid="cta-download-resume"><Download className="h-4 w-4" />Download Resume</button>
           </div>
+          <Link to="/tour" className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-teal-300 hover:text-teal-200" data-testid="cta-recruiter-tour"><Play className="h-4 w-4" />Short on time? Take the 5-minute recruiter tour <ArrowRight className="h-4 w-4" /></Link>
           <div className="mt-14 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-white/10 bg-white/10 md:grid-cols-4" data-testid="verified-metrics">
             {p.metrics.map((m) => <div key={m.label} className="bg-[#0B132B] p-5"><p className="font-heading text-3xl font-extrabold text-teal-300">{m.value}</p><p className="mt-1 text-xs text-slate-400">{m.label}</p></div>)}
           </div>
